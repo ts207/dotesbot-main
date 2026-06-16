@@ -160,11 +160,18 @@ def _acquire_single_instance_lock(path: str = "logs/paper_bot.lock") -> bool:
     global _LOCK_HANDLE
     os.makedirs(os.path.dirname(path), exist_ok=True)
     handle = open(path, "w", encoding="utf-8")
-    try:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        handle.close()
-        return False
+
+    if fcntl is not None:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            handle.close()
+            return False
+    else:
+        # Windows/dev fallback: no advisory flock. Keep handle open so the
+        # lock file still records this process, but do not claim hard exclusion.
+        pass
+
     handle.write(str(os.getpid()))
     handle.flush()
     _LOCK_HANDLE = handle
