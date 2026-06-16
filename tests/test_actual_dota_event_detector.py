@@ -97,3 +97,48 @@ def test_event_and_derived_state_enums_are_explicit():
     ))
     assert DerivedGameStateType.DOMINANT_NETWORTH_LEAD.value in derived.flags
     assert all(isinstance(flag, str) for flag in derived.flags)
+
+
+def test_multi_kill_live_and_research_grading():
+    detector = ActualDotaEventDetector()
+
+    # Base state
+    detector.observe(_game(received_at_ns=1_000_000_000, game_time_sec=900, radiant_score=5, dire_score=4))
+
+    # 1. Live-grade multi-kill (window = 20s <= 30s)
+    events = detector.observe(_game(
+        received_at_ns=2_000_000_000,
+        game_time_sec=920,
+        radiant_score=8,  # +3 kills
+        dire_score=4,
+    ))
+    multis = [e for e in events if e.event_type == "MULTI_KILL_WINDOW"]
+    assert len(multis) == 1
+    assert multis[0].live_grade_event is True
+
+    # Reset state
+    detector.observe(_game(received_at_ns=3_000_000_000, game_time_sec=1000, radiant_score=10, dire_score=10))
+
+    # 2. Research-grade multi-kill (window = 50s > 30s and <= 90s)
+    events = detector.observe(_game(
+        received_at_ns=4_000_000_000,
+        game_time_sec=1050,
+        radiant_score=13,  # +3 kills
+        dire_score=10,
+    ))
+    multis = [e for e in events if e.event_type == "MULTI_KILL_WINDOW"]
+    assert len(multis) == 1
+    assert multis[0].live_grade_event is False
+
+    # Reset state
+    detector.observe(_game(received_at_ns=5_000_000_000, game_time_sec=2000, radiant_score=20, dire_score=20))
+
+    # 3. Outside research window (window = 100s > 90s)
+    events = detector.observe(_game(
+        received_at_ns=6_000_000_000,
+        game_time_sec=2100,
+        radiant_score=23,  # +3 kills
+        dire_score=20,
+    ))
+    multis = [e for e in events if e.event_type == "MULTI_KILL_WINDOW"]
+    assert len(multis) == 0

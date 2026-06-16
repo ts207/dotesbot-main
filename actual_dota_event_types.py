@@ -36,6 +36,7 @@ class ActualDotaEvent:
     current_value: Any = None
     delta: int | None = None
     window_sec: int | None = None
+    live_grade_event: bool = True
     radiant_lead_before: int | None = None
     radiant_lead_after: int | None = None
     radiant_score_before: int | None = None

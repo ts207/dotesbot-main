@@ -6,6 +6,7 @@ from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from typing import Any
 
+import config
 from config import (
     PAPER_SLIPPAGE_CENTS, PAPER_TRADE_SIZE_USD, MAX_OPEN_USD_PER_MATCH,
     EXIT_TAKE_PROFIT, EXIT_STOP_LOSS_ABS, EXIT_STOP_LOSS_REL,
@@ -396,6 +397,34 @@ class PaperTrader:
             # DSwing-style (map_end_convergence): hold to map end.
             # Both skip take_profit, stop_loss, trailing_stop, and horizon.
             
+            is_event_reversal = (
+                str(pos.strategy_kind or "").upper() == "EVENT_REVERSAL_EDGE"
+                or pos.entry_is_reversal is True
+                or pos.hold_policy == "reversal_bounce_or_thesis"
+            )
+
+            if is_event_reversal:
+                if pos.match_id in game_over_match_ids:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "game_over"))
+                elif age_sec >= max_hold_sec:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "max_hold_timeout"))
+                elif exit_px is not None:
+                    if config.EVENT_REVERSAL_ACTIVE_EXITS_ENABLED:
+                        if bid is not None and bid >= pos.entry_price + config.EVENT_REVERSAL_TAKE_PROFIT_CENTS:
+                            to_close.append((token_id, bid, "event_reversal_bounce_take_profit"))
+                            continue
+                        if age_sec >= config.EVENT_REVERSAL_MAX_HOLD_SEC:
+                            to_close.append((token_id, exit_px, "event_reversal_timeout"))
+                            continue
+                    
+                    if (pos.fair_price > 0
+                        and pos.fair_price < pos.entry_price - 0.03
+                        and pos.fair_price < exit_px - 0.05):
+                        to_close.append((token_id, exit_px, "event_reversal_fair_invalidation"))
+                continue
+
             sk = str(pos.strategy_kind or "").upper()
             et = str(pos.event_type or "").upper()
             hp = str(pos.hold_policy or "")

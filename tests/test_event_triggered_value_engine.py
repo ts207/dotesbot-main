@@ -86,7 +86,7 @@ def test_event_triggered_value_uses_toplive_event_and_winprob_value():
     assert signal.fair_price == signal.fair_after
     assert signal.fair_delta >= 0.06
     assert signal.edge >= 0.10
-    assert signal.to_signal_dict()["event_type"] == "EVENT_TRIGGERED_VALUE"
+    assert signal.to_signal_dict()["event_type"] == "EVENT_CONTINUATION_EDGE"
     assert signal.to_signal_dict()["actual_event_type"] == "NETWORTH_SWING_WINDOW"
     assert signal.to_signal_dict()["fair_after"] == signal.fair_after
     assert signal.to_signal_dict()["hold_policy"] == "thesis_invalidation"
@@ -140,3 +140,26 @@ def test_event_triggered_value_rejects_non_primitive_actual_events():
         book_store=books,
     )[0]
     assert aegis.reason == "unsupported_actual_event_type"
+
+
+def test_event_triggered_value_rejects_non_live_grade_multikill():
+    engine = EventTriggeredValueEngine()
+    books = FakeBookStore(YES={"best_ask": 0.58, "best_bid": 0.56, "received_at_ns": time.time_ns()})
+
+    # live_grade_event = False should be rejected
+    rejected = engine.evaluate(
+        event=_event(event_type="MULTI_KILL_WINDOW", live_grade_event=False),
+        game=_game(),
+        mapping=_mapping(),
+        book_store=books,
+    )[0]
+    assert rejected.reason == "multi_kill_not_live_grade"
+
+    # live_grade_event = True (or default) should not be rejected for multi_kill_not_live_grade
+    allowed = engine.evaluate(
+        event=_event(event_type="MULTI_KILL_WINDOW", live_grade_event=True, side="radiant", radiant_lead_before=1000, radiant_lead_after=1500),
+        game=_game(radiant_lead=1500),
+        mapping=_mapping(),
+        book_store=books,
+    )[0]
+    assert allowed.reason != "multi_kill_not_live_grade"

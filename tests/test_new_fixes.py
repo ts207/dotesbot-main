@@ -116,8 +116,17 @@ def test_reject_value_labels():
     le = LiveExecutor()
     sig1 = MagicMock()
     sig1.__class__.__name__ = "EventTriggeredValueSignal"
+    sig1.is_reversal = False
+    sig1.is_continuation = True
     att1 = le._reject_value(sig1, {}, {}, "tok_1", 5.0, "reason")
-    assert att1.event_type == "EVENT_TRIGGERED_VALUE"
+    assert att1.event_type == "EVENT_CONTINUATION_EDGE"
+
+    sig1_rev = MagicMock()
+    sig1_rev.__class__.__name__ = "EventTriggeredValueSignal"
+    sig1_rev.is_reversal = True
+    sig1_rev.is_continuation = False
+    att1_rev = le._reject_value(sig1_rev, {}, {}, "tok_1", 5.0, "reason")
+    assert att1_rev.event_type == "EVENT_REVERSAL_EDGE"
     
     sig2 = MagicMock()
     sig2.__class__.__name__ = "DSwingSignal"

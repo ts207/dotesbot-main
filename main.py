@@ -997,6 +997,23 @@ async def steam_loop(
                                             else:
                                                 cost = ev_attempt.submitted_size_usd or 0.0
                                                 shares = 0.0
+
+                                            ev_strategy_kind = (
+                                                "EVENT_REVERSAL_EDGE"
+                                                if ev_result.is_reversal
+                                                else "EVENT_CONTINUATION_EDGE"
+                                            )
+                                            ev_hold_policy = (
+                                                "reversal_bounce_or_thesis"
+                                                if ev_result.is_reversal
+                                                else "thesis_invalidation"
+                                            )
+                                            ev_exit_engine = (
+                                                "event_reversal_exit"
+                                                if ev_result.is_reversal
+                                                else "value_fair_invalidation"
+                                            )
+
                                             live_position_store.add(LivePosition(
                                                 position_id=f"{ev_attempt.match_id}:{ev_attempt.token_id}:{ev_attempt.created_at_ns}",
                                                 state="OPEN" if is_filled else "PENDING_ENTRY",
@@ -1010,7 +1027,7 @@ async def steam_loop(
                                                 cost_usd=cost,
                                                 entry_time_ns=ev_attempt.created_at_ns,
                                                 entry_game_time_sec=ev_result.game_time_sec,
-                                                event_type="EVENT_TRIGGERED_VALUE",
+                                                event_type=ev_strategy_kind,
                                                 expected_move=0.0,
                                                 fair_price=ev_result.fair_price,
                                                 trader_kind="value",
@@ -1018,10 +1035,14 @@ async def steam_loop(
                                                 signal_id=ev_result.signal_id,
                                                 backed_direction=ev_result.direction,
                                                 pending_entry_order_id=ev_attempt.order_id if not is_filled else None,
-                                                strategy_kind="EVENT_TRIGGERED_VALUE",
+                                                strategy_kind=ev_strategy_kind,
+                                                strategy_family="EVENT",
+                                                strategy_subtype=ev_result.actual_event_type,
+                                                entry_is_reversal=ev_result.is_reversal,
+                                                entry_is_continuation=ev_result.is_continuation,
                                                 entry_engine="event_triggered_value",
-                                                exit_engine="value_fair_invalidation",
-                                                hold_policy="thesis_invalidation",
+                                                exit_engine=ev_exit_engine,
+                                                hold_policy=ev_hold_policy,
                                                 entry_fair=ev_result.fair_price,
                                                 entry_edge=ev_result.edge,
                                                 entry_backed_side=ev_result.direction,

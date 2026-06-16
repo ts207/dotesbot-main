@@ -344,6 +344,18 @@ BOOK_MOVE_MIN_CENTS = float(os.getenv("BOOK_MOVE_MIN_CENTS", "0.01"))
 REALTIME_STATS_ENABLED = os.getenv("REALTIME_STATS_ENABLED", "true").lower() in {"1", "true", "yes"}
 REALTIME_STATS_STALE_SEC = int(os.getenv("REALTIME_STATS_STALE_SEC", "30"))
 
+EVENT_REVERSAL_ACTIVE_EXITS_ENABLED = os.getenv(
+    "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED", "false"
+).lower() in {"1", "true", "yes"}
+
+EVENT_REVERSAL_TAKE_PROFIT_CENTS = float(
+    os.getenv("EVENT_REVERSAL_TAKE_PROFIT_CENTS", "0.10")
+)
+
+EVENT_REVERSAL_MAX_HOLD_SEC = int(
+    os.getenv("EVENT_REVERSAL_MAX_HOLD_SEC", "300")
+)
+
 
 def _config_hash() -> str:
     keys = [

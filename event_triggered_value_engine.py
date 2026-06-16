@@ -160,6 +160,11 @@ class EventTriggeredValueEngine:
         actual_event_type = _event_type_value(event.event_type)
         if actual_event_type not in PRIMITIVE_EVENT_TYPES:
             return [self._reject(event, match_id, cur_ns, "unsupported_actual_event_type")]
+        if (
+            actual_event_type == "MULTI_KILL_WINDOW"
+            and not bool(getattr(event, "live_grade_event", True))
+        ):
+            return [self._reject(event, match_id, cur_ns, "multi_kill_not_live_grade")]
         if actual_event_type == "GAME_ENDED" or game.get("game_over"):
             return [self._reject(event, match_id, cur_ns, "game_over")]
         if event.side not in {"radiant", "dire"}:

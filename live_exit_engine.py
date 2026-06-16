@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass
 
 import winprob
+import config
 from config import (
     EXIT_TAKE_PROFIT,
     EXIT_STOP_LOSS_ABS,
@@ -64,6 +65,24 @@ def decide_live_exit(
             game_over_match_ids=game_over_match_ids,
             now_ns=now_ns,
         )
+    hold_policy = str(getattr(position, "hold_policy", "") or "")
+    strategy_kind = str(getattr(position, "strategy_kind", "") or "").upper()
+
+    if (
+        trader_kind == "value"
+        and (
+            hold_policy == "reversal_bounce_or_thesis"
+            or strategy_kind == "EVENT_REVERSAL_EDGE"
+        )
+    ):
+        return _decide_event_reversal_exit(
+            position=position,
+            book=book,
+            game_over_match_ids=game_over_match_ids,
+            now_ns=now_ns,
+            game=game,
+        )
+
     # 2026-06-03 — winprob VALUE bot: TRUE hold-to-settle. The edge is
     # informational (net worth predicts winner); selling early underperforms
     # (proven: every active-exit mechanism loses to hold-to-settle). Exit ONLY at
@@ -317,5 +336,47 @@ def _decide_underdog_exit(
         return ExitDecision(True, "stop_loss", bid)
     if age_sec >= MAX_HOLD_HOURS * 3600:
         return ExitDecision(True, "max_hold_timeout", bid)
+
+    return ExitDecision(False)
+
+
+def _decide_event_reversal_exit(
+    *,
+    position,
+    book: dict | None,
+    game_over_match_ids: set[str],
+    now_ns: int,
+    game: dict | None = None,
+) -> ExitDecision:
+    raw_bid = (book or {}).get("best_bid")
+    bid = float(raw_bid) if raw_bid is not None else None
+    age_sec = (now_ns - position.entry_time_ns) / 1e9
+
+    if position.match_id in game_over_match_ids:
+        return ExitDecision(True, "game_over", bid)
+
+    if age_sec >= MAX_HOLD_HOURS * 3600:
+        return ExitDecision(True, "max_hold_timeout", bid)
+
+    # Quarantine: no active bounce/timeout exits until explicitly enabled.
+    if not config.EVENT_REVERSAL_ACTIVE_EXITS_ENABLED:
+        return ExitDecision(False)
+
+    if bid is None:
+        return ExitDecision(False)
+
+    if bid >= position.entry_price + config.EVENT_REVERSAL_TAKE_PROFIT_CENTS:
+        return ExitDecision(True, "event_reversal_bounce_take_profit", bid)
+
+    if age_sec >= config.EVENT_REVERSAL_MAX_HOLD_SEC:
+        return ExitDecision(True, "event_reversal_timeout", bid)
+
+    current_fair = _current_fair_for_position(position, game) if game is not None else None
+    if (
+        current_fair is not None
+        and current_fair < position.entry_price - VALUE_EXIT_FAIR_ENTRY_BUFFER
+        and current_fair < bid - VALUE_EXIT_FAIR_BID_BUFFER
+    ):
+        return ExitDecision(True, "event_reversal_fair_invalidation", bid, current_fair)
 
     return ExitDecision(False)

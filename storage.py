@@ -435,7 +435,7 @@ class ActualDotaEventLogger(CsvLogger):
             "event_id", "event_type", "match_id", "lobby_id", "league_id",
             "source", "side", "game_time_sec", "received_at_ns",
             "previous_value", "current_value", "delta", "window_sec",
-            "radiant_lead_before", "radiant_lead_after",
+            "live_grade_event", "radiant_lead_before", "radiant_lead_after",
             "radiant_score_before", "radiant_score_after",
             "dire_score_before", "dire_score_after",
             "networth_delta", "structure_team", "structure_tier",

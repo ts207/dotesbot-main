@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from dataclasses import dataclass
 from typing import Any, Mapping
@@ -13,7 +14,8 @@ _NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555559")
 _NETWORTH_CHANGE_MIN = 1000
 _NETWORTH_FLIP_MIN_SIDE = 1000
 _NETWORTH_FLIP_MIN_SWING = 2500
-_MULTI_KILL_WINDOW_SEC = 90
+_MULTI_KILL_WINDOW_LIVE_SEC = int(os.getenv("MULTI_KILL_WINDOW_LIVE_SEC", "30"))
+_MULTI_KILL_WINDOW_RESEARCH_SEC = int(os.getenv("MULTI_KILL_WINDOW_RESEARCH_SEC", "90"))
 
 
 def _to_int(value: Any) -> int | None:
@@ -139,20 +141,37 @@ class ActualDotaEventDetector:
             )
         ]
         window = self._window_sec(prev, cur)
-        if window is not None and window <= _MULTI_KILL_WINDOW_SEC:
+        if window is not None and window <= _MULTI_KILL_WINDOW_RESEARCH_SEC:
+            live_grade = window <= _MULTI_KILL_WINDOW_LIVE_SEC
             if r_delta >= 3 and d_delta <= 1:
                 events.append(self._event(
                     cur, "MULTI_KILL_WINDOW", side="radiant", delta=r_delta, window_sec=window,
+                    live_grade_event=live_grade,
                     radiant_lead_before=prev.radiant_lead,
                     radiant_score_before=prev.radiant_score,
                     dire_score_before=prev.dire_score,
+                    details=json.dumps({
+                        "radiant_kills_delta": r_delta,
+                        "dire_kills_delta": d_delta,
+                        "live_grade_event": live_grade,
+                        "live_window_sec": _MULTI_KILL_WINDOW_LIVE_SEC,
+                        "research_window_sec": _MULTI_KILL_WINDOW_RESEARCH_SEC,
+                    }, sort_keys=True),
                 ))
             if d_delta >= 3 and r_delta <= 1:
                 events.append(self._event(
                     cur, "MULTI_KILL_WINDOW", side="dire", delta=d_delta, window_sec=window,
+                    live_grade_event=live_grade,
                     radiant_lead_before=prev.radiant_lead,
                     radiant_score_before=prev.radiant_score,
                     dire_score_before=prev.dire_score,
+                    details=json.dumps({
+                        "radiant_kills_delta": r_delta,
+                        "dire_kills_delta": d_delta,
+                        "live_grade_event": live_grade,
+                        "live_window_sec": _MULTI_KILL_WINDOW_LIVE_SEC,
+                        "research_window_sec": _MULTI_KILL_WINDOW_RESEARCH_SEC,
+                    }, sort_keys=True),
                 ))
         return events
 
@@ -273,6 +292,7 @@ class ActualDotaEventDetector:
         current_value: Any = None,
         delta: int | None = None,
         window_sec: int | None = None,
+        live_grade_event: bool = True,
         networth_delta: int | None = None,
         structure_team: str = "",
         structure_tier: str = "",
@@ -301,6 +321,7 @@ class ActualDotaEventDetector:
             current_value=current_value,
             delta=delta,
             window_sec=window_sec,
+            live_grade_event=live_grade_event,
             radiant_lead_before=radiant_lead_before,
             radiant_lead_after=cur.radiant_lead,
             radiant_score_before=radiant_score_before,
