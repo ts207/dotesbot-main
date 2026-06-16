@@ -73,9 +73,9 @@ def generate_report():
             if cname == 'VALUE_EDGE':
                 t_sub = paper_trades[paper_trades['strategy_kind'].str.upper() == 'VALUE']
             elif cname == 'ETV_CONTINUATION':
-                t_sub = paper_trades[(paper_trades['strategy_kind'].str.upper() == 'EVENT_TRIGGERED_VALUE') & (paper_trades['entry_derived_state_flags'].str.contains('continuation', na=False, case=False))]
+                t_sub = paper_trades[(paper_trades['strategy_kind'].str.upper() == 'EVENT_CONTINUATION_EDGE') | (paper_trades['entry_is_continuation'].astype(str).str.lower() == 'true')]
             elif cname == 'ETV_REVERSAL':
-                t_sub = paper_trades[(paper_trades['strategy_kind'].str.upper() == 'EVENT_TRIGGERED_VALUE') & (paper_trades['entry_derived_state_flags'].str.contains('reversal', na=False, case=False))]
+                t_sub = paper_trades[(paper_trades['strategy_kind'].str.upper() == 'EVENT_REVERSAL_EDGE') | (paper_trades['entry_is_reversal'].astype(str).str.lower() == 'true')]
             elif cname == 'DSWING':
                 t_sub = paper_trades[paper_trades['strategy_kind'].str.upper() == 'DSWING']
             else:

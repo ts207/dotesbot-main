@@ -265,6 +265,11 @@ class LiveOrderAttempt:
     # Active strategies leave this None; DSWING exits on map-end convergence.
     exit_horizon_sec: int | None = None
     signal_id: str | None = None
+    strategy_kind: str | None = None
+    strategy_family: str | None = None
+    strategy_subtype: str | None = None
+    is_reversal: bool | None = None
+    is_continuation: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -812,6 +817,11 @@ class LiveExecutor:
             match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
             game_time_sec=game.get("game_time_sec"),
             created_at_ns=time.time_ns(),
+            strategy_kind=extra.get("strategy_kind"),
+            strategy_family=extra.get("strategy_family"),
+            strategy_subtype=extra.get("strategy_subtype"),
+            is_reversal=extra.get("is_reversal"),
+            is_continuation=extra.get("is_continuation"),
         )
 
     async def try_buy(self, *, signal: dict, mapping: dict, game: dict, book_store) -> LiveOrderAttempt:
@@ -1110,6 +1120,11 @@ class LiveExecutor:
             match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
             game_time_sec=game.get("game_time_sec"),
             created_at_ns=time.time_ns(),
+            strategy_kind=signal.get("strategy_kind") or signal.get("event_family") or signal.get("event_type"),
+            strategy_family=signal.get("strategy_family"),
+            strategy_subtype=signal.get("strategy_subtype"),
+            is_reversal=bool(signal.get("is_reversal", False)),
+            is_continuation=bool(signal.get("is_continuation", False)),
         )
 
         attempt.submit_start_ns = time.time_ns()
@@ -1211,11 +1226,23 @@ class LiveExecutor:
     def _reject_value(self, signal, mapping, game, token_id, size_usd, reason) -> LiveOrderAttempt:
         signal_kind = signal.__class__.__name__
         if signal_kind == "EventTriggeredValueSignal":
-            event_type = "EVENT_TRIGGERED_VALUE"
+            event_type = "EVENT_REVERSAL_EDGE" if signal.is_reversal else "EVENT_CONTINUATION_EDGE"
+            strategy_family = "EVENT"
+            strategy_subtype = signal.actual_event_type
+            is_reversal = signal.is_reversal
+            is_continuation = signal.is_continuation
         elif signal_kind == "DSwingSignal":
             event_type = "DSWING"
+            strategy_family = "DSWING"
+            strategy_subtype = None
+            is_reversal = False
+            is_continuation = False
         else:
-            event_type = "VALUE"
+            event_type = "VALUE_EDGE"
+            strategy_family = "VALUE"
+            strategy_subtype = None
+            is_reversal = False
+            is_continuation = False
             
         trader_kind = "dswing" if event_type == "DSWING" else "value"
 
@@ -1238,6 +1265,11 @@ class LiveExecutor:
             trader_kind=trader_kind,
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
+            strategy_kind=event_type,
+            strategy_family=strategy_family,
+            strategy_subtype=strategy_subtype,
+            is_reversal=is_reversal,
+            is_continuation=is_continuation,
         )
 
     async def try_buy_manual(
@@ -1263,6 +1295,8 @@ class LiveExecutor:
                 market_name=mapping.get("name"), match_id=str(match_id),
                 game_time_sec=0, created_at_ns=time.time_ns(),
                 trader_kind="manual", exit_horizon_sec=None,
+                strategy_kind="MANUAL", strategy_family="MANUAL", strategy_subtype=None,
+                is_reversal=False, is_continuation=False,
             )
 
         from config import ENABLE_REAL_LIVE_TRADING
@@ -1433,11 +1467,23 @@ class LiveExecutor:
 
         signal_kind = signal.__class__.__name__
         if signal_kind == "EventTriggeredValueSignal":
-            attempt_event_type = "EVENT_TRIGGERED_VALUE"
+            attempt_event_type = "EVENT_REVERSAL_EDGE" if signal.is_reversal else "EVENT_CONTINUATION_EDGE"
+            strategy_family = "EVENT"
+            strategy_subtype = signal.actual_event_type
+            is_reversal = signal.is_reversal
+            is_continuation = signal.is_continuation
         elif signal_kind == "DSwingSignal":
             attempt_event_type = "DSWING"
+            strategy_family = "DSWING"
+            strategy_subtype = None
+            is_reversal = False
+            is_continuation = False
         else:
-            attempt_event_type = "VALUE"
+            attempt_event_type = "VALUE_EDGE"
+            strategy_family = "VALUE"
+            strategy_subtype = None
+            is_reversal = False
+            is_continuation = False
             
         trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"
 
@@ -1463,6 +1509,11 @@ class LiveExecutor:
             trader_kind=trader_kind,
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
+            strategy_kind=attempt_event_type,
+            strategy_family=strategy_family,
+            strategy_subtype=strategy_subtype,
+            is_reversal=is_reversal,
+            is_continuation=is_continuation,
         )
 
         attempt.submit_start_ns = time.time_ns()

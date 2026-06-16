@@ -401,7 +401,7 @@ class PositionLogger(CsvLogger):
             "token_id", "match_id", "market_name", "side",
             "entry_price", "shares", "cost_usd",
             "event_type", "lag", "expected_move", "fair_price",
-            "strategy_kind", "hold_policy", "entry_fair", "entry_edge",
+            "strategy_kind", "strategy_family", "strategy_subtype", "entry_is_reversal", "entry_is_continuation", "hold_policy", "entry_fair", "entry_edge",
             "entry_backed_side", "entry_radiant_lead", "entry_actual_event_type",
             "entry_derived_state_flags",
             "entry_game_time_sec",

@@ -1187,6 +1187,10 @@ async def steam_loop(
                                             trader_kind="dswing", exit_horizon_sec=None, signal_id=ds_res.signal_id,
                                             backed_direction=ds_res.direction,
                                             strategy_kind="DSWING",
+                                            strategy_family="DSWING",
+                                            strategy_subtype=None,
+                                            entry_is_reversal=False,
+                                            entry_is_continuation=False,
                                             entry_engine="decisive_swing",
                                             exit_engine="dswing_map_end",
                                             hold_policy="map_end_convergence",
@@ -1777,6 +1781,11 @@ async def steam_loop(
                                             event_type=signal.get("event_type") or "",
                                             expected_move=signal.get("expected_move") or 0.0,
                                             fair_price=signal.get("fair_price") or 0.0,
+                                            strategy_kind=attempt.strategy_kind,
+                                            strategy_family=attempt.strategy_family,
+                                            strategy_subtype=attempt.strategy_subtype,
+                                            entry_is_reversal=attempt.is_reversal,
+                                            entry_is_continuation=attempt.is_continuation,
                                         )
                                         live_position_store.add(live_pos)
                                     elif attempt.order_status in ("delayed", "live") and attempt.order_id and live_position_store:
@@ -1799,6 +1808,11 @@ async def steam_loop(
                                             event_type=signal.get("event_type") or "",
                                             expected_move=signal.get("expected_move") or 0.0,
                                             fair_price=signal.get("fair_price") or 0.0,
+                                            strategy_kind=attempt.strategy_kind,
+                                            strategy_family=attempt.strategy_family,
+                                            strategy_subtype=attempt.strategy_subtype,
+                                            entry_is_reversal=attempt.is_reversal,
+                                            entry_is_continuation=attempt.is_continuation,
                                             pending_entry_order_id=attempt.order_id,
                                         )
                                         live_position_store.add(live_pos)

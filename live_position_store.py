@@ -43,6 +43,10 @@ class LivePosition:
     backed_direction: str | None = None
     # 2026-06-16 — PnL separation tags
     strategy_kind: str | None = None
+    strategy_family: str | None = None
+    strategy_subtype: str | None = None
+    entry_is_reversal: bool | None = None
+    entry_is_continuation: bool | None = None
     entry_engine: str | None = None
     exit_engine: str | None = None
     hold_policy: str | None = None

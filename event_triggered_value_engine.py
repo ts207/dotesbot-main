@@ -72,6 +72,7 @@ class EventTriggeredValueSignal:
         return not self.is_reversal
 
     def to_signal_dict(self) -> dict:
+        strategy_kind = "EVENT_REVERSAL_EDGE" if self.is_reversal else "EVENT_CONTINUATION_EDGE"
         return {
             "signal_id": self.signal_id,
             "match_id": self.match_id,
@@ -86,13 +87,14 @@ class EventTriggeredValueSignal:
             "executable_edge": self.edge,
             "expected_move": 0.0,
             "target_size_usd": self.sized_usd,
-            "event_type": "EVENT_TRIGGERED_VALUE",
-            "strategy_kind": "value",
-            "hold_policy": "thesis_invalidation",
+            "event_type": strategy_kind,
+            "strategy_kind": strategy_kind,
+            "strategy_family": "EVENT",
+            "strategy_subtype": self.actual_event_type,
+            "hold_policy": "reversal_bounce_or_thesis" if self.is_reversal else "thesis_invalidation",
             "actual_event_type": self.actual_event_type,
             "event_tier": "A",
             "event_is_primary": True,
-            "event_family": "VALUE",
             "event_quality": 1.0,
             "event_direction": self.direction,
             "is_reversal": self.is_reversal,

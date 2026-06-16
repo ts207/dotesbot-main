@@ -34,6 +34,10 @@ class Position:
     is_underdog_reversal: bool = False  # underdog comeback hold — wide stop, TP=0.75, no horizon
     peak_bid: float = 0.0         # highest bid seen since entry; drives trailing stop
     strategy_kind: str | None = None
+    strategy_family: str | None = None
+    strategy_subtype: str | None = None
+    entry_is_reversal: bool | None = None
+    entry_is_continuation: bool | None = None
     hold_policy: str | None = None
     entry_fair: float | None = None
     entry_edge: float | None = None
@@ -71,6 +75,10 @@ class ClosedPosition:
     fair_price: float = 0.0
     is_underdog_reversal: bool = False
     strategy_kind: str | None = None
+    strategy_family: str | None = None
+    strategy_subtype: str | None = None
+    entry_is_reversal: bool | None = None
+    entry_is_continuation: bool | None = None
     hold_policy: str | None = None
     entry_fair: float | None = None
     entry_edge: float | None = None
@@ -173,6 +181,10 @@ class PaperTrader:
                 ),
                 is_underdog_reversal=str(row.get("is_underdog_reversal", "")).lower() in {"true", "1"},
                 strategy_kind=row.get("strategy_kind") or None,
+                strategy_family=row.get("strategy_family") or None,
+                strategy_subtype=row.get("strategy_subtype") or None,
+                entry_is_reversal=str(row.get("entry_is_reversal", "")).lower() in {"true", "1"},
+                entry_is_continuation=str(row.get("entry_is_continuation", "")).lower() in {"true", "1"},
                 hold_policy=row.get("hold_policy") or None,
                 entry_fair=self._optional_float(row.get("entry_fair")),
                 entry_edge=self._optional_float(row.get("entry_edge")),
@@ -298,6 +310,10 @@ class PaperTrader:
             is_underdog_reversal=bool(signal.get("is_underdog_reversal", False)),
             peak_bid=bid,  # initialize to current bid so trailing stop has a starting point
             strategy_kind=signal.get("strategy_kind") or signal.get("event_family") or signal.get("event_type"),
+            strategy_family=signal.get("strategy_family"),
+            strategy_subtype=signal.get("strategy_subtype"),
+            entry_is_reversal=bool(signal.get("is_reversal", False)),
+            entry_is_continuation=bool(signal.get("is_continuation", False)),
             hold_policy=signal.get("hold_policy"),
             entry_fair=fair_price,
             entry_edge=self._optional_float(entry_edge),
@@ -539,6 +555,10 @@ class PaperTrader:
             fair_price=pos.fair_price,
             is_underdog_reversal=pos.is_underdog_reversal,
             strategy_kind=pos.strategy_kind,
+            strategy_family=pos.strategy_family,
+            strategy_subtype=pos.strategy_subtype,
+            entry_is_reversal=pos.entry_is_reversal,
+            entry_is_continuation=pos.entry_is_continuation,
             hold_policy=pos.hold_policy,
             entry_fair=pos.entry_fair,
             entry_edge=pos.entry_edge,

@@ -11452,3 +11452,25 @@ markets:
   steam_radiant_team: InterActive Philippines
   steam_dire_team: Mentality Monsters
   steam_side_mapping: reversed
+- name: 'Dota 2: Roar Gaming vs Cloud Rising (BO3) - The International China Closed
+    Qualifier Playoffs'
+  condition_id: '0x7293d8712c79a7273dd40cc703d35a60a4fa5c67ac5d8ae0b9bd8f9387d1c595'
+  market_id: '2552677'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Roar Gaming
+  no_team: Cloud Rising
+  yes_token_id: '87724709880827554983271979278366166096333425332905517316881448992363922870688'
+  no_token_id: '35145231519003505857736315175168059684599647302793037098814343175806909309943'
+  dota_match_id: '8853851704'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T06:55:32+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Cloud Rising
+  steam_dire_team: Roar
+  steam_side_mapping: reversed
