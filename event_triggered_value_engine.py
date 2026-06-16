@@ -262,6 +262,7 @@ class EventTriggeredValueEngine:
         mapping: Mapping[str, Any],
         book_store: Any,
         entered_tokens: Any = None,
+        pre_event_books: dict[str, dict] | None = None,
     ) -> list[EventTriggeredValueSignal | EventTriggeredValueReject]:
         if not EVENT_TRIGGERED_VALUE_ENABLED:
             return []
@@ -387,13 +388,21 @@ class EventTriggeredValueEngine:
             None if res_before.fair_raw is None or res_after.fair_raw is None
             else res_after.fair_raw - res_before.fair_raw
         )
-        market_price_before_event = _first_float(
-            book,
-            "market_price_before_event",
-            "best_ask_before_event",
-            "pre_event_ask",
-            "pre_event_price",
-        )
+        pre_event_book = pre_event_books.get(token_id) if pre_event_books else None
+        if pre_event_book:
+            market_price_before_event = _first_float(
+                pre_event_book,
+                "ask",
+                "mid",
+            )
+        else:
+            market_price_before_event = _first_float(
+                book,
+                "market_price_before_event",
+                "best_ask_before_event",
+                "pre_event_ask",
+                "pre_event_price",
+            )
         market_price_after_event = ask
         market_reprice = (
             None if market_price_before_event is None

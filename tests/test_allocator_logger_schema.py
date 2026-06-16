@@ -18,5 +18,9 @@ def test_allocator_logger_headers():
         assert "candidate_count" in headers
         assert "blocked_count" in headers
         assert "blocked_strategies" in headers
+        assert "winner_edge_type" in headers
+        assert "winner_target_horizon" in headers
+        assert "winner_expected_hold_sec" in headers
+        assert "block_reason" in headers
     finally:
         os.unlink(f_name)

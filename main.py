@@ -38,8 +38,13 @@ from config import REALTIME_STATS_STALE_SEC
 from series_model import compute_bo3_match_p
 from team_utils import norm_team
 
-# Current paper runtime has two entry strategies: VALUE and DSWING. Event
-# detection remains enabled for diagnostics, but it does not create entries.
+# Current paper runtime entry strategies:
+#   - VALUE
+#   - DSWING
+#   - EVENT_TRIGGERED_VALUE when enabled by config
+#
+# Legacy EventSignalEngine diagnostics may still run, but legacy event entries
+# are disabled unless ENABLE_LEGACY_EVENT_ENTRIES is explicitly true.
 ENABLE_LEGACY_EVENT_DIAGNOSTICS = True
 ENABLE_LEGACY_EVENT_ENTRIES = False
 from config import (
@@ -715,6 +720,7 @@ async def steam_loop(
                 game_over_match_ids: set[str] = set()
                 current_game_times: dict[str, int | None] = {}
                 actual_events_by_match: dict[str, list] = {}
+                pre_event_books_by_event: dict[str, dict[str, dict]] = {}
 
                 # 1. First pass: log and process only relevant games
                 active_games = []
@@ -784,22 +790,18 @@ async def steam_loop(
                         actual_events = actual_event_detector.observe(game)
                         if actual_events:
                             # Pre-event book capture for EVENT strategy horizon markouts
-                            event_ns = actual_events[0].received_at_ns if actual_events else int(game.get("received_at_ns") or 0)
-                            for mapping in mappings:
-                                if str(mapping.get("dota_match_id") or "") in {match_id, str(game.get("lobby_id") or "")}:
-                                    for key in ("yes_token_id", "no_token_id"):
-                                        tok = mapping.get(key)
-                                        if tok:
-                                            b = book_store.get(tok)
-                                            if b:
+                            for event in actual_events:
+                                event_ns = event.received_at_ns
+                                e_books = {}
+                                for mapping in mappings:
+                                    if str(mapping.get("dota_match_id") or "") in {match_id, str(game.get("lobby_id") or "")}:
+                                        for key in ("yes_token_id", "no_token_id"):
+                                            tok = mapping.get(key)
+                                            if tok:
                                                 snap = book_store.get_snapshot_before(tok, event_ns)
                                                 if snap:
-                                                    b["pre_event_bid"] = snap.get("bid")
-                                                    b["pre_event_ask"] = snap.get("ask")
-                                                    b["pre_event_price"] = snap.get("mid")
-                                                    b["pre_event_book_received_at_ns"] = snap.get("received_at_ns")
-                                                    now_ns = time.time_ns()
-                                                    b["pre_event_book_age_ms"] = (now_ns - snap["received_at_ns"]) / 1e6 if snap.get("received_at_ns") else None
+                                                    e_books[tok] = snap
+                                pre_event_books_by_event[event.event_id] = e_books
 
                             actual_events_by_match[match_id] = actual_events
                             if actual_event_logger is not None:
@@ -1018,6 +1020,7 @@ async def steam_loop(
                                     mapping=mapping,
                                     book_store=book_store,
                                     entered_tokens=_entered_toks,
+                                    pre_event_books=pre_event_books_by_event.get(actual_event.event_id),
                                 )
                                 for ev_result in ev_results:
                                     if not isinstance(ev_result, EventTriggeredValueSignal):
