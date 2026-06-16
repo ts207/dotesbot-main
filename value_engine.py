@@ -214,12 +214,21 @@ class ValueEngine:
         if not book:
             return [ValueReject(match_id, cur_ns, "missing_book", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=game_time)]
         
+        received_at_ns = book.get("received_at_ns")
+        book_age_ms = None
+        if received_at_ns:
+            book_age_ms = int((time.time_ns() - received_at_ns) / 1_000_000)
+
         try:
             ask = float(book.get("best_ask"))
         except (TypeError, ValueError):
-            return [ValueReject(match_id, cur_ns, "missing_ask", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=game_time)]
-            
-        received_at_ns = book.get("received_at_ns")
+            reason = "one_sided_book_missing_ask" if book.get("best_bid") is not None else "missing_ask"
+            return [ValueReject(
+                match_id, cur_ns, reason,
+                direction=direction, side=side, token_id=token_id,
+                lead=lead, game_time_sec=game_time, book_age_ms=book_age_ms,
+            )]
+
         if not received_at_ns:
             # No timestamp → can't prove the ask is fresh/fillable. Treat as stale.
             return [ValueReject(
@@ -227,7 +236,6 @@ class ValueEngine:
                 direction=direction, side=side, token_id=token_id,
                 ask=ask, lead=lead, game_time_sec=game_time
             )]
-        book_age_ms = int((time.time_ns() - received_at_ns) / 1_000_000)
 
         if book_age_ms > VALUE_MAX_BOOK_AGE_MS:
             # We want to print this specifically for book feed verification (#2)

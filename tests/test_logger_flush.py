@@ -29,6 +29,26 @@ def test_csv_logger_flush(tmp_path):
             assert int(row["val"]) == i
 
 
+def test_csv_logger_does_not_dual_write_by_default(tmp_path, monkeypatch):
+    monkeypatch.delenv("UNIFIED_STORAGE_DUAL_WRITE", raising=False)
+
+    logger = CsvLogger(str(tmp_path / "test.csv"), ["ts"], parquet_table="signals")
+    try:
+        assert logger._parquet_writer is None
+    finally:
+        logger.stop()
+
+
+def test_csv_logger_dual_write_is_explicit(tmp_path, monkeypatch):
+    monkeypatch.setenv("UNIFIED_STORAGE_DUAL_WRITE", "true")
+
+    logger = CsvLogger(str(tmp_path / "test.csv"), ["ts"], parquet_table="signals")
+    try:
+        assert logger._parquet_writer is not None
+    finally:
+        logger.stop()
+
+
 def test_liveleague_logger_rotates_when_size_exceeded(tmp_path, monkeypatch):
     """When the active jsonl exceeds the threshold, it should be renamed and
     the renamed file gzipped in the background."""

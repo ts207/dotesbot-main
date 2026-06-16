@@ -7,6 +7,7 @@ import pytest
 
 from live_executor import LiveExecutor, LiveExitExecutor, round_down_to_tick
 from poly_ws import BookStore
+from decisive_swing_engine import DSwingSignal
 
 
 class FakeLiveClient:
@@ -82,9 +83,47 @@ def _book_store(ask=0.61, bid=0.58):
     return store
 
 
+def _dswing_signal():
+    return DSwingSignal(
+        signal_id="ds1",
+        match_id="M1",
+        received_at_ns=time.time_ns(),
+        direction="radiant",
+        side="YES",
+        token_id="TOKYES",
+        lead=9000,
+        game_time_sec=900,
+        p_game=0.95,
+        series_fair=0.72,
+        ask=0.55,
+        edge=0.17,
+        sized_usd=1.0,
+        fair_price=0.72,
+        book_age_ms=100,
+    )
+
+
 def test_round_down_to_tick():
     assert round_down_to_tick(0.6789, "0.01") == 0.67
     assert round_down_to_tick(0.6789, "0.001") == 0.678
+
+
+@pytest.mark.asyncio
+async def test_dswing_signal_is_tagged_as_dswing_paper_attempt(monkeypatch):
+    monkeypatch.setattr("live_executor.ENABLE_REAL_LIVE_TRADING", False)
+    executor = LiveExecutor()
+
+    attempt = await executor.try_buy_value(
+        signal=_dswing_signal(),
+        mapping=_mapping(market_type="MATCH_WINNER"),
+        game=_game(),
+        book_store=_book_store(ask=0.55, bid=0.54),
+    )
+
+    assert attempt.order_status == "filled"
+    assert attempt.event_type == "DSWING"
+    assert attempt.trader_kind == "dswing"
+    assert attempt.order_id.startswith("paper_dswing_")
 
 
 @pytest.mark.asyncio

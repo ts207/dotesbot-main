@@ -9,7 +9,7 @@ Standalone script that:
      P&L to logs/lol_scalp_paper.csv.
 
 Scalp evaluation runs PAPER-only (no real CLOB orders) — uses the same
-filter as the Dota scalp_executor (skew ≤ 0.08, sum ≤ 1.03, both prices
+filter as the historical Dota buy-both scalp rule (skew <= 0.08, sum <= 1.03, both prices
 in [0.40, 0.60]).
 """
 from __future__ import annotations

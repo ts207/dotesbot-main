@@ -23,20 +23,15 @@ Parquet direction, but it is not the primary runtime store.
 
 ## Strategy Inventory
 
-- Value engine: primary hold-to-settlement strategy. It backs the net-worth
-  leader when top-live state, market scope, book freshness, price, edge, and
-  orientation guards pass.
-- Decisive swing: BO3 moneyline convergence strategy. It is wired but defaults
-  off with `DSWING_ENABLED=false`.
-- Continuous engine: snapshot-to-snapshot momentum scorer. It defaults off and
-  is intended for shadow or explicitly enabled paper/live attempts.
-- Arb engine: YES+NO settlement arb scanner. It defaults off and only trades when
-  `ENABLE_ARB_TRADING=true`.
-- Event detector / signal engine: legacy tactical event stack. It is still wired
-  but heavily gated by event taxonomy, cadence quality, freshness, and live
-  allowlists.
-- Scalp, favorite, early-favorite, and model-B style paths are research,
-  shadow, or disabled surfaces unless explicitly enabled.
+- Value engine: primary hold-to-settlement paper strategy. It backs the
+  net-worth leader when top-live state, market scope, book freshness, price,
+  edge, and orientation guards pass.
+- Decisive swing: BO3 moneyline convergence paper strategy. It backs the team
+  about to win the current map when the match-winner book is slow to reprice.
+- Event detector / signal engine: diagnostics only. Event entries are disabled
+  in `main.py`; event rows remain useful context for logs and analysis.
+- Removed strategy branches: continuous momentum, YES/NO arb, scalp,
+  book-favorite, early-favorite, and nomodel event trading.
 
 ## Safety Gates
 
@@ -53,7 +48,7 @@ boundaries:
 - Executor gates enforce order type, event tier, event schema, cadence quality,
   event quality, spread, ask size, book age, Steam age, disk space, balance, open
   position count, total submitted budget, daily drawdown, and per-match exposure.
-- Exit logic keeps value and arb positions hold-to-settlement except for game
+- Exit logic keeps value and DSWING positions hold-to-settlement except for game
   over, max-hold timeout, and narrow catastrophe salvage rules.
 
 ## Current Blockers

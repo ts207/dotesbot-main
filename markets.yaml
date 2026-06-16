@@ -11624,8 +11624,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 0
-  series_score_no: 1
-  current_game_number: 2
+  series_score_no: 2
+  current_game_number: 3
   yes_team: Hokori
   no_team: Team Nemesis
   yes_token_id: '4237037923613301288093136071314468832905578305370205176422378224541008134240'
@@ -11634,6 +11634,27 @@ markets:
   confidence: 1.0
   scheduled_start_utc: '2026-06-14 22:36:47'
   auto_mapped_at_utc: '2026-06-15T23:03:49+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Hokori
+  steam_dire_team: Team Nemesis
+  steam_side_mapping: normal
+- name: 'Dota 2: Hokori vs Team Nemesis - Game 2 Winner'
+  condition_id: '0x24abe0c5e186dd3c89e804e8d91ae898ac7062ee03bf6a6ead8c0d03b52fc52e'
+  market_id: '2546815'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: Hokori
+  no_team: Team Nemesis
+  yes_token_id: '55205121428158491378471420453715762641937691153598495540907638473876118362260'
+  no_token_id: '18280242728020834314917405689302856817910034029294162414393752343085064598168'
+  dota_match_id: '8853647647'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 22:36:47'
+  auto_mapped_at_utc: '2026-06-16T00:07:37+00:00'
   auto_mapped_source: auto_series_binder
   steam_radiant_team: Hokori
   steam_dire_team: Team Nemesis

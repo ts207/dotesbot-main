@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from gettoplive_state import validate_top_live_state
 from value_engine import ValueEngine, ValueReject
 
@@ -60,3 +62,16 @@ def test_value_engine_rejects_degraded_top_live_before_book_lookup():
     assert len(result) == 1
     assert isinstance(result[0], ValueReject)
     assert result[0].reason == "missing_top_live_state:building_state"
+
+
+def test_value_engine_labels_bid_only_book_as_one_sided_missing_ask():
+    result = ValueEngine().evaluate(
+        complete_game(),
+        mapping={"market_type": "MAP_WINNER", "steam_side_mapping": "normal", "yes_token_id": "Y", "no_token_id": "N"},
+        book_store={"Y": {"best_bid": 0.99, "best_ask": None, "received_at_ns": time.time_ns() - 100_000_000}},
+    )
+
+    assert len(result) == 1
+    assert isinstance(result[0], ValueReject)
+    assert result[0].reason == "one_sided_book_missing_ask"
+    assert result[0].book_age_ms is not None

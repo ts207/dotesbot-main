@@ -25,6 +25,7 @@ except Exception:
     compute_bo3_match_p = None
 
 DSWING_ENABLED = os.getenv("DSWING_ENABLED", "false").lower() in {"1", "true", "yes"}
+DSWING_SHADOW_ENABLED = os.getenv("DSWING_SHADOW_ENABLED", "false").lower() in {"1", "true", "yes"}
 DSWING_LEAD = int(os.getenv("DSWING_LEAD", "6000"))          # game-ending swing; backtest: enter EARLY (6k) = +14.8% vs +0.7% at 12k
 DSWING_MIN_EDGE = float(os.getenv("DSWING_MIN_EDGE", "0.05"))  # series_fair - ask
 DSWING_MAX_PRICE = float(os.getenv("DSWING_MAX_PRICE", "0.92"))
@@ -60,6 +61,17 @@ class DSwingSignal:
 class DSwingReject:
     match_id: str
     reason: str
+    received_at_ns: int = 0
+    direction: str = ""
+    side: str = ""
+    token_id: str = ""
+    lead: int | None = None
+    game_time_sec: int | None = None
+    p_game: float | None = None
+    series_fair: float | None = None
+    ask: float | None = None
+    edge: float | None = None
+    book_age_ms: int | None = None
 
 
 def _series_fair(mapping: Mapping, side: str, p_game: float) -> float:
@@ -92,28 +104,46 @@ def _series_fair(mapping: Mapping, side: str, p_game: float) -> float:
 
 class DecisiveSwingEngine:
     def evaluate(self, game: Mapping, mapping: Mapping, book_store: Any):
-        if not DSWING_ENABLED:
+        if not (DSWING_ENABLED or DSWING_SHADOW_ENABLED):
             return []
         if str(mapping.get("market_type")) != "MATCH_WINNER":
             return []   # this edge is specifically the BO3 moneyline
         match_id = str(game.get("match_id") or "")
         if not match_id or game.get("data_source") != "top_live" or game.get("game_over"):
             return []
+        received_at_ns = int(game.get("received_at_ns") or 0)
+
+        def _reject(reason: str, **kwargs) -> DSwingReject:
+            return DSwingReject(
+                match_id=match_id,
+                reason=reason,
+                received_at_ns=received_at_ns,
+                **kwargs,
+            )
+
         state_check = validate_top_live_state(game)
         if not state_check.ok:
             missing = ",".join(state_check.missing_fields)
             reason = state_check.reason if not missing else f"{state_check.reason}:{missing}"
-            return [DSwingReject(match_id, reason)]
+            return [_reject(reason)]
         gt = game.get("game_time_sec")
         lead = game.get("radiant_lead")
-        if gt is None or lead is None or gt < DSWING_MIN_GAME_TIME:
-            return []
+        if gt is None:
+            return [_reject("missing_game_time")]
+        try:
+            gt = int(gt)
+        except (TypeError, ValueError):
+            return [_reject("invalid_game_time")]
+        if lead is None:
+            return [_reject("missing_lead", game_time_sec=gt)]
         try:
             lead = int(lead)
         except (TypeError, ValueError):
-            return []
+            return [_reject("invalid_lead", game_time_sec=gt)]
+        if gt < DSWING_MIN_GAME_TIME:
+            return [_reject("game_too_early", lead=lead, game_time_sec=gt)]
         if abs(lead) < DSWING_LEAD:
-            return []                                   # not a decisive/game-ending swing
+            return [_reject("lead_too_small", lead=lead, game_time_sec=gt)]
         direction = "radiant" if lead > 0 else "dire"
         if (match_id, direction) in _sniped:
             return []                                   # one snipe per match-side
@@ -124,25 +154,29 @@ class DecisiveSwingEngine:
         elif sm == "reversed":
             side = "NO" if direction == "radiant" else "YES"
         else:
-            return [DSwingReject(match_id, "unknown_side_mapping")]
+            return [_reject("unknown_side_mapping", direction=direction, lead=lead, game_time_sec=gt)]
         token_id = mapping.get("yes_token_id") if side == "YES" else mapping.get("no_token_id")
         if not token_id:
-            return [DSwingReject(match_id, "missing_token_id")]
+            return [_reject("missing_token_id", direction=direction, side=side, lead=lead, game_time_sec=gt)]
+        token_id = str(token_id)
 
         book = book_store.get(token_id) if book_store else None
         ask = None
+        book_age_ms = None
         if book:
             try:
                 ask = float(book.get("best_ask"))
             except (TypeError, ValueError):
                 ask = None
         if ask is None:
-            return [DSwingReject(match_id, "missing_ask")]
+            return [_reject("missing_ask", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=gt)]
         rcv = book.get("received_at_ns")
-        if not rcv or (time.time_ns() - rcv) / 1e6 > DSWING_MAX_BOOK_AGE_MS:
-            return [DSwingReject(match_id, "book_stale")]
+        if rcv:
+            book_age_ms = int((time.time_ns() - rcv) / 1e6)
+        if not rcv or book_age_ms is None or book_age_ms > DSWING_MAX_BOOK_AGE_MS:
+            return [_reject("book_stale", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=gt, ask=ask, book_age_ms=book_age_ms)]
         if ask > DSWING_MAX_PRICE:
-            return [DSwingReject(match_id, "price_too_high")]
+            return [_reject("price_too_high", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=gt, ask=ask, book_age_ms=book_age_ms)]
 
         # Elo + single-game prob (~0.95 at a decisive lead), then series fair.
         rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
@@ -153,14 +187,14 @@ class DecisiveSwingEngine:
         series_fair = _series_fair(mapping, side, p_game)
         edge = series_fair - ask
         if edge < DSWING_MIN_EDGE:
-            return [DSwingReject(match_id, f"edge_too_small:{edge:.3f}")]
+            return [_reject("edge_too_small", direction=direction, side=side, token_id=token_id, lead=lead, game_time_sec=gt, p_game=p_game, series_fair=series_fair, ask=ask, edge=edge, book_age_ms=book_age_ms)]
 
         _sniped.add((match_id, direction))
         return [DSwingSignal(
             signal_id=str(uuid.uuid5(_NS, f"dswing|{match_id}|{direction}")),
-            match_id=match_id, received_at_ns=int(game.get("received_at_ns") or 0),
-            direction=direction, side=side, token_id=str(token_id),
+            match_id=match_id, received_at_ns=received_at_ns,
+            direction=direction, side=side, token_id=token_id,
             lead=lead, game_time_sec=gt, p_game=p_game, series_fair=series_fair,
             ask=ask, edge=edge, sized_usd=DSWING_TRADE_USD,
-            fair_price=series_fair, book_age_ms=int((time.time_ns() - rcv) / 1e6),
+            fair_price=series_fair, book_age_ms=book_age_ms,
         )]

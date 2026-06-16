@@ -72,9 +72,8 @@ def main() -> int:
     all_ok &= _survival_profile_check()
 
     try:
-        from continuous_engine import CONTINUOUS_ENGINE_ENABLED, ENABLE_CONTINUOUS_TRADING
-        from arb_engine import ARB_ENGINE_ENABLED, ENABLE_ARB_TRADING, ARB_MAX_OPEN_POSITIONS
-        from scalp_executor import SCALP_ENABLED
+        from value_engine import VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
+        from decisive_swing_engine import DSWING_ENABLED, DSWING_SHADOW_ENABLED
         from config import (
             ENABLE_REAL_LIVE_TRADING,
             LIVE_TRADING,
@@ -84,23 +83,23 @@ def main() -> int:
         all_ok &= _check(
             "config + engine modules load",
             True,
-            f"cont={CONTINUOUS_ENGINE_ENABLED}/{ENABLE_CONTINUOUS_TRADING} "
-            f"arb={ARB_ENGINE_ENABLED}/{ENABLE_ARB_TRADING} "
-            f"scalp={SCALP_ENABLED} live={ENABLE_REAL_LIVE_TRADING}",
+            f"value={VALUE_ENGINE_ENABLED}/{ENABLE_VALUE_TRADING} "
+            f"dswing={DSWING_ENABLED}/shadow={DSWING_SHADOW_ENABLED} "
+            f"live={ENABLE_REAL_LIVE_TRADING}",
         )
     except Exception as exc:
         all_ok &= _check("config + engine modules load", False, repr(exc))
         return 1
 
-    if ENABLE_CONTINUOUS_TRADING and not CONTINUOUS_ENGINE_ENABLED:
-        all_ok &= _check("continuous flag coherence", False, "ENABLE_CONTINUOUS_TRADING=true but engine off")
+    if ENABLE_VALUE_TRADING and not VALUE_ENGINE_ENABLED:
+        all_ok &= _check("value flag coherence", False, "ENABLE_VALUE_TRADING=true but engine off")
     else:
-        all_ok &= _check("continuous flag coherence", True)
+        all_ok &= _check("value flag coherence", True)
 
-    if ENABLE_ARB_TRADING and not ARB_ENGINE_ENABLED:
-        all_ok &= _check("arb flag coherence", False, "ENABLE_ARB_TRADING=true but engine off")
+    if DSWING_ENABLED and ENABLE_REAL_LIVE_TRADING:
+        all_ok &= _check("dswing paper guard", False, "DSWING is expected to stay paper-only")
     else:
-        all_ok &= _check("arb flag coherence", True)
+        all_ok &= _check("dswing paper guard", True)
 
     print("\n2. Market mappings:")
     try:
@@ -144,61 +143,63 @@ def main() -> int:
 
     print("\n5. Strategy smoke test:")
     try:
-        from continuous_scorer import ContinuousSignal, score_snapshot
+        from value_engine import ValueEngine, ValueSignal
 
-        if not (CONTINUOUS_ENGINE_ENABLED or ENABLE_CONTINUOUS_TRADING):
-            all_ok &= _check("continuous_scorer fires on synthetic", True, "(skipped; continuous engine disabled)")
-        else:
-            prev = {
+        res = ValueEngine().evaluate(
+            {
+                "data_source": "top_live",
+                "received_at_ns": time.time_ns(),
                 "match_id": "99999",
-                "received_at_ns": 1_000_000_000_000_000_000,
-                "game_time_sec": 1800,
-                "radiant_lead": 500,
-                "radiant_score": 10,
-                "dire_score": 10,
-            }
-            cur = {
-                "match_id": "99999",
-                "received_at_ns": 1_000_000_020_000_000_000,
-                "game_time_sec": 1820,
-                "radiant_lead": 2500,
-                "radiant_score": 12,
-                "dire_score": 10,
-            }
-            yes_book = {"best_bid": 0.54, "best_ask": 0.56, "mid": 0.55, "ask_size": 100, "bid_size": 150}
-            no_book = {"best_bid": 0.44, "best_ask": 0.46, "mid": 0.45, "ask_size": 100, "bid_size": 150}
-            res = score_snapshot(
-                prev_snap=prev,
-                cur_snap=cur,
-                yes_book=yes_book,
-                no_book=no_book,
-                pregame_yes_mid=0.62,
-                mapping={"steam_side_mapping": "normal"},
-            )
-            all_ok &= _check(
-                "continuous_scorer fires on synthetic",
-                isinstance(res, ContinuousSignal),
-                f"side={getattr(res, 'side', '?')} sized=${getattr(res, 'sized_usd', 0):.2f}",
-            )
+                "game_time_sec": 1200,
+                "radiant_lead": 12000,
+                "radiant_score": 20,
+                "dire_score": 8,
+                "building_state": 2047,
+                "tower_state": 2047,
+                "radiant_team": "Radiant Test",
+                "dire_team": "Dire Test",
+            },
+            {"market_type": "MAP_WINNER", "steam_side_mapping": "normal", "yes_token_id": "YT", "no_token_id": "NT"},
+            {"YT": {"best_ask": 0.72, "best_bid": 0.71, "received_at_ns": time.time_ns()}},
+        )
+        all_ok &= _check("value_engine synthetic evaluation", any(isinstance(x, ValueSignal) for x in res), f"results={len(res)}")
     except Exception as exc:
-        all_ok &= _check("continuous_scorer round-trip", False, repr(exc))
+        all_ok &= _check("value_engine round-trip", False, repr(exc))
 
     try:
-        from arb_scanner import ArbOpportunity, scan_pair
+        from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal
 
-        res = scan_pair(
-            yes_book={"best_ask": 0.40, "best_bid": 0.39, "ask_size": 1000, "bid_size": 1000},
-            no_book={"best_ask": 0.50, "best_bid": 0.49, "ask_size": 1000, "bid_size": 1000},
-            mapping={"market_id": "M1", "dota_match_id": "99999", "yes_token_id": "YT", "no_token_id": "NT"},
-            received_at_ns=time.time_ns(),
-            total_capital_usd=10.0,
+        res = DecisiveSwingEngine().evaluate(
+            {
+                "data_source": "top_live",
+                "received_at_ns": time.time_ns(),
+                "match_id": "99998",
+                "game_time_sec": 900,
+                "radiant_lead": 9000,
+                "radiant_score": 22,
+                "dire_score": 9,
+                "building_state": 2047,
+                "tower_state": 2047,
+                "radiant_team": "Radiant Test",
+                "dire_team": "Dire Test",
+            },
+            {
+                "market_type": "MATCH_WINNER",
+                "steam_side_mapping": "normal",
+                "yes_token_id": "YT",
+                "no_token_id": "NT",
+                "current_game_number": 1,
+                "series_score_yes": 0,
+                "series_score_no": 0,
+            },
+            {"YT": {"best_ask": 0.10, "best_bid": 0.09, "received_at_ns": time.time_ns()}},
         )
-        all_ok &= _check("arb_scanner fires on synthetic", isinstance(res, ArbOpportunity), f"profit={getattr(res, 'profit_cents', 0):.1f}c")
+        all_ok &= _check("dswing synthetic evaluation", any(isinstance(x, DSwingSignal) for x in res), f"results={len(res)}")
     except Exception as exc:
-        all_ok &= _check("arb_scanner round-trip", False, repr(exc))
+        all_ok &= _check("dswing round-trip", False, repr(exc))
 
     print("\n6. Polymarket credentials:")
-    needed = ENABLE_REAL_LIVE_TRADING or ENABLE_CONTINUOUS_TRADING or ENABLE_ARB_TRADING
+    needed = ENABLE_REAL_LIVE_TRADING
     for key in [
         "POLY_FUNDER_ADDRESS",
         "POLY_PRIVATE_KEY",
@@ -215,14 +216,6 @@ def main() -> int:
 
     print("\n7. Capital headroom check:")
     projected_peak_usd = 0.0
-    if ENABLE_CONTINUOUS_TRADING:
-        projected_peak_usd += MAX_TRADE_USD * 5
-    if ENABLE_ARB_TRADING:
-        from arb_scanner import ARB_TOTAL_CAPITAL_USD
-
-        projected_peak_usd += ARB_TOTAL_CAPITAL_USD * ARB_MAX_OPEN_POSITIONS
-    if SCALP_ENABLED:
-        projected_peak_usd += 100
     if ENABLE_REAL_LIVE_TRADING:
         all_ok &= _check("USDC balance >= peak", True, f"projected peak ${projected_peak_usd:.0f}; verify USDC balance manually")
     else:

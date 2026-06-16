@@ -281,6 +281,9 @@ def _ok(report: dict[str, Any]) -> tuple[bool, list[str]]:
         if count < 1:
             failures.append(f"{name} process not running")
     heartbeat_limits = {
+        "bot": 180.0,
+        "binder": 150.0,
+        "shadow": 450.0,
         "monitor": float(os.getenv("MONITOR_INTERVAL_SEC", "300")) * 2 + 30,
     }
     for name, age in report["heartbeat_age_sec"].items():

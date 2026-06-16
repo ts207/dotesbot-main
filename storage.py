@@ -50,15 +50,20 @@ import queue
 import threading
 
 
-# Phase-2 dual-write: optionally tee CsvLogger appends to a unified_storage
-# BatchWriter. If unified_storage import fails (e.g., missing pyarrow), we
-# fall back to CSV-only — the bot keeps running.
+# Optional unified-storage writer. Runtime CSV logs remain the canonical live
+# data source unless UNIFIED_STORAGE_DUAL_WRITE=true or a logger is explicitly
+# parquet-only. This prevents writing the same live stream to two locations by
+# default while preserving the historical data_v2 backfill/replay path.
 try:
     from unified_storage import BatchWriter  # type: ignore
     _UNIFIED_AVAILABLE = True
 except Exception as _e:  # pragma: no cover — exercised only on missing deps
     _UNIFIED_AVAILABLE = False
     _storage_logger.info("unified_storage unavailable (%s); CSV-only mode", _e)
+
+
+def _unified_dual_write_enabled() -> bool:
+    return os.getenv("UNIFIED_STORAGE_DUAL_WRITE", "false").lower() in {"1", "true", "yes"}
 
 
 class CsvLogger:
@@ -85,7 +90,7 @@ class CsvLogger:
         if not self._parquet_only:
             self._init_file()
         self._parquet_writer = None
-        if parquet_table and _UNIFIED_AVAILABLE:
+        if parquet_table and _UNIFIED_AVAILABLE and (self._parquet_only or _unified_dual_write_enabled()):
             try:
                 self._parquet_writer = BatchWriter(
                     parquet_table,
@@ -492,9 +497,9 @@ class RawSnapshotLogger(CsvLogger):
         "players",
     ]
 
-    # Rotate at 500MB. raw_snapshots.csv grew to 408MB unrotated; with dual-write
-    # to parquet now active, the CSV is redundant for analytics — we keep it as
-    # a fallback but bound its size.
+    # Rotate at 500MB. raw_snapshots.csv has grown large during long paper runs;
+    # keep the canonical CSV bounded while historical Parquet remains a backfill
+    # or explicit opt-in path.
     _ROTATE_BYTES = int(os.getenv("RAW_SNAPSHOTS_ROTATE_BYTES", str(500 * 1024 * 1024)))
 
     def __init__(self, filename: str = RAW_SNAPSHOTS_CSV_PATH):
@@ -1040,136 +1045,6 @@ class MatchWinnerSignalLogger(CsvLogger):
         self.append(row)
 
 
-class ContinuousAttemptLogger(CsvLogger):
-    """One row per continuous-engine scoring event. Records both signals
-    (would_trade=True) and rejects (would_trade=False, reason=...) for
-    shadow-mode validation. 2026-05-29 — new in Phase CS-2."""
-
-    def __init__(self, filename: str = "logs/continuous_attempts.csv"):
-        super().__init__(filename, [
-            # identity
-            "timestamp_utc", "received_at_ns", "signal_id", "match_id",
-            # decision
-            "would_trade", "reject_reason",
-            # trade params (set only when would_trade=True)
-            "direction", "side", "sized_usd", "exit_horizon_sec",
-            # pricing (set when book was available)
-            "yes_mid", "no_mid", "yes_ask", "no_ask", "yes_bid", "no_bid",
-            "ref_mid_blended",
-            # features
-            "game_time_sec", "d_lead_1", "d_kill_1", "cur_lead_yes",
-            "pregame_signed", "book_imbalance_yes", "book_imbalance_no",
-            "snap_gap_sec",
-            # sizing breakdown
-            "conviction_mult", "magnitude_mult",
-        ], parquet_table="continuous_attempts",
-            # Phase 5: parquet-only. Zero real CSV consumers (verified — only
-            # comments and writer config reference this file). 3 MB/day saved.
-            parquet_only=os.getenv("CONTINUOUS_ATTEMPTS_PARQUET_ONLY", "1") == "1")
-
-    def log_signal(self, sig) -> None:
-        """Log a ContinuousSignal as `would_trade=True`."""
-        self.append({
-            "timestamp_utc": ns_to_iso(sig.received_at_ns) or utc_now_iso(),
-            "received_at_ns": sig.received_at_ns,
-            "signal_id": sig.signal_id,
-            "match_id": sig.match_id,
-            "would_trade": True,
-            "reject_reason": "",
-            "direction": sig.direction,
-            "side": sig.side,
-            "sized_usd": sig.sized_usd,
-            "exit_horizon_sec": sig.exit_horizon_sec,
-            "yes_mid": sig.yes_mid,
-            "no_mid": sig.no_mid,
-            "yes_ask": sig.yes_ask,
-            "no_ask": sig.no_ask,
-            "yes_bid": sig.yes_bid,
-            "no_bid": sig.no_bid,
-            "ref_mid_blended": sig.ref_mid_blended,
-            "game_time_sec": sig.game_time_sec,
-            "d_lead_1": sig.d_lead_1,
-            "d_kill_1": sig.d_kill_1,
-            "cur_lead_yes": sig.cur_lead_yes,
-            "pregame_signed": sig.pregame_signed,
-            "book_imbalance_yes": sig.book_imbalance_yes,
-            "book_imbalance_no": sig.book_imbalance_no,
-            "snap_gap_sec": sig.snap_gap_sec,
-            "conviction_mult": sig.conviction_mult,
-            "magnitude_mult": sig.magnitude_mult,
-        })
-
-    def log_reject(self, rej) -> None:
-        """Log a ScoreReject as `would_trade=False` with the reason and any
-        forensic features the scorer attached."""
-        feats = rej.features or {}
-        self.append({
-            "timestamp_utc": ns_to_iso(rej.received_at_ns) or utc_now_iso(),
-            "received_at_ns": rej.received_at_ns,
-            "signal_id": "",
-            "match_id": rej.match_id,
-            "would_trade": False,
-            "reject_reason": rej.reason,
-            "game_time_sec": feats.get("game_time_sec"),
-            "d_lead_1": feats.get("d_lead_1"),
-            "d_kill_1": feats.get("d_kill_1"),
-            "ref_mid_blended": feats.get("ref_mid_blended"),
-            "snap_gap_sec": feats.get("snap_gap_sec"),
-        })
-
-
-class ArbAttemptLogger(CsvLogger):
-    """One row per arb-scanner decision (opportunity or reject).
-    2026-05-29 — new in Phase AR-2."""
-
-    def __init__(self, filename: str = "logs/arb_attempts.csv"):
-        super().__init__(filename, [
-            "timestamp_utc", "received_at_ns", "arb_id",
-            "market_id", "match_id",
-            "would_trade", "reject_reason",
-            "yes_token_id", "no_token_id",
-            "yes_ask", "no_ask", "arb_cost",
-            "yes_ask_size", "no_ask_size",
-            "profit_cents", "profit_per_dollar",
-            "leg_size_usd", "expected_profit_usd",
-        ], parquet_table="arb_attempts",
-            # Phase 5: parquet-only. Zero real CSV consumers. 33 MB/day saved.
-            parquet_only=os.getenv("ARB_ATTEMPTS_PARQUET_ONLY", "1") == "1")
-
-    def log_opportunity(self, opp) -> None:
-        self.append({
-            "timestamp_utc": ns_to_iso(opp.received_at_ns) or utc_now_iso(),
-            "received_at_ns": opp.received_at_ns,
-            "arb_id": opp.arb_id,
-            "market_id": opp.market_id,
-            "match_id": opp.match_id,
-            "would_trade": True,
-            "reject_reason": "",
-            "yes_token_id": opp.yes_token_id,
-            "no_token_id": opp.no_token_id,
-            "yes_ask": opp.yes_ask,
-            "no_ask": opp.no_ask,
-            "arb_cost": opp.arb_cost,
-            "yes_ask_size": opp.yes_ask_size,
-            "no_ask_size": opp.no_ask_size,
-            "profit_cents": opp.profit_cents,
-            "profit_per_dollar": opp.profit_per_dollar,
-            "leg_size_usd": opp.leg_size_usd,
-            "expected_profit_usd": opp.expected_profit_usd,
-        })
-
-    def log_reject(self, rej) -> None:
-        self.append({
-            "timestamp_utc": ns_to_iso(rej.received_at_ns) or utc_now_iso(),
-            "received_at_ns": rej.received_at_ns,
-            "arb_id": "",
-            "market_id": rej.market_id,
-            "match_id": rej.match_id,
-            "would_trade": False,
-            "reject_reason": rej.reason,
-            "arb_cost": rej.arb_cost,
-        })
-
 class ValueAttemptLogger(CsvLogger):
     """One row per value-engine scoring event. Records both signals
     and rejects for shadow-mode validation."""
@@ -1227,39 +1102,81 @@ class ValueAttemptLogger(CsvLogger):
         })
 
 
-class EarlyFavoriteShadowLogger(CsvLogger):
-    """Shadow-only candidate entries for early favorite settlement strategies."""
+class DSwingAttemptLogger(CsvLogger):
+    """One row per decisive-swing shadow evaluation.
 
-    def __init__(self, filename: str = "logs/early_favorite_shadow_entries.csv"):
+    This remains CSV-only by default so live diagnostics have one canonical
+    location unless unified dual-write is explicitly enabled elsewhere.
+    """
+
+    def __init__(self, filename: str = "logs/dswing_attempts.csv"):
         super().__init__(filename, [
-            "timestamp_utc", "received_at_ns", "signal_id", "strategy_id",
-            "match_id", "market_name", "market_type", "side", "token_id",
-            "ask", "other_ask", "bid", "book_prob", "book_gap",
-            "fair_price", "edge", "game_time_sec", "lead",
-            "networth_side", "model_side", "book_age_ms", "sized_usd",
-            "would_enter", "reject_reason",
+            "timestamp_utc", "received_at_ns", "signal_id", "match_id",
+            "would_trade", "reject_reason",
+            "market_name", "market_type", "current_game_number",
+            "series_score_yes", "series_score_no",
+            "direction", "side", "token_id",
+            "yes_token_id", "no_token_id",
+            "p_game", "series_fair", "ask", "edge",
+            "lead", "game_time_sec", "book_age_ms", "sized_usd",
         ])
 
-    def log_entry(self, entry) -> None:
-        row = entry.to_dict() if hasattr(entry, "to_dict") else dict(entry)
-        row["timestamp_utc"] = ns_to_iso(row.get("received_at_ns")) or utc_now_iso()
+    @staticmethod
+    def _mapping_fields(mapping) -> dict:
+        mapping = mapping or {}
+        return {
+            "market_name": mapping.get("name") or mapping.get("market_name"),
+            "market_type": mapping.get("market_type"),
+            "current_game_number": mapping.get("current_game_number") or mapping.get("game_number"),
+            "series_score_yes": mapping.get("series_score_yes"),
+            "series_score_no": mapping.get("series_score_no"),
+            "yes_token_id": mapping.get("yes_token_id"),
+            "no_token_id": mapping.get("no_token_id"),
+        }
+
+    def log_signal(self, sig, mapping=None) -> None:
+        row = {
+            "timestamp_utc": ns_to_iso(sig.received_at_ns) or utc_now_iso(),
+            "received_at_ns": sig.received_at_ns,
+            "signal_id": sig.signal_id,
+            "match_id": sig.match_id,
+            "would_trade": True,
+            "reject_reason": "",
+            "direction": sig.direction,
+            "side": sig.side,
+            "token_id": sig.token_id,
+            "p_game": sig.p_game,
+            "series_fair": sig.series_fair,
+            "ask": sig.ask,
+            "edge": sig.edge,
+            "lead": sig.lead,
+            "game_time_sec": sig.game_time_sec,
+            "book_age_ms": sig.book_age_ms,
+            "sized_usd": sig.sized_usd,
+        }
+        row.update(self._mapping_fields(mapping))
         self.append(row)
 
-
-class PositionHealthLogger(CsvLogger):
-    """Minute-bucket health states for shadow settlement positions."""
-
-    def __init__(self, filename: str = "logs/position_health.csv"):
-        super().__init__(filename, [
-            "timestamp_utc", "received_at_ns", "strategy_id", "match_id",
-            "market_name", "position_side", "position_token_id", "entry_ask",
-            "entry_game_time_sec", "game_time_sec", "health_state", "reason",
-            "book_favorite_side", "networth_side", "model_side",
-            "current_bid", "opposite_ask", "opposite_fair", "opposite_edge",
-            "lead", "book_age_ms",
-        ])
-
-    def log_health(self, health) -> None:
-        row = health.to_dict() if hasattr(health, "to_dict") else dict(health)
-        row["timestamp_utc"] = ns_to_iso(row.get("received_at_ns")) or utc_now_iso()
+    def log_reject(self, rej, mapping=None) -> None:
+        row = {
+            "timestamp_utc": ns_to_iso(rej.received_at_ns) or utc_now_iso(),
+            "received_at_ns": rej.received_at_ns,
+            "signal_id": "",
+            "match_id": rej.match_id,
+            "would_trade": False,
+            "reject_reason": rej.reason,
+            "direction": rej.direction,
+            "side": rej.side,
+            "token_id": rej.token_id,
+            "p_game": rej.p_game,
+            "series_fair": rej.series_fair,
+            "ask": rej.ask,
+            "edge": rej.edge,
+            "lead": rej.lead,
+            "game_time_sec": rej.game_time_sec,
+            "book_age_ms": rej.book_age_ms,
+            "sized_usd": None,
+        }
+        row.update(self._mapping_fields(mapping))
         self.append(row)
+

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import time
 import aiohttp
 
@@ -12,6 +13,15 @@ TOP_LIVE_URL = "https://api.steampowered.com/IDOTA2Match_570/GetTopLiveGame/v1/"
 LIVE_LEAGUE_URL = "https://api.steampowered.com/IDOTA2Match_570/GetLiveLeagueGames/v1/"
 REALTIME_STATS_URL = "https://api.steampowered.com/IDOTA2MatchStats_570/GetRealtimeStats/v1/"
 SIDE_TOWER_ALIVE_MASK = 0x7FF
+_SENSITIVE_QUERY_RE = re.compile(
+    r"([?&](?:key|api_key|token|secret|passphrase|pass_phrase)=)[^&\s'\">]+",
+    re.IGNORECASE,
+)
+
+
+def redact_sensitive_url_params(value: object) -> str:
+    """Return a printable error string with credential-like query params hidden."""
+    return _SENSITIVE_QUERY_RE.sub(r"\1<redacted>", str(value))
 
 
 async def _get_json(session: aiohttp.ClientSession, url: str, params: dict, timeout: float = 5,
@@ -172,7 +182,7 @@ async def fetch_top_live_games(session: aiohttp.ClientSession) -> list[dict]:
                 if mid and mid not in results:
                     results[mid] = normalize_top_live(g, received_at_ns)
         except Exception as e:
-            print(f"fetch_top_live_games partner={partner} error: {e}")
+            print(f"fetch_top_live_games partner={partner} error: {redact_sensitive_url_params(e)}")
 
     await asyncio.gather(fetch_partner(0), fetch_partner(1), fetch_partner(2), fetch_partner(3))
     return list(results.values())

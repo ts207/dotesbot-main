@@ -13,21 +13,14 @@ from steam_client import fetch_all_live_games
 from poly_ws import listen_books, BookStore
 from signal_engine import EventSignalEngine, apply_probability_move
 from paper_trader import PaperTrader
-from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, ShadowTradeLogger, BookMoveLogger, ContinuousAttemptLogger, ArbAttemptLogger, ValueAttemptLogger, EarlyFavoriteShadowLogger, PositionHealthLogger
-from continuous_engine import ContinuousEngine, CONTINUOUS_ENGINE_ENABLED, ENABLE_CONTINUOUS_TRADING
+from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, ShadowTradeLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger
 from value_engine import ValueEngine, ValueSignal, VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
-from favorite_engine import FavoriteEngine, FavoriteSignal, FAVORITE_ENGINE_ENABLED, ENABLE_FAVORITE_TRADING
-from early_favorite_shadow import EarlyFavoriteShadowEngine, EARLY_FAVORITE_SHADOW_ENABLED
-from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED
+from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED, DSWING_SHADOW_ENABLED
 from config import EVENT_DETECTORS_ENABLED
-from continuous_scorer import ContinuousSignal, ScoreReject
-from arb_engine import ArbEngine, ARB_ENGINE_ENABLED, ENABLE_ARB_TRADING
-from arb_scanner import ArbOpportunity, ArbReject
 from book_move_detector import BookMoveDetector
 from mapping import load_valid_mappings
 from event_detector import EventDetector
 from live_executor import LiveExecutor, LiveExitExecutor, _to_float
-from scalp_executor import SCALP_ENABLED, ScalpExecutor
 from live_position_store import LivePositionStore, LivePosition
 from live_reconciliation import reconcile_live_positions
 from live_exit_engine import decide_live_exit
@@ -42,6 +35,11 @@ from event_taxonomy import event_tier, TIER_A_EVENTS, TIER_B_EVENTS
 from config import REALTIME_STATS_STALE_SEC
 from series_model import compute_bo3_match_p
 from team_utils import norm_team
+
+# Current paper runtime has two entry strategies: VALUE and DSWING. Event
+# detection remains enabled for diagnostics, but it does not create entries.
+ENABLE_EVENT_ENTRY_STRATEGY = False
+
 from config import (
     STEAM_API_KEY, STEAM_POLL_SECONDS, PAPER_EXECUTION_DELAY_MS, LIVE_TRADING,
     ALLOW_CONFIRMATION_ONLY_LIVE_TRADES, MAX_BOOK_AGE_MS, MIN_EXECUTABLE_EDGE,
@@ -448,19 +446,10 @@ async def steam_loop(
     shadow_logger: ShadowTradeLogger | None = None,
     last_steam_games: dict | None = None,
     pending_book_moves: list[dict] | None = None,
-    scalp_executor: ScalpExecutor | None = None,
-    continuous_engine: ContinuousEngine | None = None,
-    continuous_logger: ContinuousAttemptLogger | None = None,
-    arb_engine: ArbEngine | None = None,
-    arb_logger: ArbAttemptLogger | None = None,
     value_engine: ValueEngine | None = None,
     value_logger: ValueAttemptLogger | None = None,
-    favorite_engine: FavoriteEngine | None = None,
-    favorite_logger: ValueAttemptLogger | None = None,
-    early_favorite_shadow: EarlyFavoriteShadowEngine | None = None,
-    early_favorite_shadow_logger: EarlyFavoriteShadowLogger | None = None,
-    position_health_logger: PositionHealthLogger | None = None,
     dswing_engine: DecisiveSwingEngine | None = None,
+    dswing_logger: DSwingAttemptLogger | None = None,
 ):
     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
         print("Missing STEAM_API_KEY. Copy .env.example to .env and fill it in.")
@@ -640,10 +629,6 @@ async def steam_loop(
                     if new_live_assets != current_assets:
                         asset_ids.clear()
                         asset_ids.extend(new_live_assets)
-                        if continuous_engine is not None:
-                            continuous_engine.refresh_mappings(live_mappings)
-                        if arb_engine is not None:
-                            arb_engine.refresh_mappings(live_mappings)
                         print(f"WS_SUB live-only: {len(live_mappings)} live market(s); "
                               f"{len(fresh_mappings) - len(live_mappings)} stale skipped")
 
@@ -690,126 +675,6 @@ async def steam_loop(
                     data_source = game.get("data_source")
 
                     snapshot_logger.log_game(game)
-
-                    # 2026-05-29 Phase CS-2/CS-3 — continuous engine.
-                    # Phase CS-2: log every decision to continuous_attempts.csv
-                    # Phase CS-3 (when ENABLE_CONTINUOUS_TRADING=true): also
-                    # submit signals via live_executor.try_buy_continuous.
-                    if continuous_engine is not None and continuous_logger is not None:
-                        try:
-                            for result in continuous_engine.observe(game, book_store):
-                                if isinstance(result, ContinuousSignal):
-                                    continuous_logger.log_signal(result)
-                                    if (ENABLE_CONTINUOUS_TRADING
-                                            and live_executor is not None):
-                                        # Find mapping for this match.
-                                        c_mapping = next(
-                                            (m for m in mappings
-                                             if str(m.get("dota_match_id") or "") == result.match_id),
-                                            None,
-                                        )
-                                        if c_mapping is not None:
-                                            c_attempt = await live_executor.try_buy_continuous(
-                                                signal=result,
-                                                mapping=c_mapping,
-                                                game=game,
-                                                book_store=book_store,
-                                            )
-                                            if live_logger is not None:
-                                                live_logger.log_attempt(c_attempt, phase="entry")
-                                            # Record position so the 60s-horizon
-                                            # exit engine can act on it.
-                                            if (c_attempt.filled_size_usd > 0
-                                                    and c_attempt.avg_fill_price
-                                                    and live_position_store is not None):
-                                                c_shares = c_attempt.filled_size_usd / c_attempt.avg_fill_price
-                                                c_opp = (c_mapping.get("no_token_id")
-                                                         if result.side == "YES"
-                                                         else c_mapping.get("yes_token_id"))
-                                                c_pos = LivePosition(
-                                                    position_id=f"{c_attempt.match_id}:{c_attempt.token_id}:{c_attempt.created_at_ns}",
-                                                    state="OPEN",
-                                                    token_id=c_attempt.token_id,
-                                                    opposing_token_id=c_opp or "",
-                                                    match_id=c_attempt.match_id,
-                                                    market_name=c_mapping.get("name"),
-                                                    side=result.side,
-                                                    entry_price=c_attempt.avg_fill_price,
-                                                    shares=c_shares,
-                                                    cost_usd=c_attempt.filled_size_usd,
-                                                    entry_time_ns=c_attempt.created_at_ns,
-                                                    entry_game_time_sec=result.game_time_sec,
-                                                    event_type="CONTINUOUS",
-                                                    expected_move=0.0,
-                                                    fair_price=result.ref_mid_blended,
-                                                    trader_kind="continuous",
-                                                    exit_horizon_sec=result.exit_horizon_sec,
-                                                    signal_id=result.signal_id,
-                                                )
-                                                live_position_store.add(c_pos)
-                                else:
-                                    continuous_logger.log_reject(result)
-                        except Exception as exc:
-                            print(f"continuous_engine.observe error: {exc}", flush=True)
-
-                    # 2026-05-29 Phase AR-2 — arb scanner. Independent of
-                    # the directional strategy; finds risk-free spreads when
-                    # YES_ask + NO_ask < $1. Shadow-mode by default; submit
-                    # via try_buy_arb only when ENABLE_ARB_TRADING=true.
-                    if arb_engine is not None and arb_logger is not None:
-                        try:
-                            results = arb_engine.scan_all(book_store)
-                            for ar in results:
-                                if isinstance(ar, ArbOpportunity):
-                                    arb_logger.log_opportunity(ar)
-                                    if (ENABLE_ARB_TRADING
-                                            and live_executor is not None
-                                            and arb_engine.can_open_another()):
-                                        a_mapping = next(
-                                            (m for m in mappings
-                                             if str(m.get("market_id") or "") == ar.market_id),
-                                            None,
-                                        )
-                                        if a_mapping is not None:
-                                            yes_at, no_at = await live_executor.try_buy_arb(
-                                                opportunity=ar, mapping=a_mapping, game=game,
-                                            )
-                                            if live_logger is not None:
-                                                live_logger.log_attempt(yes_at, phase="arb_entry")
-                                                live_logger.log_attempt(no_at, phase="arb_entry")
-                                            # Mark open if EITHER leg succeeded; we'll
-                                            # handle partial fills via exit logic.
-                                            if yes_at.filled_size_usd > 0 or no_at.filled_size_usd > 0:
-                                                arb_engine.mark_arb_opened(ar.market_id)
-                                                # Record positions for the exit engine.
-                                                for at, side in ((yes_at, "YES"), (no_at, "NO")):
-                                                    if at.filled_size_usd > 0 and at.avg_fill_price and live_position_store is not None:
-                                                        shares_a = at.filled_size_usd / at.avg_fill_price
-                                                        opposing = (ar.no_token_id if side == "YES" else ar.yes_token_id)
-                                                        live_position_store.add(LivePosition(
-                                                            position_id=f"{at.match_id}:{at.token_id}:{at.created_at_ns}",
-                                                            state="OPEN",
-                                                            token_id=at.token_id,
-                                                            opposing_token_id=opposing,
-                                                            match_id=at.match_id,
-                                                            market_name=a_mapping.get("name"),
-                                                            side=side,
-                                                            entry_price=at.avg_fill_price,
-                                                            shares=shares_a,
-                                                            cost_usd=at.filled_size_usd,
-                                                            entry_time_ns=at.created_at_ns,
-                                                            entry_game_time_sec=game.get("game_time_sec"),
-                                                            event_type="ARB",
-                                                            expected_move=0.0,
-                                                            fair_price=0.0,
-                                                            trader_kind="arb",
-                                                            exit_horizon_sec=None,
-                                                            signal_id=ar.arb_id,
-                                                        ))
-                                else:
-                                    arb_logger.log_reject(ar)
-                        except Exception as exc:
-                            print(f"arb_engine.scan_all error: {exc}", flush=True)
 
                     # Attach LiveLeague context as metadata (non-blocking,
                     # never changes expected_move/edge/sizing)
@@ -875,19 +740,6 @@ async def steam_loop(
                     if game.get("game_over"):
                         game_over_match_ids.add(match_id)
                         _PERSISTENT_GAME_OVER_MATCH_IDS.add(match_id)
-                        # 2026-05-29 Phase AR-3 — release any open arb on this
-                        # match's market so the engine can fire again on a
-                        # future market (or a re-listed market with same ID).
-                        if arb_engine is not None:
-                            for _m in mappings:
-                                if str(_m.get("dota_match_id") or "") == match_id:
-                                    _mkt_id = str(_m.get("market_id") or "")
-                                    if _mkt_id:
-                                        arb_engine.mark_arb_closed(_mkt_id)
-                        # Also let continuous engine drop the per-match
-                        # snapshot history so memory doesn't grow unbounded.
-                        if continuous_engine is not None:
-                            continuous_engine.forget_match(match_id)
                     else:
                         active_games.append(game)
 
@@ -1074,66 +926,6 @@ async def steam_loop(
                                 book_mid = (book["best_bid"] + book["best_ask"]) / 2
                                 signal_engine.record_price(tok, book_mid, game_time)
 
-                        # Buy-both-scalp hooks (2026-05-26). Runs alongside the event
-                        # strategy on the same wallet. evaluate_market only fires on
-                        # the FIRST observation of a quotable market and only when the
-                        # game hasn't really started (game_time < 300s ~ first 5 min).
-                        # on_book_tick fires every loop iteration to advance any open
-                        # pair's state machine (scratch, ride, settle).
-                        if scalp_executor is not None:
-                            try:
-                                yes_ask = yes_book.get("best_ask") if yes_book else None
-                                no_ask = no_book.get("best_ask") if no_book else None
-                                yes_bid = yes_book.get("best_bid") if yes_book else None
-                                no_bid = no_book.get("best_bid") if no_book else None
-                                gt = float(game_time) if game_time is not None else None
-                                # 2026-05-27 — scalp now uses tiered filter inside
-                                # qualifies(), so we just pass game_time and let it
-                                # decide. The old game_started=gt>300 is kept as a
-                                # back-compat flag but it's a no-op when game_time is provided.
-                                game_too_late = False
-                                market_id = str(mapping.get("market_id") or mapping.get("name") or "")
-                                tick_size = str(mapping.get("tick_size") or "0.01")
-                                neg_risk = bool(mapping.get("neg_risk", False))
-                                # 2026-05-29 Phase SC-2 — per-token lock.
-                                # Skip scalp entry when continuous or arb already
-                                # holds the token. Prevents two strategies fighting
-                                # for the same liquidity / inflating market impact.
-                                _token_locked = False
-                                if live_position_store is not None:
-                                    _yes_t = str(mapping.get("yes_token_id") or "")
-                                    _no_t  = str(mapping.get("no_token_id") or "")
-                                    for _pos in live_position_store.open_positions():
-                                        _tk = getattr(_pos, "trader_kind", "event")
-                                        if _tk in ("continuous", "arb") and _pos.token_id in (_yes_t, _no_t):
-                                            _token_locked = True
-                                            break
-                                if not _token_locked:
-                                    await scalp_executor.evaluate_market(
-                                        market_id=market_id,
-                                        match_id=str(mapping["dota_match_id"]),
-                                        yes_token=str(mapping["yes_token_id"]),
-                                        no_token=str(mapping["no_token_id"]),
-                                        yes_ask=yes_ask, no_ask=no_ask,
-                                        tick_size=tick_size, neg_risk=neg_risk,
-                                        game_started=game_too_late,
-                                        yes_book=yes_book, no_book=no_book,
-                                        market_name=str(mapping.get("name") or ""),
-                                        game_time_sec=gt,
-                                    )
-                                # on_book_tick still runs for already-open scalp pairs
-                                # regardless of the lock — it manages exits, not entries.
-                                await scalp_executor.on_book_tick(
-                                    market_id=market_id,
-                                    yes_ask=yes_ask, no_ask=no_ask,
-                                    yes_bid=yes_bid, no_bid=no_bid,
-                                    game_over=bool(game.get("game_over")),
-                                    tick_size=tick_size, neg_risk=neg_risk,
-                                )
-                            except Exception as _scalp_err:
-                                # Never let scalp errors kill the event loop
-                                print(f"SCALP_HOOK_ERROR market={mapping.get('name')!r}: {_scalp_err}")
-
                         # --- Value Engine ---
                         if value_engine is not None and value_logger is not None:
                             # tokens already held for THIS market — enables the opposite-side hedge gate
@@ -1234,38 +1026,16 @@ async def steam_loop(
                                         position_logger.log_entry(pos)
                                         print(f"VALUE ENTER {mapping.get('name')} {result.side} price={pos.entry_price:.4f} edge={result.edge:.4f}")
 
-                        # --- Book Favorite Settlement Engine ---
-                        if favorite_engine is not None and favorite_logger is not None:
-                            favorite_results = favorite_engine.evaluate(game, mapping, book_store)
-                            for fav_result in favorite_results:
-                                if not isinstance(fav_result, FavoriteSignal):
-                                    favorite_logger.log_reject(fav_result)
-                                    continue
-                                favorite_logger.log_signal(fav_result)
-                                if not ENABLE_FAVORITE_TRADING:
-                                    continue
-                                print(
-                                    f"FAVORITE LIVE DISABLED-BY-DESIGN {mapping.get('name')} "
-                                    f"{fav_result.side} ask={fav_result.ask:.4f} gap={fav_result.book_gap:.4f}"
-                                )
-
-                        # --- Early Favorite Settlement Shadow ---
-                        if early_favorite_shadow is not None:
-                            try:
-                                early_favorite_shadow.observe(
-                                    game,
-                                    mapping,
-                                    book_store,
-                                    entry_logger=early_favorite_shadow_logger,
-                                    health_logger=position_health_logger,
-                                )
-                            except Exception as _efs_err:
-                                print(f"EARLY_FAVORITE_SHADOW_ERROR market={mapping.get('name')!r}: {_efs_err}")
-
                         # --- Decisive-Swing ML sniper ---
                         if dswing_engine is not None:
                             for ds_res in dswing_engine.evaluate(game, mapping, book_store):
                                 if not isinstance(ds_res, DSwingSignal):
+                                    if dswing_logger is not None:
+                                        dswing_logger.log_reject(ds_res, mapping=mapping)
+                                    continue
+                                if dswing_logger is not None:
+                                    dswing_logger.log_signal(ds_res, mapping=mapping)
+                                if not DSWING_ENABLED:
                                     continue
                                 ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
                                 if live_position_store:
@@ -1273,10 +1043,10 @@ async def steam_loop(
                                             if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
                                     if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
                                         continue
-                                if ENABLE_REAL_LIVE_TRADING and live_executor is not None and live_position_store is not None:
+                                if live_executor is not None and live_position_store is not None:
                                     a = await live_executor.try_buy_value(signal=ds_res, mapping=mapping, game=game, book_store=book_store)
                                     if live_logger is not None:
-                                        live_logger.log_attempt(a, phase="entry")
+                                        live_logger.log_attempt(a, phase="dswing_entry")
                                     if a.filled_size_usd > 0 or a.order_status in ("delayed", "live", "matched", "filled"):
                                         epx = a.avg_fill_price or a.price_cap or ds_res.ask
                                         cost = a.filled_size_usd or a.submitted_size_usd or 0.0
@@ -1289,7 +1059,8 @@ async def steam_loop(
                                             event_type="DSWING", expected_move=0.0, fair_price=ds_res.series_fair,
                                             trader_kind="dswing", exit_horizon_sec=None, signal_id=ds_res.signal_id,
                                             backed_direction=ds_res.direction))
-                                        print(f"DSWING ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")
+                                        mode = "LIVE" if ENABLE_REAL_LIVE_TRADING else "PAPER"
+                                        print(f"DSWING {mode} ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")
                                     else:
                                         print(f"DSWING REJECT {mapping.get('name')} {ds_res.side} reason={a.reason_if_rejected}")
 
@@ -1319,45 +1090,20 @@ async def steam_loop(
                                     continue
 
                                 signal_eval_start_ns = time.time_ns()
-                                # 2026-05-27 NOMODEL_MODE — bypass signal_engine entirely
-                                # and use pure rule-based gates from the signal audit.
-                                if os.getenv("NOMODEL_MODE", "false").lower() in {"1","true","yes"}:
-                                    from nomodel_event_strategy import evaluate_event_nomodel
-                                    # The cluster's primary event drives the decision;
-                                    # pick by severity string (low<medium<high<extreme).
-                                    _SEV_RANK = {"low": 0, "medium": 1, "high": 2, "extreme": 3}
-                                    primary = max(
-                                        cluster_events,
-                                        key=lambda e: _SEV_RANK.get(
-                                            str(getattr(e, "severity", "") or "").lower(), 0),
-                                    )
-                                    primary_dict = primary.__dict__ if hasattr(primary, "__dict__") else dict(primary)
-                                    signal = evaluate_event_nomodel(
-                                        event=primary_dict, game=game, mapping=mapping,
-                                        yes_book=yes_book, no_book=no_book,
-                                    )
-                                    # Per-match cap counter — only count BUYS
-                                    if signal.get("decision") == "buy":
-                                        from nomodel_event_strategy import note_buy_placed
-                                        note_buy_placed(str(game.get("match_id") or game.get("lobby_id") or ""))
-                                else:
-                                    # 2026-05-31 — Combined strategy gate: inject the
-                                    # first-swing direction lock so signal_engine can
-                                    # block opposite-direction signals.
-                                    _fsd = event_detector.get_first_swing_direction(
-                                        str(game.get("match_id") or game.get("lobby_id") or "")
-                                    )
-                                    if _fsd is not None:
-                                        game = dict(game)
-                                        game["first_swing_direction"] = _fsd
-                                    signal = signal_engine.evaluate_cluster(
-                                        events=cluster_events,
-                                        game=game,
-                                        mapping=mapping,
-                                        yes_book=yes_book,
-                                        no_book=no_book,
-                                        require_primary=not (LIVE_TRADING and ALLOW_CONFIRMATION_ONLY_LIVE_TRADES),
-                                    )
+                                _fsd = event_detector.get_first_swing_direction(
+                                    str(game.get("match_id") or game.get("lobby_id") or "")
+                                )
+                                if _fsd is not None:
+                                    game = dict(game)
+                                    game["first_swing_direction"] = _fsd
+                                signal = signal_engine.evaluate_cluster(
+                                    events=cluster_events,
+                                    game=game,
+                                    mapping=mapping,
+                                    yes_book=yes_book,
+                                    no_book=no_book,
+                                    require_primary=not (LIVE_TRADING and ALLOW_CONFIRMATION_ONLY_LIVE_TRADES),
+                                )
                                 signal_evaluated_ns = time.time_ns()
 
                                 # OPTIMIZATION: If event-only signal already hit a hard skip (staleness),
@@ -1825,7 +1571,7 @@ async def steam_loop(
                                             logger=shadow_logger,
                                         ))
 
-                                if signal["decision"] == "paper_buy_yes":
+                                if ENABLE_EVENT_ENTRY_STRATEGY and signal["decision"] == "paper_buy_yes":
                                     candidates.append({
                                         "signal": signal,
                                         "direction": event_direction,
@@ -2204,53 +1950,24 @@ async def main():
     book_logger = BookEventLogger()
     position_logger = PositionLogger()
     snapshot_logger = RawSnapshotLogger()
-    # 2026-05-29 Phase CS-2 — continuous engine in shadow mode. Decisions are
-    # logged to logs/continuous_attempts.csv but not executed. Inactive unless
-    # CONTINUOUS_ENGINE_ENABLED=true. `mappings` is already populated above.
-    continuous_engine: ContinuousEngine | None = None
-    continuous_logger: ContinuousAttemptLogger | None = None
-    if CONTINUOUS_ENGINE_ENABLED:
-        continuous_logger = ContinuousAttemptLogger()
-        continuous_engine = ContinuousEngine(mappings)
-        print(f"CONTINUOUS_ENGINE shadow mode ON — tracking {len(mappings)} mappings")
-
-    # 2026-05-29 Phase AR-2 — arb engine.
-    arb_engine: ArbEngine | None = None
-    arb_logger: ArbAttemptLogger | None = None
-    if ARB_ENGINE_ENABLED:
-        arb_logger = ArbAttemptLogger()
-        arb_engine = ArbEngine(mappings)
-        print(f"ARB_ENGINE shadow mode ON — tracking {len(mappings)} markets")
-
     value_engine: ValueEngine | None = None
     value_logger: ValueAttemptLogger | None = None
     if VALUE_ENGINE_ENABLED:
         value_logger = ValueAttemptLogger()
         value_engine = ValueEngine()
         print(f"VALUE_ENGINE mode ON")
-    favorite_engine: FavoriteEngine | None = None
-    favorite_logger: ValueAttemptLogger | None = None
-    if FAVORITE_ENGINE_ENABLED:
-        favorite_logger = ValueAttemptLogger(filename="logs/favorite_attempts.csv")
-        favorite_engine = FavoriteEngine()
-        print("FAVORITE_ENGINE shadow mode ON")
-    early_favorite_shadow: EarlyFavoriteShadowEngine | None = None
-    early_favorite_shadow_logger: EarlyFavoriteShadowLogger | None = None
-    position_health_logger: PositionHealthLogger | None = None
-    if EARLY_FAVORITE_SHADOW_ENABLED:
-        early_favorite_shadow = EarlyFavoriteShadowEngine()
-        early_favorite_shadow_logger = EarlyFavoriteShadowLogger()
-        position_health_logger = PositionHealthLogger()
-        print("EARLY_FAVORITE_SHADOW mode ON")
     dswing_engine: DecisiveSwingEngine | None = None
-    if DSWING_ENABLED:
+    dswing_logger: DSwingAttemptLogger | None = None
+    if DSWING_ENABLED or DSWING_SHADOW_ENABLED:
         dswing_engine = DecisiveSwingEngine()
-        print("DECISIVE_SWING engine ON")
+        dswing_logger = DSwingAttemptLogger()
+        mode = "paper" if DSWING_ENABLED and not ENABLE_REAL_LIVE_TRADING else ("armed" if DSWING_ENABLED else "shadow")
+        print(f"DECISIVE_SWING {mode} mode ON")
     latency_logger = LatencyLogger()
     rich_context_logger = RichContextLogger()
     source_delay_logger = SourceDelayLogger()
 
-    run_live_infra = LIVE_TRADING or ENABLE_CONTINUOUS_TRADING or ENABLE_ARB_TRADING
+    run_live_infra = LIVE_TRADING
     
     if run_live_infra:
         attempt_csv = LIVE_ATTEMPTS_CSV_PATH if ENABLE_REAL_LIVE_TRADING else PAPER_ATTEMPTS_CSV_PATH
@@ -2276,13 +1993,6 @@ async def main():
         live_position_store = None
         live_exit_executor = None
         live_exit_logger = None
-
-    # Buy-both-scalp executor — shares the live wallet via the LiveExecutor's
-    # CLOB client. Inactive unless SCALP_ENABLED=true. Hooks live in book/snapshot
-    # callbacks downstream (TODO once main loop is wired for scalp evaluation).
-    scalp_executor = ScalpExecutor(
-        clob_client=(live_executor.client if live_executor else None)
-    ) if SCALP_ENABLED and run_live_infra else None
 
     rescue_logger = BookRefreshRescueLogger()
     match_winner_logger = MatchWinnerSignalLogger(log_dir="logs") if ENABLE_MATCH_WINNER_RESEARCH else None
@@ -2333,8 +2043,6 @@ async def main():
         rescue_logger,
         signal_markout_logger,
         shadow_logger,
-        early_favorite_shadow_logger,
-        position_health_logger,
         book_move_logger,
     ]
     if match_winner_logger:
@@ -2421,14 +2129,6 @@ async def main():
         async with _exit_lock:
             game_over_match_ids = game_over_match_ids or set()
             adverse_token_ids = adverse_token_ids or set()
-
-            # Scalp fill polling — piggybacks on the same exit-check cadence so
-            # scratch sells can be placed as soon as both buys fill. Best-effort.
-            if scalp_executor is not None:
-                try:
-                    await scalp_executor.poll_fills(live_exit_executor.check_gtc_fill)
-                except Exception as _scalp_poll_err:
-                    print(f"SCALP_POLL_ERROR: {_scalp_poll_err}")
 
             # --- Poll pending entry orders ---
             for pos in live_position_store.pending_entry_positions():
@@ -2980,19 +2680,10 @@ async def main():
                     check_live_exits_fn=_check_live_exits,
                     shadow_logger=shadow_logger,
                     last_steam_games=_last_steam_games,
-                    scalp_executor=scalp_executor,
-                    continuous_engine=continuous_engine,
-                    continuous_logger=continuous_logger,
-                    arb_engine=arb_engine,
-                    arb_logger=arb_logger,
                     value_engine=value_engine,
                     value_logger=value_logger,
-                    favorite_engine=favorite_engine,
-                    favorite_logger=favorite_logger,
-                    early_favorite_shadow=early_favorite_shadow,
-                    early_favorite_shadow_logger=early_favorite_shadow_logger,
-                    position_health_logger=position_health_logger,
                     dswing_engine=dswing_engine,
+                    dswing_logger=dswing_logger,
                 ),
                 proactive_refresh_loop(session),
             ]
