@@ -169,6 +169,38 @@ def test_dynamic_model_fair_can_trigger_value_exit():
     assert closed[0].exit_reason == "model_value_exit"
 
 
+def test_value_exit_policy_uses_current_game_for_catastrophe_salvage():
+    trader = PaperTrader()
+    trader.positions["YES"] = Position(
+        token_id="YES",
+        match_id="M1",
+        market_name="Test",
+        side="YES",
+        entry_price=0.50,
+        shares=50,
+        cost_usd=25,
+        entry_time_ns=time.time_ns() - 60_000_000_000,
+        entry_game_time_sec=1200,
+        event_type="VALUE",
+        lag=0.0,
+        expected_move=0.0,
+        fair_price=0.80,
+        strategy_kind="VALUE_EDGE",
+        hold_policy="thesis_invalidation",
+        entry_backed_side="radiant",
+    )
+    trader._match_open_usd["M1"] = 25
+
+    closed = trader.check_exits(
+        Store({"YES": {"best_bid": 0.10, "best_ask": 0.12}}),
+        set(),
+        current_games_by_match_id={"M1": {"radiant_lead": -3000}},
+    )
+
+    assert len(closed) == 1
+    assert closed[0].exit_reason == "catastrophe_salvage"
+
+
 def test_latency_edge_timeout_exits_after_average_edge_window(monkeypatch):
     monkeypatch.setattr("paper_trader.EXIT_LATENCY_EDGE_SEC", 1)
     trader = PaperTrader()
@@ -244,3 +276,50 @@ def test_load_open_positions_replays_trade_csv(tmp_path):
     assert pos.entry_price == pytest.approx(0.39)
     assert pos.entry_game_time_sec == 1447
     assert trader._match_open_usd["M1"] == pytest.approx(55.4)
+
+
+def test_research_mode_allows_paper_only_entry(monkeypatch):
+    monkeypatch.setattr("paper_trader.PAPER_MODE", "research")
+    trader = PaperTrader()
+    store = Store({"YES": {"best_ask": 0.50, "best_bid": 0.48, "ask_size": 100}})
+
+    pos, reason = trader.enter(
+        signal=_signal(would_pass_live_gates=False, live_skip_reason="book_stale"),
+        token_id="YES", side="YES", book_store=store,
+        match_id="M1", market_name="Test", opposing_token_id="NO",
+    )
+
+    assert reason == "filled"
+    assert pos is not None
+    assert pos.paper_only_bypass is True
+    assert pos.live_skip_reason == "book_stale"
+
+
+def test_live_parity_mode_rejects_paper_only_entry(monkeypatch):
+    monkeypatch.setattr("paper_trader.PAPER_MODE", "live_parity")
+    trader = PaperTrader()
+    store = Store({"YES": {"best_ask": 0.50, "best_bid": 0.48, "ask_size": 100}})
+
+    pos, reason = trader.enter(
+        signal=_signal(would_pass_live_gates=False, live_skip_reason="book_stale"),
+        token_id="YES", side="YES", book_store=store,
+        match_id="M1", market_name="Test", opposing_token_id="NO",
+    )
+
+    assert pos is None
+    assert reason == "paper_live_parity_reject:book_stale"
+
+
+def test_shadow_live_mode_requires_policy_allowed(monkeypatch):
+    monkeypatch.setattr("paper_trader.PAPER_MODE", "shadow_live")
+    trader = PaperTrader()
+    store = Store({"YES": {"best_ask": 0.50, "best_bid": 0.48, "ask_size": 100}})
+
+    pos, reason = trader.enter(
+        signal=_signal(policy_allowed=False, policy_reason="spread_too_wide"),
+        token_id="YES", side="YES", book_store=store,
+        match_id="M1", market_name="Test", opposing_token_id="NO",
+    )
+
+    assert pos is None
+    assert reason == "paper_shadow_live_reject:spread_too_wide"

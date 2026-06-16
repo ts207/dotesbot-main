@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import os
 import time
-from dataclasses import dataclass
 
 import winprob
 import config
 from config import (
+    CATASTROPHE_FLOOR,
+    CATASTROPHE_NW_CONFIRM,
+    EXIT_HARD_STOP_LOSS_CENTS,
     EXIT_TAKE_PROFIT,
     EXIT_STOP_LOSS_ABS,
     EXIT_STOP_LOSS_REL,
@@ -23,22 +24,13 @@ from config import (
     VALUE_EXIT_FAIR_ENTRY_BUFFER,
     VALUE_EXIT_FAIR_BID_BUFFER,
 )
+from exit_policy import ExitDecision, ExitPolicy
 
 # Catastrophe-salvage floor for hold-to-settle positions: if the token bid falls
 # below this, cut to salvage residual value instead of riding to $0. Keep LOW so
 # recoverable dips aren't stopped. 0 disables.
-CATASTROPHE_FLOOR = float(os.getenv("CATASTROPHE_FLOOR", "0.12"))
 # Our backed side must be behind by at least this (net worth) to CONFIRM a
 # catastrophe cut — so a cheap bid alone (possible flip/glitch) can't dump a winner.
-CATASTROPHE_NW_CONFIRM = float(os.getenv("CATASTROPHE_NW_CONFIRM", "2000"))
-
-
-@dataclass(frozen=True)
-class ExitDecision:
-    should_exit: bool
-    reason: str = ""
-    reference_bid: float | None = None
-    price_floor: float | None = None
 
 
 def decide_live_exit(
@@ -58,6 +50,26 @@ def decide_live_exit(
     if trader_kind not in ("value", "dswing") and position.token_id in adverse_token_ids:
         return ExitDecision(True, "adverse_event")
 
+    if ExitPolicy.applies(position):
+        current_fair = None
+        strategy_kind = str(getattr(position, "strategy_kind", "") or "").upper()
+        hold_policy = str(getattr(position, "hold_policy", "") or "")
+        if game is not None and (
+            trader_kind == "value"
+            or hold_policy in {"thesis_invalidation", "reversal_bounce_or_thesis"}
+            or strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE"}
+        ):
+            current_fair = _current_fair_for_position(position, game)
+        return ExitPolicy.decide(
+            position=position,
+            book=book,
+            game=game,
+            game_over_match_ids=game_over_match_ids,
+            now_ns=now_ns,
+            current_fair=current_fair,
+            catastrophe_floor=CATASTROPHE_FLOOR,
+            catastrophe_nw_confirm=CATASTROPHE_NW_CONFIRM,
+        )
     if trader_kind == "dswing":
         return _decide_dswing_exit(
             position=position,
@@ -227,8 +239,7 @@ def decide_live_exit(
     # 2026-05-27 HARD STOP-LOSS (independent of model). Always cuts at
     # entry - HARD_STOP_CENTS regardless of fair_price / expected_move.
     # Caps the worst-case loss on any signal where the model holds too long.
-    import os as _os
-    HARD_STOP_CENTS = float(_os.getenv("EXIT_HARD_STOP_LOSS_CENTS", "0.15"))
+    HARD_STOP_CENTS = EXIT_HARD_STOP_LOSS_CENTS
     if HARD_STOP_CENTS > 0 and bid <= position.entry_price - HARD_STOP_CENTS:
         # No flash guard here — this is the LAST resort. Bigger size at risk
         # = bigger guarantee we exit.

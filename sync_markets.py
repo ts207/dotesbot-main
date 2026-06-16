@@ -13,6 +13,7 @@ import aiohttp
 import yaml
 
 from discover_markets import MARKETS_YAML, main as discover_main
+from mapping_audit import audit_mappings, quarantine_critical_issues
 from steam_client import fetch_all_live_games
 
 
@@ -266,7 +267,14 @@ async def sync_once(
         games = await fetch_all_live_games(session)
 
     updates = sync_markets_to_games(markets, games, only_pair=only_pair)
+    games_by_match_id = {live_match_id(game): game for game in games if live_match_id(game)}
+    audit_issues = audit_mappings(markets, games_by_match_id=games_by_match_id)
+    quarantined = quarantine_critical_issues(markets, audit_issues)
+    if quarantined:
+        print(f"mapping_audit quarantined {quarantined} critical mapping(s)")
     if updates and write:
+        write_markets(data)
+    elif quarantined and write:
         write_markets(data)
     return updates
 

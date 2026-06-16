@@ -11613,9 +11613,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
   yes_team: 4ikibamboni
   no_team: Spirit Academy
   yes_token_id: '65034628956166163860459226820683079678815771722683491625711793063265537469956'
@@ -11634,9 +11634,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
+  series_score_yes: 2
   series_score_no: 0
-  current_game_number: 1
+  current_game_number: 3
   yes_team: Carstensz
   no_team: Ivory
   yes_token_id: '113470224052791684419471375507739353974970183068495836572467876786506199877730'
@@ -11655,9 +11655,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
+  series_score_yes: 2
   series_score_no: 0
-  current_game_number: 1
+  current_game_number: 3
   yes_team: Yakult Brothers
   no_team: Vici Gaming
   yes_token_id: '19580164639920989548621496680197104559987323053913639425976388268355745264983'
@@ -11670,3 +11670,124 @@ markets:
   steam_radiant_team: Yakutou Brothers
   steam_dire_team: Vici Gaming
   steam_side_mapping: reversed
+- name: 'Dota 2: Yakult Brothers vs Vici Gaming - Game 2 Winner'
+  condition_id: '0xe98077f9bfc97b6e61619625a2b0838ee85c78efa3bd0a56cb61ec8ed57c54f1'
+  market_id: '2552717'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Yakult Brothers
+  no_team: Vici Gaming
+  yes_token_id: '114953172852349685211501817487362811312451076349622763814393758172520023076318'
+  no_token_id: '21329457334298569997538225778830473978782735514456767825761008732781480639831'
+  dota_match_id: '8854301438'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T14:39:27+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Vici Gaming
+  steam_dire_team: Yakutou Brothers
+  steam_side_mapping: reversed
+- name: 'Dota 2: 4ikibamboni vs Spirit Academy - Game 2 Winner'
+  condition_id: '0x5e580a0939c69396d89daeb593be96422abf23d320a4d3b1a2d48b486d95025d'
+  market_id: '2553705'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: 4ikibamboni
+  no_team: Spirit Academy
+  yes_token_id: '12498685942241866197031597324022396973037771663068426015826252637572431044185'
+  no_token_id: '110846205479587978964939398570933937711366733897487522918322282580182027414528'
+  dota_match_id: '8854239799'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 17:02:09'
+  auto_mapped_at_utc: '2026-06-16T14:39:27+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Spirit Academy
+  steam_dire_team: 4ikibamboni
+  steam_side_mapping: reversed
+- name: 'Dota 2: Carstensz vs Ivory - Game 2 Winner'
+  market_id: '2529379'
+  condition_id: '0xa8b8cbaeb3f38a62f708f4dd69dec2e64b537befa797fefbf35f6e8a4c33f4b2'
+  yes_token_id: '59011592470099887779310323297063481234065350258192138288607044874440143745089'
+  no_token_id: '44458022485184006686160159122431230351718945113780098526847516048769748822441'
+  market_type: MAP_WINNER
+  yes_team: Carstensz
+  no_team: Ivory
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 12:30:00+00'
+  source_url: https://polymarket.com/event/dota2-carst-ivo-2026-06-13
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0
+- name: 'Dota 2: 4ikibamboni vs Spirit Academy (BO3) - European Pro League Group B'
+  condition_id: '0x8061915a0f1c3f7eeb1e150d65be76de5c3c5b406033466b1974f8bd3354fb1b'
+  market_id: '2553727'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: 4ikibamboni
+  no_team: Spirit Academy
+  yes_token_id: '35136965883832997981475292683024219678046827000134845349793882261245416343326'
+  no_token_id: '27586343319324411167214153501046302137989184042233981015048484915020480763208'
+  dota_match_id: '8854333124'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 17:02:09'
+  auto_mapped_at_utc: '2026-06-16T15:07:57+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: 4ikibamboni
+  steam_dire_team: Team Spirit Academy
+  steam_side_mapping: normal
+- name: 'Dota 2: Flame Team vs Spirit Academy - Game 1 Winner'
+  condition_id: '0x17afc534dedffc3e125b194278175859645532a5d12e8ca28da63cafd0701c79'
+  market_id: '2553746'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 1
+  current_game_number: 2
+  yes_team: Flame Team
+  no_team: Spirit Academy
+  yes_token_id: '7663912628468198329204588016680685177506387246602493649692631520024043959326'
+  no_token_id: '13360031435562100091574840782271470423395209736744017240363104633733663873743'
+  dota_match_id: '8854443395'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 17:02:16'
+  auto_mapped_at_utc: '2026-06-16T16:32:14+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Spirit Academy
+  steam_dire_team: Flame Esports
+  steam_side_mapping: reversed
+- name: 'Dota 2: Flame Team vs Spirit Academy - Game 2 Winner'
+  condition_id: '0xfbb8c8d0d3b0544cb42dee0a0ff963978dc429f53c69138a06251729bb8e9e6c'
+  market_id: '2553748'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 1
+  current_game_number: 2
+  yes_team: Flame Team
+  no_team: Spirit Academy
+  yes_token_id: '75162975324630003072877753513710075005747331571985250903171907872398575139446'
+  no_token_id: '103786317053404651640159322304656610952076391648009143210880111581812077044136'
+  dota_match_id: '8854568223'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 17:02:16'
+  auto_mapped_at_utc: '2026-06-16T18:01:01+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Flame Esports
+  steam_dire_team: Team Spirit Academy
+  steam_side_mapping: normal

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
 LIVE_POSITIONS_PATH = "logs/live_positions.json"
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -77,8 +79,11 @@ class LivePosition:
 
 
 class LivePositionStore:
-    def __init__(self, path: str = LIVE_POSITIONS_PATH):
+    def __init__(self, path: str = LIVE_POSITIONS_PATH, state_db_path: str | None = None):
         self.path = path
+        self.state_db_path = state_db_path or (
+            "logs/state.sqlite" if path == LIVE_POSITIONS_PATH else f"{path}.sqlite"
+        )
         self.positions: dict[str, LivePosition] = {}
         self.load()
 
@@ -116,6 +121,11 @@ class LivePositionStore:
         }
         from atomic_writes import atomic_json_write
         atomic_json_write(self.path, data, indent=2)
+        try:
+            from state_store import StateStore
+            StateStore(self.state_db_path).mirror_live_positions(self.positions.values())
+        except Exception as exc:
+            logger.warning("SQLite live position mirror failed: %s", exc)
 
     def add(self, pos: LivePosition) -> None:
         self.positions[pos.position_id] = pos

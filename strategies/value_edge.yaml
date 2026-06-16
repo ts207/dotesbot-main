@@ -1,0 +1,17 @@
+strategy_kind: VALUE_EDGE
+version: 2026-06-16
+enabled_paper: true
+enabled_dry_live: true
+enabled_real_live: false
+edge_type: absolute_state_value
+target_horizon: settlement
+expected_hold_sec: 0
+entry_trigger: fair_used - ask
+exit_trigger: game_over / fair_invalidation / max_hold
+primary_metric: settlement_roi
+secondary_metric: fair_bucket_calibration
+promotion_rule: calibrated_positive_roi_by_bucket
+disable_rule: negative_settlement_roi_or_uncalibrated_bucket
+hold_policy: thesis_invalidation
+bounce_target:
+timeout_sec:

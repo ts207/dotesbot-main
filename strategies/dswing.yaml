@@ -1,0 +1,17 @@
+strategy_kind: DSWING
+version: 2026-06-16
+enabled_paper: true
+enabled_dry_live: false
+enabled_real_live: false
+edge_type: map_end_series_convergence
+target_horizon: map_end
+expected_hold_sec: 0
+entry_trigger: series_fair - ask
+exit_trigger: map_end_convergence
+primary_metric: exit_bid - entry_price
+secondary_metric: captured_edge_by_bucket
+promotion_rule: positive_captured_edge_by_bucket
+disable_rule: negative_captured_edge_or_missing_map_end_exit
+hold_policy: map_end_convergence
+bounce_target:
+timeout_sec:

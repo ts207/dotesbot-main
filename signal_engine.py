@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import time
 from math import exp, log
 from collections import deque
@@ -24,6 +23,7 @@ from config import (
     FIGHT_SWING_MAX_GAME_TIME_SEC,
     FIGHT_SWING_MIN_GAME_TIME_SEC,
     S3_ENABLED, S3_MIN_NW_LEAD, S3_MIN_EDGE, S3_MAX_PRICE, S3_ELO_ENABLED, S3_ELO_MARGIN,
+    S3_USE_WINPROB, TIER1_LEAGUE_IDS,
 )
 
 
@@ -413,7 +413,7 @@ def _s3_fair(lead: int, game_time_sec, elo_diff=None) -> float:
     elo_diff (backed − opp Elo) is clamped/shrunk inside winprob; pass None when
     either team's Elo is unknown (gold-only fair). Falls back to the legacy 2D
     empirical table if the model module is unavailable."""
-    if _winprob is not None and os.getenv("S3_USE_WINPROB", "true").lower() == "true":
+    if _winprob is not None and S3_USE_WINPROB:
         try:
             return _winprob.fair(lead, game_time_sec, elo_diff)
         except Exception:
@@ -606,12 +606,9 @@ class EventSignalEngine:
         # 2026-05-30 — Tier-1 league allowlist. If TIER1_LEAGUE_IDS is set
         # (comma-separated env), skip any game whose league_id isn't in it.
         # Empty / unset = allow all leagues (legacy behaviour).
-        import os
-        _tier1 = os.getenv("TIER1_LEAGUE_IDS", "").strip()
-        if _tier1:
-            _allowed = {x.strip() for x in _tier1.split(",") if x.strip()}
+        if TIER1_LEAGUE_IDS:
             _game_lid = str(game.get("league_id") or "")
-            if _game_lid not in _allowed:
+            if _game_lid not in TIER1_LEAGUE_IDS:
                 return {
                     "decision": "skip",
                     "reason": f"league_not_allowed:{_game_lid or 'none'}",

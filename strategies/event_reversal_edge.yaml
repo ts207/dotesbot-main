@@ -1,0 +1,17 @@
+strategy_kind: EVENT_REVERSAL_EDGE
+version: 2026-06-16
+enabled_paper: true
+enabled_dry_live: false
+enabled_real_live: false
+edge_type: event_overreaction_bounce
+target_horizon: bounce_120s
+expected_hold_sec: 120
+entry_trigger: overreaction_score + bounce_setup
+exit_trigger: bounce_tp / timeout / hard_stop
+primary_metric: max_realizable_bounce_after_spread
+secondary_metric: settlement_roi
+promotion_rule: positive_bounce_roi_by_event_bucket
+disable_rule: negative_realizable_bounce_or_unvalidated_spread
+hold_policy: reversal_bounce_or_thesis
+bounce_target:
+timeout_sec: 120

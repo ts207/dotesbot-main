@@ -1,948 +1,790 @@
-Below is the full repo-grounded plan from the **current inspected state**, not the earlier baseline.
+Agreed. The previous plan was too generic. I inspected the actual repo paths and active code. This is a repo-tailored plan based on the implementation, not an abstract trading-bot roadmap.
 
-# Current repo status
+## What the repo actually is now
 
-The project is partially through the cleanup plan. Some good changes have landed:
+`dotesbot-main` is no longer just a Dota event-latency bot. The active runtime has four layers:
 
-```text
-VALUE now has model_available / fair_raw / fair_used fields.
-EVENT now has edge_type, target_horizon, fair_delta, market_reprice, and event_reprice_gap fields.
-DSWING now has edge_type / target_horizon metadata.
-Allocator candidates now carry edge_type and target_horizon.
-StrategySignalLogger now logs many event-specific fields.
-```
+1. **Feed/binding layer**
 
-But the repo still has several blockers:
+   * Steam TopLive / LiveLeague / RealtimeStats ingestion.
+   * Polymarket CLOB WebSocket book ingestion.
+   * Polymarket market discovery and Steam match binding.
 
-```text
-P0: main.py still imports and can run dota_fair_model / ML_ARBITRAGE.
-P0: handoff_fix.patch is still tracked.
-P1: fair_value.py still lacks conservative phase shrink.
-P1: _lead_slope(record_history=False) still mutates/prunes history.
-P1: DSWING still ignores model_available.
-P1: live_exit_engine still ignores model_available for current fair.
-P2: allocator still does not log uncontested winners.
-P2: no unified candidate-level audit ledger yet.
-P2: event market-reprice fields exist, but pre-event book capture is not guaranteed.
-```
+2. **Signal layer**
 
-The most important repo facts: `main.py` still imports `load_bundle` and `build_feature_row` from `dota_fair_model`; the startup path can still load the model; and the tick-level block can still create `ML_ARBITRAGE` paper entries.   
+   * Legacy tactical event signal engine.
+   * `VALUE_EDGE` net-worth/fair-value engine.
+   * `EVENT_CONTINUATION_EDGE` / `EVENT_REVERSAL_EDGE`.
+   * `DSWING` match-winner convergence sniper.
 
----
+3. **Allocation/execution layer**
 
-# Final project objective
+   * Strategy allocator chooses among competing candidates.
+   * Paper trader simulates best-ask entry and best-bid exit.
+   * Optional guarded live executor submits capped CLOB orders.
 
-Build a **TopLive-only, auditable Dota trading bot** with four clearly separated strategy books:
+4. **Logging/research layer**
 
-```text
-VALUE_EDGE:
-  state mispricing → settlement
+   * CSV loggers, markouts, latency rows, strategy signals, allocator logs, paper/live attempts, rich context, source delay.
 
-EVENT_CONTINUATION_EDGE:
-  event repricing → 30/60/120s markout and/or proven settlement edge
-
-EVENT_REVERSAL_EDGE:
-  event overreaction / bounce → short-horizon bounce capture
-
-DSWING:
-  BO3 match-winner map-end convergence → exit_bid - entry_price
-```
-
-The bot should not become a broad ML prediction system. It should become a **selective mispricing-capture system** that trades only when:
-
-```text
-fresh TopLive state
-+ valid market mapping
-+ conservative fair
-+ executable book price
-+ strategy-specific thesis
-+ strategy-specific exit
-+ logged evidence
-= positive expected value by bucket
-```
+`main.py` explicitly says current active paper strategies are `VALUE`, `DSWING`, and `EVENT_TRIGGERED_VALUE`; legacy event entries are disabled unless explicitly enabled. 
 
 ---
 
-# Phase 0 — repo hygiene
+# Repo-specific priority plan
 
-## Goal
+## Phase 1 — Stabilize configuration first
 
-Remove artifacts and make the repo clean before functional changes.
+### Why this is first
 
-## Patch
-
-Delete:
+The actual repo has major config drift. `.env.example` says:
 
 ```text
-handoff_fix.patch
+MAX_STEAM_AGE_MS=1500
+MAX_BOOK_AGE_MS=750
+MIN_LAG=0.08
+MIN_EXECUTABLE_EDGE=0.03
+MAX_SPREAD=0.06
 ```
 
-It is still tracked in the repo. 
 
-## Acceptance
 
-```bash
-git rm handoff_fix.patch
-pytest
-```
-
-Commit:
+But `config.py` defaults to much looser values, including:
 
 ```text
-Remove accidental patch artifact
+MAX_STEAM_AGE_MS=25000
+MAX_BOOK_AGE_MS=90000
+MIN_LAG=0.05
+MIN_EXECUTABLE_EDGE=0.05
+MAX_SPREAD=0.15
 ```
 
----
+ 
 
-# Phase 1 — remove ML runtime contamination
+This means the bot behaves differently depending on whether `.env` exists. For a latency-sensitive trading system, that is unacceptable.
 
-## Goal
+### Exact implementation
 
-The runtime should not import, load, or trade from `dota_fair_model`.
-
-## Current problem
-
-`main.py` still imports:
-
-```python
-from dota_fair_model.inference import load_bundle
-from dota_fair_model.features import build_feature_row
-```
-
-
-
-It still conditionally loads `DOTA_FAIR_MODEL_PATH` when `ML_STRATEGY_ENABLED` is true. 
-
-It still runs a tick-level ML block that builds feature rows, predicts fair, updates paper fair values, and can create `ML_ARBITRAGE` paper entries.   
-
-## Patch
-
-In `main.py`:
+Create:
 
 ```text
-Remove dota_fair_model imports.
-Remove load_bundle startup model loading.
-Remove model_bundle from steam_loop.
-Remove team_stats loading from dota_fair_model/models/team_stats.json.
-Delete the tick-level ML block.
-Delete ML_ARBITRAGE entry path.
-Keep ML_STRATEGY_ENABLED only as deprecated/ignored config if needed.
+runtime_config.py
 ```
 
-In `config.py`, keep this only as compatibility:
-
-```python
-# Deprecated. ML live/paper entries are disabled in the TopLive-only stack.
-ML_STRATEGY_ENABLED = os.getenv("ML_STRATEGY_ENABLED", "false").lower() in {"1", "true", "yes"}
-```
-
-## Tests
-
-Add `tests/test_no_ml_entry.py`:
-
-```python
-from pathlib import Path
-
-def test_main_has_no_dota_fair_model_import():
-    text = Path("main.py").read_text()
-    assert "from dota_fair_model" not in text
-    assert "import dota_fair_model" not in text
-
-def test_ml_arbitrage_path_removed():
-    text = Path("main.py").read_text()
-    assert "ML_ARBITRAGE" not in text
-    assert "build_feature_row" not in text
-    assert "load_bundle" not in text
-```
-
-## Acceptance
-
-```bash
-python -m py_compile main.py
-pytest tests/test_no_ml_entry.py
-```
-
-Commit:
-
-```text
-Remove ML runtime trading path
-```
-
----
-
-# Phase 2 — finish `fair_value.py`
-
-## Goal
-
-Make `fair_value.py` the single safe fair gateway.
-
-## Current state
-
-`FairValueResult` now includes `fair_raw`, `fair_used`, `model_available`, and `model_reason`. 
-
-`compute_side_fair()` now rejects missing lead, invalid lead, missing game time, and invalid game time.   
-
-But `_lead_slope()` still uses `setdefault()` and prunes the deque even with `record_history=False`. 
-
-Also, `fair_raw` and `fair_used` are currently identical; no conservative shrink is applied. 
-
-## Patch
-
-Extend `FairValueResult`:
+with typed sections:
 
 ```python
 @dataclass(frozen=True)
-class FairValueResult:
+class FeedConfig:
+    steam_poll_seconds: float
+    max_steam_age_ms: int
+    max_source_update_age_sec: float
+    require_top_live_for_signals: bool
+
+@dataclass(frozen=True)
+class BookConfig:
+    max_book_age_ms: int
+    max_spread: float
+    min_ask_size_usd: float
+
+@dataclass(frozen=True)
+class PaperConfig:
+    paper_trade_size_usd: float
+    paper_slippage_cents: float
+    paper_execution_delay_ms: int
+    max_open_usd_per_match: float
+
+@dataclass(frozen=True)
+class LiveConfig:
+    live_mode: Literal["off", "dry_run", "real"]
+    max_total_live_usd: float
+    max_trade_usd: float
+    max_open_positions: int
+    max_daily_drawdown_usd: float
+
+@dataclass(frozen=True)
+class StrategyConfig:
+    value_enabled: bool
+    dswing_enabled: bool
+    event_triggered_value_enabled: bool
+```
+
+Then replace direct scattered `os.getenv()` reads in:
+
+```text
+config.py
+value_engine.py
+decisive_swing_engine.py
+event_triggered_value_engine.py
+live_executor.py
+live_exit_engine.py
+signal_engine.py
+```
+
+with `config.<section>.<field>`.
+
+### Deliverables
+
+```text
+runtime_config.py
+check_config.py
+docs/effective_config.md
+```
+
+### Acceptance criteria
+
+`python check_config.py` must print:
+
+```text
+setting
+runtime value
+source: env/default
+safe_for_paper
+safe_for_dry_live
+safe_for_real_live
+```
+
+Real live mode must fail closed if any required live setting comes from unsafe default values.
+
+---
+
+## Phase 2 — Centralize policy because the repo already has duplicated gates
+
+### Current repo problem
+
+The same checks exist in several places:
+
+* `signal_engine.py` checks freshness, book age, spread, caps, game phase, event type, lag, edge, and hold-to-settle bypasses.
+* `value_engine.py` separately checks TopLive, game time, book age, ask caps, lead, fair edge, and orientation flip.
+* `event_triggered_value_engine.py` separately checks primitive event type, book age, ask min/max, fair delta, event reprice gap, and edge.
+* `live_executor.py` repeats mapping validation, event allowlist, cadence quality, spread, book age, price caps, live budget, and edge/lag gates.
+
+The live executor comments show this duplication already caused valid hold-to-settle signals to be rejected because live had separate short-horizon edge/lag gates. 
+
+### Exact implementation
+
+Create:
+
+```text
+execution_policy.py
+```
+
+Use it in this order:
+
+1. `live_executor.py`
+2. `paper_trader.py`
+3. `value_engine.py`
+4. `event_triggered_value_engine.py`
+5. `decisive_swing_engine.py`
+6. legacy `signal_engine.py`
+
+Core API:
+
+```python
+@dataclass(frozen=True)
+class PolicyInput:
+    mode: Literal["paper_research", "paper_live_parity", "dry_live", "real_live"]
+    strategy_kind: str
+    market_type: str
+    token_id: str
     side: str
-    fair: float
-    elo_diff: float | None
-    lead_slope: float | None = None
-    draft_h2h: float | None = None
-    fair_source: str = "winprob"
+    signal: dict
+    game: dict
+    mapping: dict
+    book: dict | None
+    now_ns: int
 
-    fair_raw: float | None = None
-    fair_used: float | None = None
-    model_available: bool = True
-    model_reason: str = "ok"
-
-    phase_shrink: float = 1.0
-    confidence_multiplier: float = 1.0
-    radiant_lead: int | None = None
-    game_time_sec: int | None = None
-    slope_available: bool = True
+@dataclass(frozen=True)
+class PolicyResult:
+    allowed: bool
+    reason: str
+    would_pass_live: bool
+    live_skip_reason: str
+    paper_only_bypass: bool
+    price_cap: float | None
+    size_usd: float | None
+    risk_tags: tuple[str, ...]
 ```
 
-Fix `_lead_slope()`:
-
-```python
-def _lead_slope(match_id: str, radiant_lead: int, now_ns: int, record_history: bool = True) -> float | None:
-    if record_history:
-        dq = _lead_hist.setdefault(match_id, deque(maxlen=4000))
-        if not dq or dq[-1][0] != now_ns:
-            dq.append((now_ns, int(radiant_lead)))
-
-        cutoff = now_ns - int(_SLOPE_WINDOW_NS * 1.5)
-        while dq and dq[0][0] < cutoff:
-            dq.popleft()
-    else:
-        dq = _lead_hist.get(match_id)
-        if not dq:
-            return None
-
-    target = now_ns - _SLOPE_WINDOW_NS
-    past = None
-    for ns, ld in dq:
-        if ns <= target:
-            past = ld
-        else:
-            break
-
-    return None if past is None else float(radiant_lead - past)
-```
-
-Add phase shrink:
-
-```python
-def _phase_shrink(game_time_sec: int) -> float:
-    minute = game_time_sec / 60.0
-    if minute < 25:
-        return 1.00
-    if minute < 30:
-        return 0.92
-    if minute < 35:
-        return 0.85
-    if minute < 45:
-        return 0.75
-    return 0.65
-```
-
-Use conservative fair:
-
-```python
-fair_raw = fair_leader if side_lead >= 0 else 1.0 - fair_leader
-phase = _phase_shrink(game_time)
-confidence = phase
-fair_used = 0.5 + (fair_raw - 0.5) * confidence
-fair_used = max(0.0, min(1.0, fair_used))
-```
-
-Return:
-
-```python
-return FairValueResult(
-    side=side,
-    fair=fair_used,
-    fair_raw=fair_raw,
-    fair_used=fair_used,
-    elo_diff=elo_diff,
-    lead_slope=lead_slope,
-    draft_h2h=draft,
-    fair_source="winprob",
-    model_available=True,
-    model_reason="ok",
-    phase_shrink=phase,
-    confidence_multiplier=confidence,
-    radiant_lead=radiant_lead,
-    game_time_sec=game_time,
-    slope_available=slope_available,
-)
-```
-
-## Tests
-
-Add `tests/test_fair_value.py`:
+### Move these gates into the policy module
 
 ```text
-missing radiant_lead returns model_available=False
-invalid radiant_lead returns model_available=False
-missing game_time returns model_available=False
-invalid game_time returns model_available=False
-record_history=False does not create a new _lead_hist key
-record_history=False does not prune existing history
-fair_used is closer to 0.5 than fair_raw late game
-fair == fair_used when available
-fair == 0.5 when unavailable
+mapping_valid
+unsupported_market_type
+non_top_live_source
+steam_stale
+source_update_stale
+book_missing
+book_stale
+missing_bid_or_ask
+spread_too_wide
+insufficient_ask_size
+ask_above_max_fill
+terminal_price_chase
+orientation_flip_suspected
+strategy_disabled
+event_not_allowed
+cadence_schema_missing
+cadence_quality_bad
+event_quality_too_low
+edge_too_small
+lag_too_small
+hold_to_settle_edge_lag_bypass
+max_open_positions
+max_total_live_usd
+max_open_usd_per_match
+daily_drawdown_breaker
 ```
 
-Commit:
+### Acceptance criteria
+
+Every signal/trade attempt must log:
 
 ```text
-Harden fair value availability and conservative fair
+policy_allowed
+policy_reason
+would_pass_live
+live_skip_reason
+paper_only_bypass
+policy_version
+risk_tags
 ```
+
+`storage.py` already has signal columns for `would_pass_live_gates`, `live_skip_reason`, and `paper_only_bypass`, so this fits the repo instead of adding an alien concept. 
 
 ---
 
-# Phase 3 — finish availability propagation
+## Phase 3 — Split strategy contracts out of code
 
-## Goal
+### Current repo reality
 
-No strategy trades unavailable fair, and unavailable current fair never forces an exit.
+`event_triggered_value_engine.py` already contains a strategy contract function. It distinguishes reversal vs continuation and defines edge type, horizon, entry trigger, exit trigger, primary metric, promotion rule, and disable rule. 
 
-## Current status
+That is good, but it is hardcoded inside the engine.
 
-VALUE already checks `fair_res.model_available`. 
+`DSWING` also embeds a contract in its dataclass: edge type is `map_end_series_convergence`, target horizon is `map_end`, exit trigger is `map_end_convergence`, and the primary metric is `exit_bid - entry_price`. 
 
-EVENT already checks availability for before/after fair. 
+### Exact implementation
 
-DSWING still does not check it:
-
-```python
-fair_res = compute_side_fair(game=game, side=direction)
-p_game = fair_res.fair
-```
-
-
-
-`live_exit_engine._current_fair_for_position()` still returns `fair_res.fair` directly. 
-
-## Patch
-
-In `decisive_swing_engine.py`:
-
-```python
-fair_res = compute_side_fair(game=game, side=direction)
-if not fair_res.model_available:
-    return [DSwingReject(match_id, f"model_unavailable:{fair_res.model_reason}")]
-
-p_game = fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
-```
-
-In `live_exit_engine.py`:
-
-```python
-fair_res = compute_side_fair(game=game, side=backed, record_history=False)
-if not fair_res.model_available:
-    return None
-return fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
-```
-
-That makes fair invalidation safe because current fair unavailable becomes “no fair invalidation this tick,” not “exit.”
-
-## Tests
-
-Add:
+Create:
 
 ```text
-DSWING rejects unavailable model fair.
-live_exit_engine does not fair-invalidate when current fair unavailable.
-```
-
-Commit:
-
-```text
-Reject unavailable fair in DSWING and exits
-```
-
----
-
-# Phase 4 — update allocator audit
-
-## Goal
-
-Log all allocator decisions, including uncontested winners.
-
-## Current issue
-
-`decision_to_log_row()` still returns `None` for uncontested winners. 
-
-`AllocatorLogger` also says uncontested wins are not logged.  
-
-The allocator candidate model now has useful edge/horizon fields, which should be logged for all winners. 
-
-## Patch
-
-Change:
-
-```python
-def decision_to_log_row(decision: AllocationDecision, *, include_uncontested: bool = True) -> dict | None:
-    if not include_uncontested and not decision.blocked and decision.block_reason != "already_entered":
-        return None
-```
-
-Add fields:
-
-```text
-candidate_count
-blocked_count
-allocator_winner
-```
-
-Update `AllocatorLogger` docstring:
-
-```text
-Logs all allocation decisions, including uncontested winners.
-```
-
-Update tests. Current tests expect no log row for uncontested winners, so they must change. 
-
-Commit:
-
-```text
-Log uncontested allocator winners
-```
-
----
-
-# Phase 5 — preserve event/value separation
-
-## Goal
-
-Keep VALUE and EVENT as separate strategy books.
-
-## Current good state
-
-EVENT now has its own contract:
-
-```text
-continuation = event_repricing, repricing_120s
-reversal = event_overreaction_bounce, bounce_120s
-```
-
-
-
-EVENT computes:
-
-```text
-fair_delta
-market_reprice
-remaining_event_edge
-event_reprice_gap
-```
-
-
-
-## Remaining gap
-
-`market_price_before_event` is taken from optional fields in the current book object:
-
-```text
-market_price_before_event
-best_ask_before_event
-pre_event_ask
-pre_event_price
-```
-
-
-
-If those are not populated upstream, `market_reprice` and `event_reprice_gap` will be `None`.
-
-## Patch
-
-Add a real pre-event book snapshot at event-detection time:
-
-```text
-pre_event_bid
-pre_event_ask
-pre_event_mid
-pre_event_book_received_at_ns
-pre_event_book_age_ms
-```
-
-Pass those into `EventTriggeredValueEngine`.
-
-Then compute:
-
-```text
-market_reprice = ask_after_event - ask_before_event
-event_reprice_gap = fair_delta_used - market_reprice
-```
-
-For EVENT_CONTINUATION, primary metric:
-
-```text
-bid_120s - entry_ask
-```
-
-For EVENT_REVERSAL, primary metric:
-
-```text
-max_bid_120s - entry_ask
-```
-
-Commit:
-
-```text
-Capture pre-event book state for event repricing
-```
-
----
-
-# Phase 6 — add unified candidate audit
-
-## Goal
-
-Create one alpha ledger that joins candidate → allocator → execution → exit.
-
-## Current status
-
-`StrategySignalLogger` is much better now and logs event-specific fair/reprice fields.  
-
-But logs are still fragmented:
-
-```text
-VALUE logs separately.
-EVENT logs separately.
-DSWING logs separately.
-Allocator logs separately.
-Execution logs separately.
-Exit logs separately.
-```
-
-## Patch
-
-Add `CandidateAuditLogger` or `FairModelAuditLogger`.
-
-Required columns:
-
-```text
-timestamp_utc
-received_at_ns
-run_id
-code_version
-config_hash
-candidate_set_id
-signal_id
-event_id
-
-strategy_kind
-strategy_family
-strategy_subtype
-edge_type
-target_horizon
-
-match_id
-token_id
-side
-direction
-market_type
-
-game_time_sec
-radiant_lead
-lead_slope
-slope_available
-elo_diff
-draft_h2h
-
-fair_source
-model_available
-model_reason
-fair_raw
-fair_used
-phase_shrink
-confidence_multiplier
-
-fair_before_raw
-fair_before_used
-fair_after_raw
-fair_after_used
-fair_delta_raw
-fair_delta_used
-
-market_price_before_event
-market_price_after_event
-market_reprice
-remaining_event_edge
-event_reprice_gap
-
-bid
-ask
-spread
-book_age_ms
-edge_raw
-edge_used
-
-would_trade
-reject_reason
-
-allocator_winner
-allocator_block_reason
-blocked_strategies
-execution_path
-
-entered
-entry_price
-exit_price
-exit_reason
-pnl
-roi
-```
-
-Commit:
-
-```text
-Add unified candidate audit logger
-```
-
----
-
-# Phase 7 — reports
-
-## Goal
-
-Turn logs into decisions.
-
-Add scripts:
-
-```text
-scripts/fair_calibration_report.py
-scripts/value_bucket_report.py
-scripts/event_markout_report.py
-scripts/event_incrementality_report.py
-scripts/dswing_exit_quality_report.py
-scripts/execution_quality_report.py
-scripts/allocator_counterfactual_report.py
-```
-
-## VALUE report
-
-Answer:
-
-```text
-Is fair_used calibrated?
-Does fair_used - ask predict settlement ROI?
-Which game-time / lead / ask / edge buckets work?
-```
-
-## EVENT report
-
-Answer:
-
-```text
-Does fair_delta produce 30/60/120s markout?
-Did market_reprice already consume the event?
-Does EVENT_CONTINUATION beat comparable VALUE candidates?
-Does EVENT_REVERSAL produce realizable bounce?
-```
-
-## DSWING report
-
-Answer:
-
-```text
-Does series_fair - ask predict exit_bid - entry_price?
-How much edge is lost after map-end detection?
-Which game/series-score buckets work?
-```
-
-## Execution report
-
-Answer:
-
-```text
-signal ask vs fresh ask vs fill price
-edge_at_signal vs edge_at_fill
-fill rate
-slippage
-price-cap rejects
-book staleness
-```
-
-Commit:
-
-```text
-Add calibration and strategy reports
-```
-
----
-
-# Phase 8 — policy config and caps
-
-## Goal
-
-Move proven buckets into an explicit policy file.
-
-Add:
-
-```text
-strategy_policy.yaml
+strategies/
+  value_edge.yaml
+  event_continuation_edge.yaml
+  event_reversal_edge.yaml
+  dswing.yaml
+  legacy_event.yaml
 ```
 
 Example:
 
 ```yaml
+strategy_kind: EVENT_CONTINUATION_EDGE
+version: 2026-06-16
+enabled_paper: true
+enabled_dry_live: false
+enabled_real_live: false
+edge_type: event_repricing
+target_horizon: repricing_120s
+expected_hold_sec: 120
+entry_trigger: fair_delta_used - market_reprice
+exit_trigger: markout_target / timeout / thesis_invalidation
+primary_metric: 120s_realizable_markout
+secondary_metric: incremental_settlement_roi_over_value
+promotion_rule: positive_markout_or_incremental_settlement_roi_over_value
+disable_rule: negative_event_markout_or_no_incremental_edge
+```
+
+Then replace `_strategy_contract()` in `event_triggered_value_engine.py` with:
+
+```python
+contract = strategy_registry.get("EVENT_REVERSAL_EDGE" if is_reversal else "EVENT_CONTINUATION_EDGE")
+```
+
+### Acceptance criteria
+
+No strategy metadata should be hardcoded inside signal constructors. Engines should calculate signals; contracts should live in `strategies/*.yaml`.
+
+---
+
+## Phase 4 — Make paper results live-comparable
+
+### Current repo reality
+
+Paper execution is good but not yet fully live-comparable.
+
+`PaperTrader` fills at the current best ask and exits at bid, which is correct for taker simulation.  
+
+But some paper strategy logic intentionally bypasses live freshness gates. For example, `signal_engine.py` only enforces Steam/book staleness when `ENABLE_REAL_LIVE_TRADING` is true.  
+
+### Exact implementation
+
+Add a paper mode enum:
+
+```text
+PAPER_MODE=research|live_parity|shadow_live
+```
+
+Behavior:
+
+```text
+research     = allow counterfactual paper entries but label live rejection reason
+live_parity  = reject anything real live would reject
+shadow_live  = do not enter paper position unless dry-live policy would submit
+```
+
+Modify:
+
+```text
+paper_trader.py
+main.py
+storage.py
+analyze_logs.py
+```
+
+### Add paper result splits
+
+Reports must show:
+
+```text
+all_paper_pnl
+live_parity_paper_pnl
+paper_only_pnl
+stale_book_pnl
+stale_steam_pnl
+wide_spread_pnl
+mapping_risk_pnl
+```
+
+### Acceptance criteria
+
+A profitable paper result is not considered deployable unless the `live_parity` subset is also profitable.
+
+---
+
+## Phase 5 — Fix live state persistence before expanding live usage
+
+### Current repo reality
+
+Live positions are stored in `logs/live_positions.json`. `LivePositionStore` has rich state fields and active-state tracking, but it is still JSON-file state. 
+
+The reconciliation layer treats CLOB token balances as source of truth and reopens or closes local positions accordingly.  It also avoids scanning every mapping token because that previously made boot take about 250 seconds. 
+
+This is already operationally mature, but file-state remains fragile.
+
+### Exact implementation
+
+Do **not** jump straight to Postgres. Add SQLite beside JSON first.
+
+Create:
+
+```text
+state_store.py
+schema.sql
+migrations/001_initial.sql
+```
+
+Tables:
+
+```sql
+live_positions
+live_orders
+live_reconciliations
+paper_positions
+paper_orders
+strategy_signals
+allocation_decisions
+policy_decisions
+mapping_snapshots
+feed_health
+```
+
+Dual-write first:
+
+```text
+JSON remains source of truth
+SQLite receives mirrored writes
+daily checker compares JSON vs SQLite
+after N clean days, SQLite becomes source of truth
+```
+
+### Acceptance criteria
+
+Restart recovery should not depend on loosely replaying CSVs or trusting one JSON file. The bot should be able to answer:
+
+```text
+What positions are open?
+Which orders are pending?
+Which mappings created them?
+Which policy approved them?
+Which strategy created them?
+```
+
+---
+
+## Phase 6 — Harden mapping and orientation
+
+### Current repo reality
+
+Mapping is one of the highest-risk areas, and the repo already knows it.
+
+Market discovery maps `outcomes[i]` to `clobTokenIds[i]`, which is the right fix for token-order ambiguity. 
+
+Mapping validation rejects missing fields, placeholders, unsupported market types, low confidence, equal yes/no tokens, same-team mappings, and duplicate active match IDs.  
+
+The value engine and live executor both contain orientation-flip guards because buying the wrong token can look like a huge value opportunity.  
+
+### Exact implementation
+
+Create:
+
+```text
+mapping_audit.py
+mapping_quarantine.py
+```
+
+Run `mapping_audit.py` before live startup and every mapping refresh.
+
+Checks:
+
+```text
+placeholder token/match IDs
+duplicate yes/no token
+duplicate active match ID
+team name mismatch
+team ID mismatch
+league mismatch
+series mismatch
+scheduled_start_utc stale
+yes token price contradicts yes-team net-worth state
+MATCH_WINNER non-decider incorrectly treated as MAP_WINNER
+```
+
+Add quarantine writeback to `markets.yaml`:
+
+```yaml
+mapping_state: quarantined
+quarantine_reason: orientation_flip_suspected
+quarantined_at_utc: ...
+quarantined_until: ...
+```
+
+`sync_markets.py` already respects quarantined mappings, so this fits existing code. 
+
+### Acceptance criteria
+
+If orientation flip is suspected once in real live mode, no further orders can be placed on that market until manually cleared.
+
+---
+
+## Phase 7 — Align entry and exit semantics per strategy
+
+### Current repo reality
+
+Exit logic is strategy-aware but split across `paper_trader.py` and `live_exit_engine.py`.
+
+`live_exit_engine.py` treats `VALUE` as true hold-to-settle, exiting only at game-over, catastrophe salvage, fair invalidation, or max-hold. 
+
+`DSWING` is different: it is not hold-to-series-settle. It exits at map-end convergence because non-decider match-winner tokens do not redeem at map end. 
+
+Event reversal exits are currently quarantined unless explicitly enabled. 
+
+### Exact implementation
+
+Create:
+
+```text
+exit_policy.py
+```
+
+Move all strategy exit contracts there:
+
+```python
+class ExitPolicy:
+    def decide(position, book, game, game_over_match_ids) -> ExitDecision:
+        ...
+```
+
+Policies:
+
+```text
 VALUE_EDGE:
-  enabled: true
-  edge_type: absolute_state_value
-  target_horizon: settlement
-  ask_min: 0.50
-  ask_max: 0.84
-  max_edge: 0.25
-  min_edge_by_game_time:
-    "10-20m": 0.10
-    "20-25m": 0.12
-    "25-30m": 0.16
-    "30m+": null
+  hold_policy: thesis_invalidation
+  exits: game_over, fair_invalidation, catastrophe_salvage, max_hold
 
 EVENT_CONTINUATION_EDGE:
-  enabled: true
-  edge_type: event_repricing
-  target_horizon: repricing_120s
-  min_fair_delta: 0.06
-  min_remaining_event_edge: 0.10
-  min_event_reprice_gap: 0.08
-  require_incremental_over_value: true
+  hold_policy: thesis_invalidation or repricing_120s
+  exits: depends on strategy YAML
 
 EVENT_REVERSAL_EDGE:
-  enabled: false
-  audit_only: true
-  edge_type: event_overreaction_bounce
-  target_horizon: bounce_120s
+  hold_policy: reversal_bounce_or_thesis
+  exits: disabled unless EVENT_REVERSAL_ACTIVE_EXITS_ENABLED
 
 DSWING:
-  enabled: true
-  edge_type: map_end_series_convergence
-  target_horizon: map_end
-  min_edge: 0.06
-  min_p_game: 0.90
+  hold_policy: map_end_convergence
+  exits: map_end_convergence, max_hold
 ```
 
-Add caps:
+Then make both `paper_trader.py` and `live_exit_engine.py` use the same `exit_policy.py`.
+
+### Acceptance criteria
+
+A paper position and a live position with the same strategy metadata must produce the same exit decision given the same book/game state.
+
+---
+
+## Phase 8 — Refactor `main.py` only after the policy layers exist
+
+### Current repo problem
+
+`main.py` imports and coordinates almost everything: feeds, mapping, events, value, decisive swing, allocation, paper, live, reconciliation, exits, discovery, logging, manual orders, enrichment, and markouts. 
+
+Refactoring it before policy/config stabilization would create churn without reducing risk.
+
+### Target structure
+
+After Phases 1–7:
 
 ```text
-MAX_VALUE_OPEN_USD
-MAX_EVENT_CONTINUATION_OPEN_USD
-MAX_EVENT_REVERSAL_OPEN_USD
-MAX_DSWING_OPEN_USD
-MAX_OPEN_USD_PER_MATCH
-MAX_DAILY_DRAWDOWN_USD
-MAX_CONSECUTIVE_LOSSES_PER_STRATEGY
+runtime/
+  bot_runtime.py
+  feed_runtime.py
+  mapping_runtime.py
+  strategy_runtime.py
+  execution_runtime.py
+  markout_runtime.py
 ```
 
-Default reversal cap should be `0` or tiny.
+Keep `main.py` thin:
 
-Commit:
+```python
+from runtime.bot_runtime import BotRuntime
+from runtime_config import load_config
+
+def main():
+    cfg = load_config()
+    BotRuntime(cfg).run()
+```
+
+### Acceptance criteria
+
+`main.py` should not contain trading logic. It should only wire components.
+
+---
+
+## Phase 9 — Tests that match the repo’s real risk
+
+Do not start with broad “unit tests everywhere.” Start with failure modes that can lose money.
+
+### Test group 1 — mapping orientation
+
+Files:
 
 ```text
-Add strategy policy and family risk caps
+mapping_validator.py
+sync_markets.py
+value_engine.py
+live_executor.py
+```
+
+Cases:
+
+```text
+normal side mapping
+reversed side mapping
+yes/no token swapped
+strong lead + cheap favorite token = orientation_flip_suspected
+stale scheduled market rejected
+MATCH_WINNER non-decider rejected by VALUE
+```
+
+### Test group 2 — policy parity
+
+Files:
+
+```text
+execution_policy.py
+paper_trader.py
+live_executor.py
+```
+
+Cases:
+
+```text
+paper research allows but logs live rejection
+paper live_parity rejects
+dry_live creates attempt but does not call CLOB
+real_live requires fresh book and fresh Steam
+hold-to-settle bypasses edge/lag but not book/mapping/freshness
+```
+
+### Test group 3 — strategy engines
+
+Files:
+
+```text
+value_engine.py
+event_triggered_value_engine.py
+decisive_swing_engine.py
+```
+
+Cases:
+
+```text
+VALUE rejects ask below anti-flip floor
+VALUE rejects huge edge as model/mapping suspect
+EVENT_CONTINUATION requires fair_delta and reprice gap
+EVENT_REVERSAL contract uses reversal_bounce_or_thesis
+DSWING only works on MATCH_WINNER
+DSWING requires series state
+DSWING one-snipe-per-match-side-token-game
+```
+
+`DSWING` has an explicit `_sniped` set and persistent `logs/dswing_snipes.json`, so that behavior needs tests. 
+
+### Test group 4 — exit parity
+
+Files:
+
+```text
+paper_trader.py
+live_exit_engine.py
+exit_policy.py
+```
+
+Cases:
+
+```text
+VALUE holds through normal price movement
+VALUE exits on game_over
+VALUE catastrophe salvage requires cheap bid + backed side losing
+DSWING exits on map_end_convergence
+EVENT_REVERSAL active exits disabled by default
+hold-to-settle ignores TP/SL/trailing/horizon
 ```
 
 ---
 
-# Phase 9 — kill switches
+# Actual implementation order
 
-## Goal
+## Step 1 — Add `runtime_config.py` and `check_config.py`
 
-Make the bot fail closed.
+Do this before touching strategy logic.
 
-Add:
-
-```text
-DISABLE_ALL_NEW_ENTRIES
-DISABLE_VALUE_ENTRIES
-DISABLE_EVENT_CONTINUATION_ENTRIES
-DISABLE_EVENT_REVERSAL_ENTRIES
-DISABLE_DSWING_ENTRIES
-EXIT_ONLY_MODE
-```
-
-Automatic halt triggers:
+Files changed:
 
 ```text
-model_unavailable spike
-book_stale ratio spike
-mapping errors spike
-two catastrophic losses in one strategy
-daily drawdown hit
-disk guard fails
-live reconciliation mismatch
-source heartbeat stale
+config.py
+runtime_config.py
+check_config.py
+.env.example
+README.md
 ```
 
-Commit:
+## Step 2 — Add `execution_policy.py`
+
+Initially call it from `live_executor.py` only. Do not modify every engine at once.
+
+Files changed:
 
 ```text
-Add strategy kill switches
+execution_policy.py
+live_executor.py
+storage.py
 ```
+
+## Step 3 — Add paper live-parity mode
+
+Files changed:
+
+```text
+paper_trader.py
+main.py
+storage.py
+analyze_logs.py
+```
+
+## Step 4 — Extract strategy contracts
+
+Files changed:
+
+```text
+strategy_registry.py
+strategies/*.yaml
+event_triggered_value_engine.py
+decisive_swing_engine.py
+value_engine.py
+```
+
+## Step 5 — Add mapping audit/quarantine
+
+Files changed:
+
+```text
+mapping_audit.py
+mapping_quarantine.py
+sync_markets.py
+mapping_validator.py
+main.py
+```
+
+## Step 6 — Add shared exit policy
+
+Files changed:
+
+```text
+exit_policy.py
+paper_trader.py
+live_exit_engine.py
+live_position_store.py
+```
+
+## Step 7 — Add SQLite dual-write state
+
+Files changed:
+
+```text
+state_store.py
+schema.sql
+live_position_store.py
+live_reconciliation.py
+paper_trader.py
+storage.py
+```
+
+## Step 8 — Refactor `main.py`
+
+Only after the above stabilizes.
 
 ---
 
-# Phase 10 — post-patch operating plan
+# What I would not do yet
 
-Once the safety patches are in, do **not** scale immediately.
+I would **not** add new alpha signals yet. The repo already has enough strategy complexity.
 
-## Step 1 — freeze thresholds
+I would **not** rewrite storage first. `storage.py` already has a CSV + optional batch-writer pattern, and live position JSON has reconciliation. Stabilize policy/config before changing persistence.
 
-Run 3–7 days of clean paper / guarded sim.
+I would **not** remove legacy event logic immediately. Keep it as diagnostics until the new strategy registry proves stable.
 
-Configuration:
-
-```text
-VALUE_EDGE enabled
-EVENT_CONTINUATION enabled if stable
-DSWING enabled if collecting convergence data
-EVENT_REVERSAL logging-only or cap=0
-ML disabled
-legacy entries disabled
-```
-
-## Step 2 — build funnel
-
-Track:
-
-```text
-TopLive snapshots
-valid fair evaluations
-model unavailable by reason
-strategy candidates
-strategy rejects
-allocator winners
-allocator blocked candidates
-execution attempts
-fills
-exits
-```
-
-## Step 3 — analyze by book
-
-### VALUE
-
-```text
-fair calibration
-settlement ROI
-edge bucket ROI
-game-time bucket ROI
-ask bucket ROI
-book-age bucket ROI
-```
-
-### EVENT_CONTINUATION
-
-```text
-fair_delta bucket
-market_reprice bucket
-event_reprice_gap bucket
-30/60/120s markout
-incremental ROI over VALUE
-```
-
-### EVENT_REVERSAL
-
-```text
-max_bid_120s - entry_ask
-bid_120s - entry_ask
-timeout loss
-spread cost
-settlement fallback ROI
-```
-
-### DSWING
-
-```text
-entry_p_game_used
-entry_series_fair
-entry_edge
-map_end_detected_ns
-exit_delay_sec
-captured_edge
-```
-
-## Step 4 — promotion matrix
-
-Classify every strategy/bucket:
-
-```text
-ACTIVE
-PAPER_ONLY
-LOGGING_ONLY
-DISABLED
-NEEDS_MORE_DATA
-```
-
-## Step 5 — tiny live rollout
-
-Stages:
-
-```text
-A: paper only
-B: guarded executor sim
-C: tiny live in one proven VALUE or DSWING bucket
-D: expand one bucket at a time
-E: strategy-family scaling
-```
-
-Initial live settings:
-
-```text
-MAX_TRADE_USD tiny
-MAX_TOTAL_LIVE_USD tiny
-MAX_OPEN_USD_PER_MATCH tiny
-MAX_DAILY_DRAWDOWN_USD tiny
-EVENT_REVERSAL cap = 0
-```
-
-Scale only after:
-
-```text
-live execution slippage matches assumptions
-no unclassified losses
-bucket ROI remains positive
-drawdown inside cap
-every trade explainable
-```
+I would **not** enable real live beyond the tiny guarded test until paper/live parity reporting shows positive results on the live-passable subset.
 
 ---
 
-# Immediate next PR scope
+# Best next concrete task
 
-Do not implement the whole roadmap in one PR.
-
-The next PR should be:
+Start with:
 
 ```text
-Remove ML runtime path and finish fair availability safety
+runtime_config.py + check_config.py
 ```
 
-Contents:
+because the repo’s current biggest immediate risk is not model quality. It is that runtime behavior depends on inconsistent defaults across `config.py`, `.env.example`, README commands, and live executor assumptions.
+
+Once config is deterministic, implement:
 
 ```text
-1. Delete handoff_fix.patch.
-2. Remove dota_fair_model imports/load/ML_ARBITRAGE from main.py.
-3. Fix fair_value.py record_history=False.
-4. Add phase_shrink / confidence_multiplier.
-5. Add DSWING model_available guard.
-6. Fix live_exit_engine current fair availability.
-7. Update allocator to log uncontested winners.
-8. Add focused tests.
+execution_policy.py
 ```
 
-That is the correct next move. New strategy logic, sizing, and reports come after this safety PR.
+That will remove the second biggest risk: duplicated paper/live gates.

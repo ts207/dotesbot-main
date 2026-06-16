@@ -1,50 +1,48 @@
 from __future__ import annotations
 
-import os
 import time
 import uuid
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Mapping, Any
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 import winprob
+from config import (
+    ENABLE_VALUE_TRADING,
+    RUNTIME_CONFIG,
+    VALUE_FLIP_ASK_FLOOR,
+    VALUE_FLIP_LEAD,
+    VALUE_HEDGE_MIN_EDGE,
+    VALUE_HEDGE_MIN_FAIR,
+    VALUE_MAX_BOOK_AGE_MS,
+    VALUE_MAX_EDGE,
+    VALUE_MAX_GAME_TIME,
+    VALUE_MAX_PRICE,
+    VALUE_MIN_EDGE,
+    VALUE_MIN_FAIR,
+    VALUE_MIN_GAME_TIME,
+    VALUE_MIN_NW_LEAD,
+    VALUE_MIN_PRICE,
+    VALUE_TRADE_USD,
+)
+from execution_policy import PolicyInput, evaluate_policy, signal_policy_fields
 from gettoplive_state import validate_top_live_state
+import strategy_registry
 
-VALUE_ENGINE_ENABLED = os.getenv("VALUE_ENGINE_ENABLED", "true").lower() in {"1", "true", "yes"}
-ENABLE_VALUE_TRADING = os.getenv("ENABLE_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}
-VALUE_MIN_EDGE = float(os.getenv("VALUE_MIN_EDGE", "0.10"))
-VALUE_MAX_PRICE = float(os.getenv("VALUE_MAX_PRICE", "0.84"))
-VALUE_MIN_NW_LEAD = int(os.getenv("VALUE_MIN_NW_LEAD", "3000"))
-VALUE_MIN_GAME_TIME = int(os.getenv("VALUE_MIN_GAME_TIME", "600"))
+VALUE_ENGINE_ENABLED = RUNTIME_CONFIG.strategy.value_enabled
 # Conviction floor (2026-06-03 sweep): the edge is concentrated in high-conviction
 # trades. Gating on model fair (not raw lead — lead is already inside fair) moved the
 # backtest from P(ROI>0)=0.89/CI-straddles-0 to 0.98/CI-off-0, win 70%→83%. Default
 # 0.0 = off; set 0.80 in .env to deploy. See scripts/value_sweep.py.
-VALUE_MIN_FAIR = float(os.getenv("VALUE_MIN_FAIR", "0.0"))
 # Opposite-side HEDGE gate (2026-06-04, user): AFTER the first signal fires on a match,
 # the OPPOSITE side may enter with LOOSER gates so a swingy/unpredictable match can
 # self-offset. Only applies when we already hold the opposite token (see entered_tokens).
-VALUE_HEDGE_MIN_FAIR = float(os.getenv("VALUE_HEDGE_MIN_FAIR", "0.5"))
-VALUE_HEDGE_MIN_EDGE = float(os.getenv("VALUE_HEDGE_MIN_EDGE", "0.04"))
 # Edge-analysis filters (2026-06-03) — remove the toxic buckets the breakdown
 # exposed: ask<0.5 (flip, −75%), edge>0.30 (fake edge/model-wrong, −100%),
 # late game (variance cliff, −30%). All env-tunable; set extreme to disable.
-VALUE_MIN_PRICE = float(os.getenv("VALUE_MIN_PRICE", "0.50"))        # anti-flip price floor
-VALUE_MAX_EDGE = float(os.getenv("VALUE_MAX_EDGE", "0.30"))          # cap fake/huge edges
-VALUE_MAX_GAME_TIME = int(os.getenv("VALUE_MAX_GAME_TIME", "1800"))  # skip late-game variance
-VALUE_TRADE_USD = float(os.getenv("VALUE_TRADE_USD", "5.0"))
-VALUE_MAX_BOOK_AGE_MS = int(os.getenv("VALUE_MAX_BOOK_AGE_MS", "30000"))
 # Orientation-flip guard (see bug_binder_orientation_flip): a binder flip routes
 # us to the LOSER's token, which then looks like a screaming value buy. A genuine
 # big leader's token is never dirt cheap. Mirrors live_executor.try_buy guard.
-VALUE_FLIP_LEAD = int(os.getenv("VALUE_FLIP_LEAD", "5000"))
-VALUE_FLIP_ASK_FLOOR = float(os.getenv("VALUE_FLIP_ASK_FLOOR", "0.35"))
 
 from fair_value import compute_side_fair, _lead_slope
 
@@ -74,17 +72,22 @@ class ValueSignal:
     sized_usd: float
     book_age_ms: int
     would_pass_live_gates: bool = True
+    would_pass_live: bool = True
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
-    edge_type: str = "absolute_state_value"
-    target_horizon: str = "settlement"
-    expected_hold_sec: int = 0
-    entry_trigger: str = "fair_used - ask"
-    exit_trigger: str = "game_over / fair_invalidation / max_hold"
-    primary_metric: str = "settlement_roi"
-    secondary_metric: str = "fair_bucket_calibration"
-    promotion_rule: str = "calibrated_positive_roi_by_bucket"
-    disable_rule: str = "negative_settlement_roi_or_uncalibrated_bucket"
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    policy_version: str = ""
+    risk_tags: str = ""
+    edge_type: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").edge_type)
+    target_horizon: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").target_horizon)
+    expected_hold_sec: int = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").expected_hold_sec)
+    entry_trigger: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").entry_trigger)
+    exit_trigger: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").exit_trigger)
+    primary_metric: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").primary_metric)
+    secondary_metric: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").secondary_metric)
+    promotion_rule: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").promotion_rule)
+    disable_rule: str = field(default_factory=lambda: strategy_registry.get("VALUE_EDGE").disable_rule)
 
     def to_signal_dict(self) -> dict:
         return {
@@ -119,8 +122,14 @@ class ValueSignal:
             "event_quality": 1.0,
             "event_direction": self.direction,
             "would_pass_live_gates": self.would_pass_live_gates,
+            "would_pass_live": self.would_pass_live,
             "live_skip_reason": self.live_skip_reason,
             "paper_only_bypass": self.paper_only_bypass,
+            "policy_allowed": self.policy_allowed,
+            "policy_reason": self.policy_reason,
+            "policy_version": self.policy_version,
+            "risk_tags": self.risk_tags,
+            "max_fill_price": VALUE_MAX_PRICE,
         }
 
 @dataclass(frozen=True)
@@ -334,6 +343,30 @@ class ValueEngine:
             )]
 
         # 6. We have a signal!
+        policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
+            mode="paper_research",
+            strategy_kind="VALUE_EDGE",
+            market_type=str(mapping.get("market_type") or ""),
+            token_id=str(token_id),
+            side=side,
+            signal={
+                "event_type": "VALUE",
+                "strategy_kind": "VALUE_EDGE",
+                "token_id": str(token_id),
+                "side": side,
+                "fair_price": fair_price,
+                "executable_edge": edge,
+                "ask": ask,
+                "max_fill_price": VALUE_MAX_PRICE,
+                "target_horizon": strategy_registry.get("VALUE_EDGE").target_horizon,
+                "expected_hold_sec": strategy_registry.get("VALUE_EDGE").expected_hold_sec,
+            },
+            game=dict(game),
+            mapping=dict(mapping),
+            book=dict(book),
+            now_ns=time.time_ns(),
+        )))
+
         signal = ValueSignal(
             signal_id=_make_signal_id(match_id, cur_ns),
             match_id=match_id,
@@ -353,5 +386,6 @@ class ValueEngine:
             elo_diff=elo_diff,
             sized_usd=VALUE_TRADE_USD,
             book_age_ms=book_age_ms,
+            **policy_fields,
         )
         return [signal]

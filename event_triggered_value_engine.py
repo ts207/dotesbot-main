@@ -23,7 +23,9 @@ from config import (
     EVENT_VALUE_REVERSAL_MIN_ASK,
 )
 from derived_game_state import derive_game_state
+from execution_policy import PolicyInput, evaluate_policy, signal_policy_fields
 from gettoplive_state import validate_top_live_state
+import strategy_registry
 from value_engine import VALUE_FLIP_ASK_FLOOR, VALUE_FLIP_LEAD, VALUE_MAX_BOOK_AGE_MS
 
 
@@ -96,8 +98,13 @@ class EventTriggeredValueSignal:
     derived_state_flags: tuple[str, ...]
     is_reversal: bool
     would_pass_live_gates: bool = True
+    would_pass_live: bool = True
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    policy_version: str = ""
+    risk_tags: str = ""
 
     @property
     def fair_price(self) -> float:
@@ -165,8 +172,14 @@ class EventTriggeredValueSignal:
             "game_time_sec": self.game_time_sec,
             "lead": self.lead,
             "would_pass_live_gates": self.would_pass_live_gates,
+            "would_pass_live": self.would_pass_live,
             "live_skip_reason": self.live_skip_reason,
             "paper_only_bypass": self.paper_only_bypass,
+            "policy_allowed": self.policy_allowed,
+            "policy_reason": self.policy_reason,
+            "policy_version": self.policy_version,
+            "risk_tags": self.risk_tags,
+            "max_fill_price": EVENT_VALUE_REVERSAL_MAX_ASK if self.is_reversal else EVENT_VALUE_MAX_ASK,
         }
 
 
@@ -224,33 +237,8 @@ class EventTriggeredValueReject:
 
 
 def _strategy_contract(is_reversal: bool) -> dict[str, Any]:
-    if is_reversal:
-        return {
-            "edge_type": "event_overreaction_bounce",
-            "target_horizon": "bounce_120s",
-            "expected_hold_sec": 120,
-            "entry_trigger": "overreaction_score + bounce_setup",
-            "exit_trigger": "bounce_tp / timeout / hard_stop",
-            "primary_metric": "max_realizable_bounce_after_spread",
-            "secondary_metric": "settlement_roi",
-            "promotion_rule": "positive_bounce_roi_by_event_bucket",
-            "disable_rule": "negative_realizable_bounce_or_unvalidated_spread",
-            "bounce_target": None,
-            "timeout_sec": 120,
-        }
-    return {
-        "edge_type": "event_repricing",
-        "target_horizon": "repricing_120s",
-        "expected_hold_sec": 120,
-        "entry_trigger": "fair_delta_used - market_reprice",
-        "exit_trigger": "markout_target / timeout / thesis_invalidation",
-        "primary_metric": "120s_realizable_markout",
-        "secondary_metric": "incremental_settlement_roi_over_value",
-        "promotion_rule": "positive_markout_or_incremental_settlement_roi_over_value",
-        "disable_rule": "negative_event_markout_or_no_incremental_edge",
-        "bounce_target": None,
-        "timeout_sec": 120,
-    }
+    kind = "EVENT_REVERSAL_EDGE" if is_reversal else "EVENT_CONTINUATION_EDGE"
+    return strategy_registry.get(kind).signal_kwargs(include_bounce_fields=True)
 
 
 class EventTriggeredValueEngine:
@@ -429,6 +417,29 @@ class EventTriggeredValueEngine:
             return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, fair_before_raw=res_before.fair_raw, fair_before_used=fair_before, fair_after_raw=res_after.fair_raw, fair_after_used=fair_after, fair_delta_raw=fair_delta_raw, fair_delta_used=fair_delta, model_available=model_available, model_reason=model_reason, market_price_before_event=market_price_before_event, market_price_after_event=market_price_after_event, market_reprice=market_reprice, remaining_event_edge=remaining_event_edge, event_reprice_gap=event_reprice_gap, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal, **contract)]
 
         derived = derive_game_state(game)
+        policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
+            mode="paper_research",
+            strategy_kind="EVENT_REVERSAL_EDGE" if is_reversal else "EVENT_CONTINUATION_EDGE",
+            market_type=str(mapping.get("market_type") or ""),
+            token_id=str(token_id),
+            side=side,
+            signal={
+                "event_type": "EVENT_TRIGGERED_VALUE",
+                "strategy_kind": "EVENT_REVERSAL_EDGE" if is_reversal else "EVENT_CONTINUATION_EDGE",
+                "token_id": str(token_id),
+                "side": side,
+                "fair_price": fair_after,
+                "executable_edge": edge,
+                "ask": ask,
+                "max_fill_price": max_ask,
+                "target_horizon": contract.get("target_horizon"),
+                "expected_hold_sec": contract.get("expected_hold_sec"),
+            },
+            game=dict(game),
+            mapping=dict(mapping),
+            book=dict(book),
+            now_ns=time.time_ns(),
+        )))
         return [EventTriggeredValueSignal(
             signal_id=_make_signal_id(match_id, event.event_id, str(token_id)),
             event_id=event.event_id,
@@ -464,6 +475,7 @@ class EventTriggeredValueEngine:
             book_age_ms=book_age_ms,
             derived_state_flags=derived.flags,
             is_reversal=is_reversal,
+            **policy_fields,
         )]
 
     def _reject(self, event: ActualDotaEvent, match_id: str, received_at_ns: int, reason: str, **kwargs) -> EventTriggeredValueReject:

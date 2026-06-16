@@ -9,12 +9,14 @@ from typing import Any
 import config
 from config import (
     PAPER_SLIPPAGE_CENTS, PAPER_TRADE_SIZE_USD, MAX_OPEN_USD_PER_MATCH,
+    PAPER_MODE,
     EXIT_TAKE_PROFIT, EXIT_STOP_LOSS_ABS, EXIT_STOP_LOSS_REL,
     EXIT_LATENCY_EDGE_SEC, EXIT_HORIZON_SEC, EXIT_HORIZON_BY_EVENT, MAX_HOLD_HOURS,
     PAPER_REENTRY_COOLDOWN_SEC,
     UNDERDOG_REVERSAL_TAKE_PROFIT, UNDERDOG_REVERSAL_STOP_ABS,
     EXIT_TRAILING_STOP_CENTS, EXIT_TRAILING_STOP_GRACE_SEC,
 )
+from exit_policy import ExitPolicy
 
 
 @dataclass
@@ -55,6 +57,14 @@ class Position:
     entry_radiant_lead: int | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
+    paper_mode: str = PAPER_MODE
+    would_pass_live: bool | None = None
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    policy_version: str = ""
+    risk_tags: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -105,6 +115,14 @@ class ClosedPosition:
     entry_radiant_lead: int | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
+    paper_mode: str = PAPER_MODE
+    would_pass_live: bool | None = None
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    policy_version: str = ""
+    risk_tags: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -220,6 +238,14 @@ class PaperTrader:
                 entry_radiant_lead=self._optional_int(row.get("entry_radiant_lead")),
                 entry_actual_event_type=row.get("entry_actual_event_type") or None,
                 entry_derived_state_flags=self._parse_flags(row.get("entry_derived_state_flags")),
+                paper_mode=row.get("paper_mode") or PAPER_MODE,
+                would_pass_live=self._optional_bool(row.get("would_pass_live")),
+                live_skip_reason=row.get("live_skip_reason") or "",
+                paper_only_bypass=bool(self._optional_bool(row.get("paper_only_bypass"))),
+                policy_allowed=self._optional_bool(row.get("policy_allowed")),
+                policy_reason=row.get("policy_reason") or "",
+                policy_version=row.get("policy_version") or "",
+                risk_tags=row.get("risk_tags") or "",
             )
         except (TypeError, ValueError):
             return None
@@ -237,12 +263,52 @@ class PaperTrader:
         return float(value)
 
     @staticmethod
+    def _optional_bool(value: Any) -> bool | None:
+        if value in (None, ""):
+            return None
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    @staticmethod
     def _parse_flags(value: Any) -> list[str]:
         if value in (None, ""):
             return []
         if isinstance(value, (list, tuple, set)):
             return [str(item) for item in value if str(item)]
         return [part for part in str(value).split(",") if part]
+
+    def _paper_gate(self, signal: dict) -> tuple[bool, str, dict[str, Any]]:
+        would_pass_live = signal.get("would_pass_live")
+        if would_pass_live is None:
+            would_pass_live = signal.get("would_pass_live_gates")
+        if would_pass_live is None:
+            would_pass_live = True
+        would_pass_live = bool(would_pass_live)
+
+        policy_allowed = signal.get("policy_allowed")
+        if policy_allowed is None:
+            policy_allowed = would_pass_live
+        policy_allowed = bool(policy_allowed)
+
+        live_skip_reason = str(signal.get("live_skip_reason") or signal.get("policy_reason") or "")
+        paper_only_bypass = bool(signal.get("paper_only_bypass", False) or not would_pass_live)
+        metadata = {
+            "paper_mode": PAPER_MODE,
+            "would_pass_live": would_pass_live,
+            "live_skip_reason": live_skip_reason,
+            "paper_only_bypass": paper_only_bypass,
+            "policy_allowed": policy_allowed,
+            "policy_reason": str(signal.get("policy_reason") or ""),
+            "policy_version": str(signal.get("policy_version") or ""),
+            "risk_tags": ",".join(signal.get("risk_tags", ())) if isinstance(signal.get("risk_tags"), (list, tuple, set)) else str(signal.get("risk_tags") or ""),
+        }
+
+        if PAPER_MODE == "live_parity" and not would_pass_live:
+            return False, f"paper_live_parity_reject:{live_skip_reason or 'live_gates'}", metadata
+        if PAPER_MODE == "shadow_live" and not policy_allowed:
+            return False, f"paper_shadow_live_reject:{live_skip_reason or 'policy'}", metadata
+        return True, "allowed", metadata
 
     @staticmethod
     def _parse_trade_time_ns(value: str | None) -> int:
@@ -270,6 +336,10 @@ class PaperTrader:
         # Guard: refuse if the other side of the same binary market is already open.
         if opposing_token_id and opposing_token_id in self.positions:
             return None, "opposing_position_open"
+
+        paper_allowed, paper_reason, paper_metadata = self._paper_gate(signal)
+        if not paper_allowed:
+            return None, paper_reason
 
         now_ns = time.time_ns()
         cooldown_until = self._token_cooldown_until_ns.get(token_id, 0)
@@ -358,6 +428,7 @@ class PaperTrader:
             entry_radiant_lead=self._optional_int(entry_lead),
             entry_actual_event_type=signal.get("actual_event_type"),
             entry_derived_state_flags=self._parse_flags(signal.get("derived_state_flags")),
+            **paper_metadata,
         )
         self.positions[token_id] = pos
         self._match_open_usd[match_id] = self._match_open_usd.get(match_id, 0.0) + size_usd
@@ -396,6 +467,7 @@ class PaperTrader:
         game_over_match_ids: set[str],
         current_game_times: dict[str, int | None] | None = None,
         adverse_token_ids: set[str] | None = None,
+        current_games_by_match_id: dict[str, dict] | None = None,
     ) -> list[ClosedPosition]:
         """Check all open positions for exit conditions. Returns newly closed positions."""
         closed_now: list[ClosedPosition] = []
@@ -426,6 +498,21 @@ class PaperTrader:
             if token_id in _adverse:
                 px = exit_px if exit_px is not None else pos.entry_price
                 to_close.append((token_id, px, "adverse_event"))
+                continue
+
+            if ExitPolicy.applies(pos):
+                game = (current_games_by_match_id or {}).get(pos.match_id)
+                decision = ExitPolicy.decide(
+                    pos,
+                    book,
+                    game,
+                    game_over_match_ids,
+                    now_ns=time.time_ns(),
+                    current_fair=pos.fair_price if pos.fair_price > 0 else None,
+                )
+                if decision.should_exit:
+                    px = decision.reference_bid if decision.reference_bid is not None else (exit_px if exit_px is not None else pos.entry_price)
+                    to_close.append((token_id, px, decision.reason))
                 continue
 
             # 2026-06-03 — VALUE and DSWING specialization.
@@ -640,6 +727,14 @@ class PaperTrader:
             entry_radiant_lead=pos.entry_radiant_lead,
             entry_actual_event_type=pos.entry_actual_event_type,
             entry_derived_state_flags=pos.entry_derived_state_flags,
+            paper_mode=pos.paper_mode,
+            would_pass_live=pos.would_pass_live,
+            live_skip_reason=pos.live_skip_reason,
+            paper_only_bypass=pos.paper_only_bypass,
+            policy_allowed=pos.policy_allowed,
+            policy_reason=pos.policy_reason,
+            policy_version=pos.policy_version,
+            risk_tags=pos.risk_tags,
         )
         self.closed.append(cp)
         cooldown_ns = int(PAPER_REENTRY_COOLDOWN_SEC * 1_000_000_000)

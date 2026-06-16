@@ -11,24 +11,29 @@ map-end, NOT hold-to-series-settle — a non-decider win doesn't redeem at $1).
 """
 from __future__ import annotations
 import os, time, uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping, Any
 
 import winprob
+from config import (
+    DSWING_LEAD,
+    DSWING_MAX_BOOK_AGE_MS,
+    DSWING_MAX_PRICE,
+    DSWING_MIN_EDGE,
+    DSWING_MIN_GAME_TIME,
+    DSWING_MIN_P_GAME,
+    DSWING_TRADE_USD,
+    RUNTIME_CONFIG,
+)
+from execution_policy import PolicyInput, evaluate_policy, signal_policy_fields
 from gettoplive_state import validate_top_live_state
+import strategy_registry
 try:
     from series_model import compute_bo3_match_p
 except Exception:
     compute_bo3_match_p = None
 
-DSWING_ENABLED = os.getenv("DSWING_ENABLED", "false").lower() in {"1", "true", "yes"}
-DSWING_LEAD = int(os.getenv("DSWING_LEAD", "6000"))          # game-ending swing; backtest: enter EARLY (6k) = +14.8% vs +0.7% at 12k
-DSWING_MIN_EDGE = float(os.getenv("DSWING_MIN_EDGE", "0.05"))  # series_fair - ask
-DSWING_MAX_PRICE = float(os.getenv("DSWING_MAX_PRICE", "0.92"))
-DSWING_MIN_GAME_TIME = int(os.getenv("DSWING_MIN_GAME_TIME", "600"))
-DSWING_TRADE_USD = float(os.getenv("DSWING_TRADE_USD", "5.0"))
-DSWING_MAX_BOOK_AGE_MS = int(os.getenv("DSWING_MAX_BOOK_AGE_MS", "15000"))
-DSWING_MIN_P_GAME = float(os.getenv("DSWING_MIN_P_GAME", "0.88"))
+DSWING_ENABLED = RUNTIME_CONFIG.strategy.dswing_enabled
 
 _NS = uuid.UUID("11111111-2222-3333-4444-555555555557")
 _sniped: set[tuple[str, str, str, str]] = set()   # (match_id, direction, token_id, current_game_number) already fired
@@ -83,15 +88,23 @@ class DSwingSignal:
     # aliases so live_executor.try_buy_value can consume this directly
     fair_price: float = 0.0
     book_age_ms: int = 0
-    edge_type: str = "map_end_series_convergence"
-    target_horizon: str = "map_end"
-    expected_hold_sec: int = 0
-    entry_trigger: str = "series_fair - ask"
-    exit_trigger: str = "map_end_convergence"
-    primary_metric: str = "exit_bid - entry_price"
-    secondary_metric: str = "captured_edge_by_bucket"
-    promotion_rule: str = "positive_captured_edge_by_bucket"
-    disable_rule: str = "negative_captured_edge_or_missing_map_end_exit"
+    would_pass_live_gates: bool = True
+    would_pass_live: bool = True
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    policy_version: str = ""
+    risk_tags: str = ""
+    edge_type: str = field(default_factory=lambda: strategy_registry.get("DSWING").edge_type)
+    target_horizon: str = field(default_factory=lambda: strategy_registry.get("DSWING").target_horizon)
+    expected_hold_sec: int = field(default_factory=lambda: strategy_registry.get("DSWING").expected_hold_sec)
+    entry_trigger: str = field(default_factory=lambda: strategy_registry.get("DSWING").entry_trigger)
+    exit_trigger: str = field(default_factory=lambda: strategy_registry.get("DSWING").exit_trigger)
+    primary_metric: str = field(default_factory=lambda: strategy_registry.get("DSWING").primary_metric)
+    secondary_metric: str = field(default_factory=lambda: strategy_registry.get("DSWING").secondary_metric)
+    promotion_rule: str = field(default_factory=lambda: strategy_registry.get("DSWING").promotion_rule)
+    disable_rule: str = field(default_factory=lambda: strategy_registry.get("DSWING").disable_rule)
 
 
 @dataclass(frozen=True)
@@ -206,6 +219,30 @@ class DecisiveSwingEngine:
         if edge < DSWING_MIN_EDGE:
             return [DSwingReject(match_id, f"edge_too_small:{edge:.3f}")]
 
+        policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
+            mode="paper_research",
+            strategy_kind="DSWING",
+            market_type=str(mapping.get("market_type") or ""),
+            token_id=str(token_id),
+            side=side,
+            signal={
+                "event_type": "DSWING",
+                "strategy_kind": "DSWING",
+                "token_id": str(token_id),
+                "side": side,
+                "fair_price": series_fair,
+                "executable_edge": edge,
+                "ask": ask,
+                "max_fill_price": DSWING_MAX_PRICE,
+                "target_horizon": strategy_registry.get("DSWING").target_horizon,
+                "expected_hold_sec": strategy_registry.get("DSWING").expected_hold_sec,
+            },
+            game=dict(game),
+            mapping=dict(mapping),
+            book=dict(book),
+            now_ns=time.time_ns(),
+        )))
+
         _save_snipe(match_id, direction, token_id, gn)
         return [DSwingSignal(
             signal_id=str(uuid.uuid5(_NS, f"dswing|{match_id}|{direction}")),
@@ -214,4 +251,5 @@ class DecisiveSwingEngine:
             lead=lead, game_time_sec=gt, p_game=p_game, p_game_used=p_game, series_fair=series_fair,
             ask=ask, edge=edge, sized_usd=DSWING_TRADE_USD,
             fair_price=series_fair, book_age_ms=int((time.time_ns() - rcv) / 1e6),
+            **policy_fields,
         )]

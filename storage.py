@@ -48,6 +48,14 @@ def ns_to_iso(ns: int | None) -> str | None:
     return datetime.fromtimestamp(ns / 1_000_000_000, tz=timezone.utc).isoformat(timespec="milliseconds")
 
 
+def _mirror_state(method: str, *args) -> None:
+    try:
+        from state_store import StateStore
+        getattr(StateStore(), method)(*args)
+    except Exception as exc:
+        _storage_logger.warning("state sqlite mirror failed: %s", exc)
+
+
 import queue
 import threading
 
@@ -237,6 +245,7 @@ class SignalLogger(CsvLogger):
             "current_game_number", "series_type",
             "structure_uncertainty_penalty",
             "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
+            "policy_allowed", "policy_reason", "policy_version", "risk_tags",
         ], parquet_table="signals")
 
     def _to_parquet_row(self, row: dict) -> dict:
@@ -341,6 +350,10 @@ class SignalLogger(CsvLogger):
             "would_pass_live_gates": signal.get("would_pass_live_gates"),
             "live_skip_reason": signal.get("live_skip_reason"),
             "paper_only_bypass": signal.get("paper_only_bypass"),
+            "policy_allowed": signal.get("policy_allowed"),
+            "policy_reason": signal.get("policy_reason"),
+            "policy_version": signal.get("policy_version"),
+            "risk_tags": signal.get("risk_tags"),
         })
 
 
@@ -408,6 +421,8 @@ class PositionLogger(CsvLogger):
             "entry_fair", "entry_edge",
             "entry_backed_side", "entry_radiant_lead", "entry_actual_event_type",
             "entry_derived_state_flags",
+            "paper_mode", "would_pass_live", "live_skip_reason", "paper_only_bypass",
+            "policy_allowed", "policy_reason", "policy_version", "risk_tags",
             "entry_game_time_sec",
             "exit_price", "proceeds_usd", "pnl_usd", "roi",
             "hold_sec", "exit_game_time_sec", "exit_reason", "execution_path",
@@ -844,6 +859,9 @@ class LiveAttemptLogger(CsvLogger):
             "book_age_ms", "steam_age_ms",
             "order_type", "submitted_size_usd", "filled_size_usd", "avg_fill_price",
             "order_status", "reason_if_rejected",
+            "policy_allowed", "policy_reason", "would_pass_live",
+            "live_skip_reason", "paper_only_bypass", "policy_version",
+            "risk_tags",
             "markout_3s", "markout_10s", "markout_30s",
             "raw_response_json",
             "trader_kind", "exit_horizon_sec", "signal_id", "execution_path",
@@ -870,6 +888,7 @@ class LiveAttemptLogger(CsvLogger):
         d["markout_10s"] = markouts.get("markout_10s")
         d["markout_30s"] = markouts.get("markout_30s")
         self.append(d)
+        _mirror_state("record_live_attempt", d)
 
 
 class LiveExitLogger(CsvLogger):
@@ -1097,7 +1116,10 @@ class ValueAttemptLogger(CsvLogger):
             "primary_metric", "secondary_metric", "promotion_rule", "disable_rule",
             "ask", "edge",
             "lead", "game_time_sec", "elo_diff",
-            "book_age_ms", "sized_usd", "execution_path",
+            "book_age_ms", "sized_usd",
+            "policy_allowed", "policy_reason", "would_pass_live",
+            "live_skip_reason", "paper_only_bypass", "policy_version", "risk_tags",
+            "execution_path",
         ], parquet_table="value_attempts")
 
     def log_signal(self, sig) -> None:
@@ -1132,6 +1154,13 @@ class ValueAttemptLogger(CsvLogger):
             "elo_diff": sig.elo_diff,
             "book_age_ms": sig.book_age_ms,
             "sized_usd": sig.sized_usd,
+            "policy_allowed": getattr(sig, "policy_allowed", None),
+            "policy_reason": getattr(sig, "policy_reason", ""),
+            "would_pass_live": getattr(sig, "would_pass_live", getattr(sig, "would_pass_live_gates", "")),
+            "live_skip_reason": getattr(sig, "live_skip_reason", ""),
+            "paper_only_bypass": getattr(sig, "paper_only_bypass", ""),
+            "policy_version": getattr(sig, "policy_version", ""),
+            "risk_tags": getattr(sig, "risk_tags", ""),
             "execution_path": self._execution_path,
         })
 
@@ -1167,6 +1196,13 @@ class ValueAttemptLogger(CsvLogger):
             "elo_diff": rej.elo_diff,
             "book_age_ms": rej.book_age_ms,
             "sized_usd": None,
+            "policy_allowed": False,
+            "policy_reason": rej.reason,
+            "would_pass_live": False,
+            "live_skip_reason": rej.reason,
+            "paper_only_bypass": False,
+            "policy_version": "",
+            "risk_tags": "",
             "execution_path": self._execution_path,
         })
 
@@ -1183,7 +1219,10 @@ class DSwingAttemptLogger(CsvLogger):
             "lead", "game_time_sec", "p_game", "p_game_used", "series_fair",
             "ask", "edge", "edge_type", "target_horizon", "expected_hold_sec",
             "entry_trigger", "exit_trigger", "primary_metric", "secondary_metric",
-            "promotion_rule", "disable_rule", "book_age_ms", "sized_usd", "execution_path",
+            "promotion_rule", "disable_rule", "book_age_ms", "sized_usd",
+            "policy_allowed", "policy_reason", "would_pass_live",
+            "live_skip_reason", "paper_only_bypass", "policy_version", "risk_tags",
+            "execution_path",
         ])
 
     def log_signal(self, sig, *, mapping: dict | None = None) -> None:
@@ -1217,6 +1256,13 @@ class DSwingAttemptLogger(CsvLogger):
             "disable_rule": getattr(sig, "disable_rule", None),
             "book_age_ms": sig.book_age_ms,
             "sized_usd": sig.sized_usd,
+            "policy_allowed": getattr(sig, "policy_allowed", None),
+            "policy_reason": getattr(sig, "policy_reason", ""),
+            "would_pass_live": getattr(sig, "would_pass_live", getattr(sig, "would_pass_live_gates", "")),
+            "live_skip_reason": getattr(sig, "live_skip_reason", ""),
+            "paper_only_bypass": getattr(sig, "paper_only_bypass", ""),
+            "policy_version": getattr(sig, "policy_version", ""),
+            "risk_tags": getattr(sig, "risk_tags", ""),
             "execution_path": self._execution_path,
         })
 
@@ -1230,6 +1276,13 @@ class DSwingAttemptLogger(CsvLogger):
             "reject_reason": getattr(rej, "reason", ""),
             "market_name": (mapping or {}).get("name"),
             "market_type": (mapping or {}).get("market_type"),
+            "policy_allowed": False,
+            "policy_reason": getattr(rej, "reason", ""),
+            "would_pass_live": False,
+            "live_skip_reason": getattr(rej, "reason", ""),
+            "paper_only_bypass": False,
+            "policy_version": "",
+            "risk_tags": "",
             "execution_path": self._execution_path,
         })
 
@@ -1356,11 +1409,13 @@ class StrategySignalLogger(CsvLogger):
             "ask", "edge", "lead", "game_time_sec", "elo_diff",
             "book_age_ms", "sized_usd", "derived_state_flags",
             "is_continuation", "is_reversal",
-            "would_pass_live_gates", "live_skip_reason", "paper_only_bypass", "execution_path",
+            "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
+            "policy_allowed", "policy_reason", "policy_version", "risk_tags",
+            "execution_path",
         ])
 
     def log_signal(self, sig, *, strategy: str = "EVENT_TRIGGERED_VALUE") -> None:
-        self.append({
+        row = {
             "timestamp_utc": ns_to_iso(sig.received_at_ns) or utc_now_iso(),
             "received_at_ns": sig.received_at_ns,
             "signal_id": sig.signal_id,
@@ -1414,11 +1469,17 @@ class StrategySignalLogger(CsvLogger):
             "would_pass_live_gates": getattr(sig, "would_pass_live_gates", ""),
             "live_skip_reason": getattr(sig, "live_skip_reason", ""),
             "paper_only_bypass": getattr(sig, "paper_only_bypass", ""),
+            "policy_allowed": getattr(sig, "policy_allowed", ""),
+            "policy_reason": getattr(sig, "policy_reason", ""),
+            "policy_version": getattr(sig, "policy_version", ""),
+            "risk_tags": getattr(sig, "risk_tags", ""),
             "execution_path": self._execution_path,
-        })
+        }
+        self.append(row)
+        _mirror_state("record_strategy_signal", row)
 
     def log_reject(self, rej, *, strategy: str = "EVENT_TRIGGERED_VALUE") -> None:
-        self.append({
+        row = {
             "timestamp_utc": ns_to_iso(rej.received_at_ns) or utc_now_iso(),
             "received_at_ns": rej.received_at_ns,
             "signal_id": "",
@@ -1475,8 +1536,14 @@ class StrategySignalLogger(CsvLogger):
             "would_pass_live_gates": False,
             "live_skip_reason": "",
             "paper_only_bypass": False,
+            "policy_allowed": False,
+            "policy_reason": getattr(rej, "reason", ""),
+            "policy_version": "",
+            "risk_tags": "",
             "execution_path": self._execution_path,
-        })
+        }
+        self.append(row)
+        _mirror_state("record_strategy_signal", row)
 
 
 class AllocatorLogger(CsvLogger):
@@ -1519,7 +1586,9 @@ class AllocatorLogger(CsvLogger):
 
         Pass the raw dict directly; None values are safe (filtered by CsvLogger).
         """
-        self.append({
+        row = {
             "timestamp_utc": utc_now_iso(),
             **decision_row,
-        })
+        }
+        self.append(row)
+        _mirror_state("record_allocation_decision", row)

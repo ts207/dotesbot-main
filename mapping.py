@@ -5,6 +5,7 @@ import os
 import yaml
 
 from mapping_validator import MappingError, has_placeholder, validate_active_mappings, validate_mapping_schema
+from mapping_quarantine import is_quarantined
 
 DEFAULT_MARKETS_PATH = os.path.join(os.path.dirname(__file__), "markets.yaml")
 
@@ -40,6 +41,9 @@ def load_valid_mappings(filename: str = DEFAULT_MARKETS_PATH) -> tuple[list[dict
 
     for i, (mapping, result) in enumerate(zip(raw, results)):
         mapping = dict(mapping)  # copy so validate_mapping's normalisation doesn't mutate the original
+        if is_quarantined(mapping):
+            errors.append(MappingError(index=i, name=mapping.get("name"), reason=f"mapping_quarantined:{mapping.get('quarantine_reason') or 'unknown'}"))
+            continue
         if result.mapping_errors:
             errors.append(MappingError(index=i, name=mapping.get("name"), reason="; ".join(result.mapping_errors)))
             continue

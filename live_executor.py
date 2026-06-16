@@ -20,6 +20,8 @@ from config import (
     DEFAULT_MAX_FILL_PRICE,
     DISABLE_STRUCTURE_TRADES,
     ENABLE_REAL_LIVE_TRADING,
+    LIVE_FAK_BUFFER_TICKS,
+    LIVE_GTC_ENTER_AT_MID,
     LIVE_ORDER_TYPE,
     LIVE_ALLOWED_CADENCE_QUALITIES,
     LIVE_MIN_EVENT_QUALITY,
@@ -39,9 +41,19 @@ from config import (
     MIN_EXECUTABLE_EDGE,
     MIN_LAG,
     TRADE_EVENTS,
+    VALUE_FAK_BUFFER_TICKS,
+    VALUE_MAX_PER_MATCH,
+    VALUE_REENTRY_COOLDOWN_SEC,
 )
 import aiohttp
 from event_taxonomy import PREMIUM_EVENT_FILTERS, event_tier
+from execution_policy import (
+    POLICY_VERSION,
+    PolicyInput,
+    PolicyResult,
+    evaluate_policy,
+    result_for_existing_decision,
+)
 from signal_engine import age_ms
 from mapping_validator import validate_mapping_identity
 from live_state import load_live_state, save_live_state
@@ -59,8 +71,6 @@ STRUCTURE_EVENTS = frozenset({
 _ALLOWED_ORDER_TYPES = {"FAK", "FOK", "GTC"}
 
 _USDC_BALANCE_PATH = os.path.join("logs", "usdc_balance.json")
-
-VALUE_REENTRY_COOLDOWN_SEC = float(os.getenv("VALUE_REENTRY_COOLDOWN_SEC", "60"))
 
 # B2: edge-weighted sizing cap. order_usd is multiplied by min(EDGE_SIZE_MAX_MULT,
 # edge / MIN_EXECUTABLE_EDGE), floored at 1.0. Set to 1.0 to disable scaling.
@@ -293,9 +303,18 @@ class LiveOrderAttempt:
     strategy_subtype: str | None = None
     is_reversal: bool | None = None
     is_continuation: bool | None = None
+    policy_allowed: bool | None = None
+    policy_reason: str = ""
+    would_pass_live: bool | None = None
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+    policy_version: str = POLICY_VERSION
+    risk_tags: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        data["risk_tags"] = ",".join(self.risk_tags)
+        return data
 
 
 class LiveCLOBClient:
@@ -830,8 +849,37 @@ class LiveExecutor:
     def remaining_budget(self) -> float:
         return max(0.0, MAX_TOTAL_LIVE_USD - self.total_submitted_usd)
 
+    def _policy_mode(self) -> str:
+        return "real_live" if ENABLE_REAL_LIVE_TRADING else "dry_live"
+
+    def _risk_state_for_policy(self, match_id: str | None = None) -> dict[str, Any]:
+        return {
+            "total_submitted_usd": self.total_submitted_usd,
+            "open_positions": self.open_positions,
+            "daily_realized_pnl_usd": self.daily_realized_pnl_usd,
+            "match_open_usd": self._submitted_match_usd.get(str(match_id), 0.0) if match_id else None,
+        }
+
+    def _apply_policy_result(self, attempt: LiveOrderAttempt, result: PolicyResult) -> LiveOrderAttempt:
+        attempt.policy_allowed = result.allowed
+        attempt.policy_reason = result.reason
+        attempt.would_pass_live = result.would_pass_live
+        attempt.live_skip_reason = result.live_skip_reason
+        attempt.paper_only_bypass = result.paper_only_bypass
+        attempt.policy_version = result.policy_version
+        attempt.risk_tags = result.risk_tags
+        if result.price_cap is not None and attempt.price_cap is None:
+            attempt.price_cap = result.price_cap
+        return attempt
+
     def _reject(self, signal: dict, mapping: dict, game: dict, reason: str, **extra) -> LiveOrderAttempt:
-        return LiveOrderAttempt(
+        policy_result = extra.get("policy_result") or result_for_existing_decision(
+            False,
+            reason,
+            price_cap=extra.get("price_cap"),
+            risk_tags=tuple(extra.get("risk_tags") or ()),
+        )
+        attempt = LiveOrderAttempt(
             event_type=str(signal.get("event_type") or ""),
             event_direction=str(signal.get("event_direction") or ""),
             token_id=str(signal.get("token_id") or ""),
@@ -861,6 +909,7 @@ class LiveExecutor:
             is_reversal=extra.get("is_reversal"),
             is_continuation=extra.get("is_continuation"),
         )
+        return self._apply_policy_result(attempt, policy_result)
 
     async def try_buy(self, *, signal: dict, mapping: dict, game: dict, book_store) -> LiveOrderAttempt:
         mapping_result = validate_mapping_identity(mapping, game)
@@ -868,7 +917,28 @@ class LiveExecutor:
             return self._reject(
                 signal, mapping, game,
                 f"mapping_invalid:{';'.join(mapping_result.mapping_errors) or 'confidence_not_1'}",
+                risk_tags=("mapping_valid",),
             )
+        token_id_for_policy = str(signal.get("token_id") or "")
+        book_for_policy = book_store.get(token_id_for_policy) if book_store and token_id_for_policy else None
+        signal_match_id = str(game.get("match_id") or game.get("lobby_id") or "")
+        policy_result = evaluate_policy(
+            PolicyInput(
+                mode=self._policy_mode(),
+                strategy_kind=str(signal.get("strategy_kind") or signal.get("event_family") or signal.get("event_type") or ""),
+                market_type=str(mapping.get("market_type") or ""),
+                token_id=token_id_for_policy,
+                side=str(signal.get("side") or ""),
+                signal=dict(signal),
+                game=dict(game),
+                mapping=dict(mapping),
+                book=dict(book_for_policy) if book_for_policy else None,
+                now_ns=time.time_ns(),
+                risk_state=self._risk_state_for_policy(signal_match_id),
+            )
+        )
+        if not policy_result.allowed:
+            return self._reject(signal, mapping, game, policy_result.reason, policy_result=policy_result)
         if not ALLOW_EVENT_TRADES:
             return self._reject(signal, mapping, game, "event_trades_disabled")
         if ALLOW_GAME_OVER_ONLY and not game.get("game_over"):
@@ -907,7 +977,6 @@ class LiveExecutor:
         cluster_types = {e for e in str(signal.get("cluster_event_types") or event_type).split("+") if e}
         is_book_move = event_type == "BOOK_MOVE"
         event_direction = str(signal.get("event_direction") or "")
-        signal_match_id = str(game.get("match_id") or game.get("lobby_id") or "")
 
         # Block ALL second entries on a match.
         # 2026-05-29 added opposite-direction allowance, then REVERTED after
@@ -1054,8 +1123,7 @@ class LiveExecutor:
             # moving books (ask rises as the favorite's signal fires → cap sits
             # below the live ask → zero fill). Widened+configurable; still bounded
             # by event_max_fill below and the S3 price gate (≤0.84).
-            _fak_ticks = float(os.getenv("LIVE_FAK_BUFFER_TICKS", "4"))
-            price_cap = round_down_to_tick(effective_ask + _fak_ticks * float(tick_size), tick_size)
+            price_cap = round_down_to_tick(effective_ask + LIVE_FAK_BUFFER_TICKS * float(tick_size), tick_size)
         price_cap = min(price_cap, event_max_fill)
         price_cap = round_down_to_tick(price_cap, tick_size)
         if price_cap <= 0 or price_cap > 0.99 or not math.isfinite(price_cap):
@@ -1073,8 +1141,7 @@ class LiveExecutor:
         gtc_limit_price: float | None = None
         if LIVE_ORDER_TYPE == "GTC" and not is_book_move:
             _tick = float(tick_size)
-            _enter_mid = os.getenv("LIVE_GTC_ENTER_AT_MID", "false").lower() in {"1","true","yes"}
-            if _enter_mid and ask is not None and bid is not None:
+            if LIVE_GTC_ENTER_AT_MID and ask is not None and bid is not None:
                 mid = (bid + ask) / 2.0
                 _passive = round_down_to_tick(mid, tick_size)
             else:
@@ -1163,6 +1230,16 @@ class LiveExecutor:
             strategy_subtype=signal.get("strategy_subtype"),
             is_reversal=bool(signal.get("is_reversal", False)),
             is_continuation=bool(signal.get("is_continuation", False)),
+        )
+        self._apply_policy_result(
+            attempt,
+            result_for_existing_decision(
+                True,
+                "allowed",
+                price_cap=price_cap,
+                size_usd=order_usd,
+                risk_tags=policy_result.risk_tags,
+            ),
         )
 
         attempt.submit_start_ns = time.time_ns()
@@ -1261,7 +1338,7 @@ class LiveExecutor:
 
         return attempt
 
-    def _reject_value(self, signal, mapping, game, token_id, size_usd, reason) -> LiveOrderAttempt:
+    def _reject_value(self, signal, mapping, game, token_id, size_usd, reason, policy_result: PolicyResult | None = None) -> LiveOrderAttempt:
         signal_kind = signal.__class__.__name__
         if signal_kind == "EventTriggeredValueSignal":
             event_type = "EVENT_REVERSAL_EDGE" if signal.is_reversal else "EVENT_CONTINUATION_EDGE"
@@ -1284,7 +1361,12 @@ class LiveExecutor:
             
         trader_kind = "dswing" if event_type == "DSWING" else "value"
 
-        return LiveOrderAttempt(
+        policy_result = policy_result or result_for_existing_decision(
+            False,
+            reason,
+            size_usd=size_usd,
+        )
+        attempt = LiveOrderAttempt(
             event_type=event_type,
             event_direction=str(signal.direction),
             token_id=str(token_id or ""),
@@ -1309,6 +1391,7 @@ class LiveExecutor:
             is_reversal=is_reversal,
             is_continuation=is_continuation,
         )
+        return self._apply_policy_result(attempt, policy_result)
 
     async def try_buy_manual(
         self,
@@ -1321,7 +1404,7 @@ class LiveExecutor:
     ) -> LiveOrderAttempt:
         """Submit a FAK buy from a dashboard manual order."""
         def _reject(reason: str) -> LiveOrderAttempt:
-            return LiveOrderAttempt(
+            attempt = LiveOrderAttempt(
                 event_type="MANUAL",
                 event_direction="manual",
                 token_id=str(token_id),
@@ -1335,6 +1418,10 @@ class LiveExecutor:
                 trader_kind="manual", exit_horizon_sec=None,
                 strategy_kind="MANUAL", strategy_family="MANUAL", strategy_subtype=None,
                 is_reversal=False, is_continuation=False,
+            )
+            return self._apply_policy_result(
+                attempt,
+                result_for_existing_decision(False, reason or "rejected"),
             )
 
         from config import ENABLE_REAL_LIVE_TRADING
@@ -1368,6 +1455,10 @@ class LiveExecutor:
         attempt.submitted_size_usd = size_usd
         attempt.best_ask = ask
         attempt.price_cap = price_cap
+        self._apply_policy_result(
+            attempt,
+            result_for_existing_decision(True, "allowed", price_cap=price_cap, size_usd=size_usd),
+        )
 
         tick = mapping.get("tick_size") or str(LIVE_TICK_SIZE)
         neg_risk = bool(mapping.get("neg_risk", False))
@@ -1471,11 +1562,10 @@ class LiveExecutor:
         # submitted USD per match at VALUE_MAX_PER_MATCH (≈ one trade) regardless of
         # whether the dedup/recording fires. This is what dumped ~$50 into Inner
         # Circle/MODUS (no cap on this path). Persisted in _submitted_match_usd.
-        _vmpm = float(os.getenv("VALUE_MAX_PER_MATCH", "6.0"))
         match_used = self._submitted_match_usd.get(signal_match_id, 0.0)
-        if match_used + size_usd > _vmpm:
+        if match_used + size_usd > VALUE_MAX_PER_MATCH:
             return self._reject_value(signal, mapping, game, token_id, size_usd,
-                                      f"value_match_cap:used={match_used:.1f}_cap={_vmpm:.1f}")
+                                      f"value_match_cap:used={match_used:.1f}_cap={VALUE_MAX_PER_MATCH:.1f}")
 
         # Re-entry cooldown per (match, direction). Hold-to-settle wants ONE bet
         # per match-side; the cooldown plus the caller's open-position check guard
@@ -1501,8 +1591,7 @@ class LiveExecutor:
         # rises as the leader's signal fires -> cap below the live ask -> 0 fill; that's
         # why VALUE was 0/16 while the event path, already on 4 ticks, fills ~54%). Match
         # the event path's proven buffer. Bounded below by fair (never pay past fair).
-        _fak_ticks = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "4"))
-        price_cap = round(min(ask + _fak_ticks * _tick, signal.fair_price), 4)
+        price_cap = round(min(ask + VALUE_FAK_BUFFER_TICKS * _tick, signal.fair_price), 4)
         neg_risk = bool(mapping.get("neg_risk", False))
 
         if ask > price_cap:
@@ -1546,6 +1635,15 @@ class LiveExecutor:
             strategy_subtype=strategy_subtype,
             is_reversal=is_reversal,
             is_continuation=is_continuation,
+        )
+        self._apply_policy_result(
+            attempt,
+            result_for_existing_decision(
+                True,
+                "allowed",
+                price_cap=price_cap,
+                size_usd=size_usd,
+            ),
         )
 
         attempt.submit_start_ns = time.time_ns()

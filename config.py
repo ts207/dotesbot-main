@@ -6,6 +6,7 @@ import hashlib
 import subprocess
 import time
 from event_taxonomy import RETIRED_FIXED_WINDOW_EVENTS, TIER_A_EVENTS, TIER_B_EVENTS, UNREACHABLE_PRO_EVENTS
+from runtime_config import load_config
 
 try:
     from dotenv import load_dotenv
@@ -14,6 +15,8 @@ except ImportError:
         return False
 
 load_dotenv()
+
+RUNTIME_CONFIG = load_config()
 
 RUN_ID = os.getenv("RUN_ID") or str(int(time.time()))
 def _git_code_version() -> str:
@@ -37,15 +40,17 @@ STEAM_API_KEY = os.getenv("STEAM_API_KEY")
 MODE = os.getenv("MODE", "paper").lower()
 
 # Guarded live-path switch. Defaults to false; paper mode remains the default.
-LIVE_TRADING = os.getenv("LIVE_TRADING", "false").lower() in {"1", "true", "yes"}
-ENABLE_REAL_LIVE_TRADING = os.getenv("ENABLE_REAL_LIVE_TRADING", "false").lower() in {"1", "true", "yes"}
-MAX_TOTAL_LIVE_USD = float(os.getenv("MAX_TOTAL_LIVE_USD", "1000"))
-MAX_DAILY_DRAWDOWN_USD = float(os.getenv("MAX_DAILY_DRAWDOWN_USD", "25"))
-MAX_TRADE_USD = float(os.getenv("MAX_TRADE_USD", "1"))
-MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "1"))
+LIVE_TRADING = RUNTIME_CONFIG.live.live_trading
+ENABLE_REAL_LIVE_TRADING = RUNTIME_CONFIG.live.enable_real_live_trading
+MAX_TOTAL_LIVE_USD = RUNTIME_CONFIG.live.max_total_live_usd
+MAX_DAILY_DRAWDOWN_USD = RUNTIME_CONFIG.live.max_daily_drawdown_usd
+MAX_TRADE_USD = RUNTIME_CONFIG.live.max_trade_usd
+MAX_OPEN_POSITIONS = RUNTIME_CONFIG.live.max_open_positions
 LIVE_ORDER_TYPE = os.getenv("ORDER_TYPE", "FAK").upper()
 LIVE_TICK_SIZE = os.getenv("LIVE_TICK_SIZE", "0.01")
 LIVE_SAFETY_MARGIN = float(os.getenv("LIVE_SAFETY_MARGIN", "0.02"))
+LIVE_FAK_BUFFER_TICKS = float(os.getenv("LIVE_FAK_BUFFER_TICKS", "4"))
+LIVE_GTC_ENTER_AT_MID = os.getenv("LIVE_GTC_ENTER_AT_MID", "false").lower() in {"1", "true", "yes"}
 LIVE_REQUIRE_CADENCE_SCHEMA = os.getenv("LIVE_REQUIRE_CADENCE_SCHEMA", "true").lower() in {"1", "true", "yes"}
 LIVE_ALLOWED_CADENCE_QUALITIES = {
     q.strip() for q in os.getenv("LIVE_ALLOWED_CADENCE_QUALITIES", "direct,normal").split(",") if q.strip()
@@ -77,7 +82,7 @@ DSWING_EXIT_QUALITY_CSV_PATH = os.getenv(
     "logs/dswing_exit_quality.csv",
 )
 
-EVENT_TRIGGERED_VALUE_ENABLED = os.getenv("EVENT_TRIGGERED_VALUE_ENABLED", "true").lower() in {"1", "true", "yes"}
+EVENT_TRIGGERED_VALUE_ENABLED = RUNTIME_CONFIG.strategy.event_triggered_value_enabled
 ENABLE_EVENT_TRIGGERED_VALUE_TRADING = os.getenv("ENABLE_EVENT_TRIGGERED_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}
 EVENT_VALUE_MIN_EDGE = float(os.getenv("EVENT_VALUE_MIN_EDGE", "0.10"))
 EVENT_VALUE_MIN_FAIR_DELTA = float(os.getenv("EVENT_VALUE_MIN_FAIR_DELTA", "0.06"))
@@ -92,6 +97,33 @@ EVENT_VALUE_REVERSAL_MIN_EDGE = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_EDGE",
 EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA", "0.10"))
 EVENT_VALUE_REVERSAL_MAX_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MAX_ASK", "0.45"))
 EVENT_VALUE_REVERSAL_MIN_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_ASK", "0.08"))
+
+ENABLE_VALUE_TRADING = os.getenv("ENABLE_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}
+VALUE_MIN_EDGE = float(os.getenv("VALUE_MIN_EDGE", "0.10"))
+VALUE_MAX_PRICE = float(os.getenv("VALUE_MAX_PRICE", "0.84"))
+VALUE_MIN_NW_LEAD = int(os.getenv("VALUE_MIN_NW_LEAD", "3000"))
+VALUE_MIN_GAME_TIME = int(os.getenv("VALUE_MIN_GAME_TIME", "600"))
+VALUE_MIN_FAIR = float(os.getenv("VALUE_MIN_FAIR", "0.0"))
+VALUE_HEDGE_MIN_FAIR = float(os.getenv("VALUE_HEDGE_MIN_FAIR", "0.5"))
+VALUE_HEDGE_MIN_EDGE = float(os.getenv("VALUE_HEDGE_MIN_EDGE", "0.04"))
+VALUE_MIN_PRICE = float(os.getenv("VALUE_MIN_PRICE", "0.50"))
+VALUE_MAX_EDGE = float(os.getenv("VALUE_MAX_EDGE", "0.30"))
+VALUE_MAX_GAME_TIME = int(os.getenv("VALUE_MAX_GAME_TIME", "1800"))
+VALUE_TRADE_USD = float(os.getenv("VALUE_TRADE_USD", "5.0"))
+VALUE_MAX_BOOK_AGE_MS = int(os.getenv("VALUE_MAX_BOOK_AGE_MS", "30000"))
+VALUE_FLIP_LEAD = int(os.getenv("VALUE_FLIP_LEAD", "5000"))
+VALUE_FLIP_ASK_FLOOR = float(os.getenv("VALUE_FLIP_ASK_FLOOR", "0.35"))
+VALUE_REENTRY_COOLDOWN_SEC = float(os.getenv("VALUE_REENTRY_COOLDOWN_SEC", "60"))
+VALUE_MAX_PER_MATCH = float(os.getenv("VALUE_MAX_PER_MATCH", "6.0"))
+VALUE_FAK_BUFFER_TICKS = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "4"))
+
+DSWING_LEAD = int(os.getenv("DSWING_LEAD", "6000"))
+DSWING_MIN_EDGE = float(os.getenv("DSWING_MIN_EDGE", "0.05"))
+DSWING_MAX_PRICE = float(os.getenv("DSWING_MAX_PRICE", "0.92"))
+DSWING_MIN_GAME_TIME = int(os.getenv("DSWING_MIN_GAME_TIME", "600"))
+DSWING_TRADE_USD = float(os.getenv("DSWING_TRADE_USD", "5.0"))
+DSWING_MAX_BOOK_AGE_MS = int(os.getenv("DSWING_MAX_BOOK_AGE_MS", "15000"))
+DSWING_MIN_P_GAME = float(os.getenv("DSWING_MIN_P_GAME", "0.88"))
 
 # Event-reversal exit quarantine.
 # Default is disabled so EVENT_REVERSAL_EDGE positions do not silently become an
@@ -124,7 +156,7 @@ ENABLE_LEGACY_ADVERSE_EXITS = os.getenv(
 # NOTE: GetLiveLeagueGames carries a ~120s Valve-imposed broadcast delay.
 # GetTopLiveGame is ~15–30s.
 # If market lag is ~60s and Steam delay is ~30s, the actual capture window is ~30s.
-STEAM_POLL_SECONDS = float(os.getenv("STEAM_POLL_SECONDS", "3.0"))
+STEAM_POLL_SECONDS = RUNTIME_CONFIG.feed.steam_poll_seconds
 WS_RECONNECT_SECONDS = float(os.getenv("WS_RECONNECT_SECONDS", "5"))
 # GetLiveLeagueGames refresh interval — it adds ~120s on top of broadcaster delay
 # and is only used for team-name enrichment, so polling it slowly is correct.
@@ -141,21 +173,21 @@ LLG_REFRESH_SECONDS = int(os.getenv("LLG_REFRESH_SECONDS", "60"))
 # (49%) at 10s gate while live inter-snapshot p90=21.6s, p99=64s; 25s covers
 # >90% of legitimate snapshots. Hold-to-settle events tolerate the small extra
 # age tradeoff (60s markout already absorbs much larger lag).
-MAX_STEAM_AGE_MS = int(os.getenv("MAX_STEAM_AGE_MS", "25000"))
+MAX_STEAM_AGE_MS = RUNTIME_CONFIG.feed.max_steam_age_ms
 # Source freshness guards. received_at_ns only proves the HTTP response is fresh;
 # these guards prevent paper trades from slower/stale Dota sources.
 # stream_delay_s is spectator/broadcast delay metadata only; it is logged, not used as a skip guard.
-REQUIRE_TOP_LIVE_FOR_SIGNALS = os.getenv("REQUIRE_TOP_LIVE_FOR_SIGNALS", "true").lower() in {"1", "true", "yes"}
+REQUIRE_TOP_LIVE_FOR_SIGNALS = RUNTIME_CONFIG.feed.require_top_live_for_signals
 # 2026-05-28 — Tightened 120→30s. Observed source_update_age_sec distribution
 # (top_live only): median 3.8s, p75 38.8s, p90 68.6s, p99 111.3s. The 120s
 # threshold sat past p99 and never fired. 30s catches the actual stale tail
 # while preserving the p75 of normal traffic.
-MAX_SOURCE_UPDATE_AGE_SEC = float(os.getenv("MAX_SOURCE_UPDATE_AGE_SEC", "30"))
-MAX_BOOK_AGE_MS = int(os.getenv("MAX_BOOK_AGE_MS", "90000"))
+MAX_SOURCE_UPDATE_AGE_SEC = RUNTIME_CONFIG.feed.max_source_update_age_sec
+MAX_BOOK_AGE_MS = RUNTIME_CONFIG.book.max_book_age_ms
 # Signal edge / lag knobs. MIN_EDGE was the old combined knob; keep it as
 # a backward-compatible default for MIN_LAG only when MIN_LAG is unset.
-MIN_LAG = float(os.getenv("MIN_LAG", os.getenv("MIN_EDGE", "0.05")))
-MIN_EXECUTABLE_EDGE = float(os.getenv("MIN_EXECUTABLE_EDGE", "0.05"))
+MIN_LAG = RUNTIME_CONFIG.signal.min_lag
+MIN_EXECUTABLE_EDGE = RUNTIME_CONFIG.signal.min_executable_edge
 UNDERDOG_REVERSAL_MIN_EDGE = float(os.getenv("UNDERDOG_REVERSAL_MIN_EDGE", "0.02"))
 UNDERDOG_REVERSAL_MIN_LAG = float(os.getenv("UNDERDOG_REVERSAL_MIN_LAG", "0.03"))
 # --- S3: net-worth value gate (2026-06-03) ---------------------------------
@@ -174,9 +206,11 @@ S3_MAX_PRICE = float(os.getenv("S3_MAX_PRICE", "0.84"))     # never pay above th
 # once more data accumulates. Fail-open if Elo unknown.
 S3_ELO_ENABLED = os.getenv("S3_ELO_ENABLED", "false").lower() == "true"
 S3_ELO_MARGIN = int(os.getenv("S3_ELO_MARGIN", "50"))      # skip if backed_elo < opp_elo - this
+S3_USE_WINPROB = os.getenv("S3_USE_WINPROB", "true").lower() == "true"
+TIER1_LEAGUE_IDS = {x.strip() for x in os.getenv("TIER1_LEAGUE_IDS", "").split(",") if x.strip()}
 PRICE_LOOKBACK_SEC = float(os.getenv("PRICE_LOOKBACK_SEC", "10"))
 DEFAULT_MAX_FILL_PRICE = float(os.getenv("DEFAULT_MAX_FILL_PRICE", "0.80"))
-MAX_SPREAD = float(os.getenv("MAX_SPREAD", "0.15"))
+MAX_SPREAD = RUNTIME_CONFIG.book.max_spread
 # 2026-05-30 — Raised 0.08→0.50. The 8c cap was designed for short-horizon
 # (30-60s markout) events where spread = realized exit slippage. 11/12 current
 # tradable events are hold-to-settle (EXIT_HORIZON=0), so spread on entry is
@@ -198,13 +232,14 @@ BOOK_MOVE_ALPHA_THRESHOLD = float(os.getenv("BOOK_MOVE_ALPHA_THRESHOLD", "0.03")
 # are noisy/lane-skirmish-tier, post-12 is when real teamfight dynamics kick in.
 FIGHT_SWING_MIN_GAME_TIME_SEC = int(os.getenv("FIGHT_SWING_MIN_GAME_TIME_SEC", "720"))
 FIGHT_SWING_MAX_GAME_TIME_SEC = int(os.getenv("FIGHT_SWING_MAX_GAME_TIME_SEC", "2400"))
-MIN_ASK_SIZE_USD = float(os.getenv("MIN_ASK_SIZE_USD", "25"))
-PAPER_TRADE_SIZE_USD = float(os.getenv("PAPER_TRADE_SIZE_USD", "25"))
-PAPER_SLIPPAGE_CENTS = float(os.getenv("PAPER_SLIPPAGE_CENTS", "0.01"))
-PAPER_EXECUTION_DELAY_MS = int(os.getenv("PAPER_EXECUTION_DELAY_MS", "0"))
+MIN_ASK_SIZE_USD = RUNTIME_CONFIG.book.min_ask_size_usd
+PAPER_MODE = RUNTIME_CONFIG.paper.paper_mode
+PAPER_TRADE_SIZE_USD = RUNTIME_CONFIG.paper.paper_trade_size_usd
+PAPER_SLIPPAGE_CENTS = RUNTIME_CONFIG.paper.paper_slippage_cents
+PAPER_EXECUTION_DELAY_MS = RUNTIME_CONFIG.paper.paper_execution_delay_ms
 # Hard cap on total open paper exposure per match (USD). Prevents runaway stacking
 # when multiple events fire in the same direction within a single game.
-MAX_OPEN_USD_PER_MATCH = float(os.getenv("MAX_OPEN_USD_PER_MATCH", "150"))
+MAX_OPEN_USD_PER_MATCH = RUNTIME_CONFIG.paper.max_open_usd_per_match
 # Prevent immediate re-entry churn after a paper exit in the same token.
 PAPER_REENTRY_COOLDOWN_SEC = float(os.getenv("PAPER_REENTRY_COOLDOWN_SEC", "300"))
 
@@ -217,9 +252,12 @@ EXIT_STOP_LOSS_REL = float(os.getenv("EXIT_STOP_LOSS_REL",  "0.10"))   # max los
 # Set to 0 to disable. Data: mid-game FIGHT_SWING peak-to-trough rarely exceeds 3c in winners.
 EXIT_TRAILING_STOP_CENTS = float(os.getenv("EXIT_TRAILING_STOP_CENTS", "0.10"))  # 2026-05-27: was 0.03 (too tight)
 EXIT_TRAILING_STOP_GRACE_SEC = float(os.getenv("EXIT_TRAILING_STOP_GRACE_SEC", "30.0"))  # 2026-05-27: was 10 (arm later, less noise)
+EXIT_HARD_STOP_LOSS_CENTS = float(os.getenv("EXIT_HARD_STOP_LOSS_CENTS", "0.15"))
 VALUE_EXIT_FAIR_INVALIDATION_ENABLED = os.getenv("VALUE_EXIT_FAIR_INVALIDATION_ENABLED", "true").lower() in {"1", "true", "yes"}
 VALUE_EXIT_FAIR_ENTRY_BUFFER = float(os.getenv("VALUE_EXIT_FAIR_ENTRY_BUFFER", "0.03"))
 VALUE_EXIT_FAIR_BID_BUFFER = float(os.getenv("VALUE_EXIT_FAIR_BID_BUFFER", "0.05"))
+CATASTROPHE_FLOOR = float(os.getenv("CATASTROPHE_FLOOR", "0.12"))
+CATASTROPHE_NW_CONFIRM = float(os.getenv("CATASTROPHE_NW_CONFIRM", "2000"))
 # If the average market-latency edge window passes before price reaches model
 # value, close and stop waiting for the original stale edge to materialize.
 # Disabled (0): was forcing exits at 30s before the move completed on 4/7 sample trades.

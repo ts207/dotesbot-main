@@ -114,7 +114,31 @@ MAX_SPREAD=0.06
 MIN_ASK_SIZE_USD=25
 ```
 
+Before running the bot, inspect the effective sourced config:
+
+```bash
+python check_config.py
+```
+
+The checker shows each runtime value, whether it came from env/default, and
+whether it is safe for paper, dry-live, and real-live operation. The centralized
+defaults live in `runtime_config.py` and intentionally match `.env.example` for
+the high-risk feed, book, paper, live-risk, and strategy-enable settings.
+
 `DEFAULT_MAX_FILL_PRICE` is a conservative fallback. Important events have higher in-code safety caps, while the real trade filter remains `fair_price - executable_price`.
+
+Paper entries are controlled by:
+
+```text
+PAPER_MODE=research|live_parity|shadow_live
+```
+
+- `research` keeps counterfactual paper entries but tags live rejection fields.
+- `live_parity` rejects paper entries that would not pass live gates.
+- `shadow_live` only enters paper positions when dry-live policy would submit.
+
+A profitable paper result is deployable only if the live-parity subset is also
+profitable. Use `python3 analyze_logs.py` to print the split.
 
 ## Suggested validation rule
 
@@ -171,6 +195,7 @@ ENABLE_REAL_LIVE_TRADING=false \
 MAX_TOTAL_LIVE_USD=10 \
 MAX_TRADE_USD=1 \
 MAX_OPEN_POSITIONS=1 \
+MAX_DAILY_DRAWDOWN_USD=10 \
 ORDER_TYPE=FAK \
 MIN_EXECUTABLE_EDGE=0.08 \
 MIN_LAG=0.08 \
@@ -194,6 +219,11 @@ starts the guarded live path and logs would-be live attempts without submitting
 orders. Set `ENABLE_REAL_LIVE_TRADING=true` only for the intentional real $10
 order-flow test after `logs/live_attempts.csv` shows clean prechecks on real
 current markets.
+
+Real live mode fails closed if required live settings are still coming from
+repository defaults or fail the real-live safety checks. Run `python check_config.py`
+and resolve any `safe_for_real_live=false` rows before setting
+`ENABLE_REAL_LIVE_TRADING=true`.
 
 The live executor sends only capped BUY market orders using FAK/FOK semantics. For
 BUY orders, `price` is used as the worst acceptable price cap. The code computes:
