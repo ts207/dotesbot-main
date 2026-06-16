@@ -26,12 +26,6 @@ PROCS = {
                "logs/heartbeat",         180, 90, "logs/stdout.log"),
     "binder": ([sys.executable, "auto_series_binder.py", "--loop"],
                "logs/binder_heartbeat",  150, 45, "logs/binder.log"),
-    "shadow": ([sys.executable, "settlement_shadow.py", "--loop"],
-               "logs/shadow_heartbeat",  450, 60, "logs/shadow.log"),
-    # continuous health/risk watch — equity curve + alerts (logs/monitor.log).
-    # Observability + the daily-drawdown executor circuit-breaker is the hard kill.
-    "monitor": ([sys.executable, "monitor.py", "--loop"],
-                "logs/monitor_heartbeat", 900, 60, "logs/monitor.log"),
 }
 
 global_state = {}

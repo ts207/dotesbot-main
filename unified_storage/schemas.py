@@ -243,12 +243,12 @@ SCHEMA_SIGNALS = pa.schema([
 
 
 # ---------- trade_attempts ----------
-# Union of: live_attempts.csv, paper_trades.csv, shadow_trades.csv, scalp_trades.csv.
+# Union of: live_attempts.csv and paper_trades.csv.
 # `trader_kind` distinguishes the writer; `signal_id` joins back to signals.
 SCHEMA_TRADE_ATTEMPTS = pa.schema([
     pa.field("attempt_id", pa.string()),     # NEW: uuid5(match, token, ts)
     pa.field("signal_id", pa.string()),      # NEW: foreign key to signals
-    pa.field("trader_kind", pa.string()),    # NEW: 'live' | 'paper' | 'shadow' | 'scalp'
+    pa.field("trader_kind", pa.string()),
     pa.field("received_at_utc", pa.string()),
     pa.field("received_at_ns", pa.int64()),
     pa.field("phase", pa.string()),
@@ -330,70 +330,6 @@ SCHEMA_MARKOUTS = pa.schema([
     pa.field("edge_after", pa.float64()),
     pa.field("decision_at_signal", pa.string()),
     pa.field("side", pa.string()),
-    pa.field("date", pa.string()),
-    pa.field("schema_version", pa.string()),
-    pa.field("source_file", pa.string()),
-])
-
-
-# ---------- continuous_attempts ----------
-# Source: continuous_attempts.csv. One row per continuous-engine evaluation
-# (would_trade=True for signals, False with reason for rejects).
-SCHEMA_CONTINUOUS_ATTEMPTS = pa.schema([
-    pa.field("received_at_utc", pa.string()),
-    pa.field("received_at_ns", pa.int64()),
-    pa.field("signal_id", pa.string()),
-    pa.field("match_id", pa.string()),
-    pa.field("would_trade", pa.bool_()),
-    pa.field("reject_reason", pa.string()),
-    pa.field("direction", pa.int32()),
-    pa.field("side", pa.string()),
-    pa.field("sized_usd", pa.float64()),
-    pa.field("exit_horizon_sec", pa.int32()),
-    pa.field("yes_mid", pa.float64()),
-    pa.field("no_mid", pa.float64()),
-    pa.field("yes_ask", pa.float64()),
-    pa.field("no_ask", pa.float64()),
-    pa.field("yes_bid", pa.float64()),
-    pa.field("no_bid", pa.float64()),
-    pa.field("ref_mid_blended", pa.float64()),
-    pa.field("game_time_sec", pa.int32()),
-    pa.field("d_lead_1", pa.int32()),
-    pa.field("d_kill_1", pa.int32()),
-    pa.field("cur_lead_yes", pa.int32()),
-    pa.field("pregame_signed", pa.float64()),
-    pa.field("book_imbalance_yes", pa.float64()),
-    pa.field("book_imbalance_no", pa.float64()),
-    pa.field("snap_gap_sec", pa.float64()),
-    pa.field("conviction_mult", pa.float64()),
-    pa.field("magnitude_mult", pa.float64()),
-    pa.field("date", pa.string()),
-    pa.field("schema_version", pa.string()),
-    pa.field("source_file", pa.string()),
-])
-
-
-# ---------- arb_attempts ----------
-# Source: arb_attempts.csv. One row per arb-engine scan.
-SCHEMA_ARB_ATTEMPTS = pa.schema([
-    pa.field("received_at_utc", pa.string()),
-    pa.field("received_at_ns", pa.int64()),
-    pa.field("arb_id", pa.string()),
-    pa.field("market_id", pa.string()),
-    pa.field("match_id", pa.string()),
-    pa.field("would_trade", pa.bool_()),
-    pa.field("reject_reason", pa.string()),
-    pa.field("yes_token_id", pa.string()),
-    pa.field("no_token_id", pa.string()),
-    pa.field("yes_ask", pa.float64()),
-    pa.field("no_ask", pa.float64()),
-    pa.field("arb_cost", pa.float64()),
-    pa.field("yes_ask_size", pa.float64()),
-    pa.field("no_ask_size", pa.float64()),
-    pa.field("profit_cents", pa.float64()),
-    pa.field("profit_per_dollar", pa.float64()),
-    pa.field("leg_size_usd", pa.float64()),
-    pa.field("expected_profit_usd", pa.float64()),
     pa.field("date", pa.string()),
     pa.field("schema_version", pa.string()),
     pa.field("source_file", pa.string()),
@@ -491,6 +427,30 @@ SCHEMA_LATENCY = pa.schema([
 ])
 
 
+SCHEMA_VALUE_ATTEMPTS = pa.schema([
+    pa.field("received_at_utc", pa.string()),
+    pa.field("received_at_ns", pa.int64()),
+    pa.field("signal_id", pa.string()),
+    pa.field("match_id", pa.string()),
+    pa.field("would_trade", pa.bool_()),
+    pa.field("reject_reason", pa.string()),
+    pa.field("direction", pa.string()),
+    pa.field("side", pa.string()),
+    pa.field("token_id", pa.string()),
+    pa.field("fair_price", pa.float64()),
+    pa.field("ask", pa.float64()),
+    pa.field("edge", pa.float64()),
+    pa.field("lead", pa.int32()),
+    pa.field("game_time_sec", pa.int32()),
+    pa.field("elo_diff", pa.float64()),
+    pa.field("book_age_ms", pa.float64()),
+    pa.field("sized_usd", pa.float64()),
+    pa.field("date", pa.string()),
+    pa.field("schema_version", pa.string()),
+    pa.field("source_file", pa.string()),
+])
+
+
 ALL_SCHEMAS = {
     "snapshots": SCHEMA_SNAPSHOTS,
     "book_ticks": SCHEMA_BOOK_TICKS,
@@ -499,8 +459,7 @@ ALL_SCHEMAS = {
     "trade_attempts": SCHEMA_TRADE_ATTEMPTS,
     "exits": SCHEMA_EXITS,
     "markouts": SCHEMA_MARKOUTS,
-    "continuous_attempts": SCHEMA_CONTINUOUS_ATTEMPTS,
-    "arb_attempts": SCHEMA_ARB_ATTEMPTS,
+    "value_attempts": SCHEMA_VALUE_ATTEMPTS,
     "source_delay": SCHEMA_SOURCE_DELAY,
     "latency": SCHEMA_LATENCY,
 }

@@ -59,14 +59,11 @@ ALLOW_GAME_OVER_ONLY = os.getenv("ALLOW_GAME_OVER_ONLY", "false").lower() in {"1
 ALLOW_EVENT_TRADES = os.getenv("ALLOW_EVENT_TRADES", "true").lower() in {"1", "true", "yes"}
 EVENT_DETECTORS_ENABLED = os.getenv("EVENT_DETECTORS_ENABLED", "true").lower() in {"1", "true", "yes"}
 DISABLE_STRUCTURE_TRADES = os.getenv("DISABLE_STRUCTURE_TRADES", "false").lower() in {"1", "true", "yes"}
-# Default live allowlist = current TIER_A + TIER_B + the "decided game"
-# detector POLL_AEGIS_MOMENTUM (which sits outside the standard tiers but is
-# tradeable). Derives from event_taxonomy so taxonomy changes propagate
-# automatically; the previously-hardcoded list went stale during 2026-05-25
-# tier reshuffling. Research / blocking / retired / unreachable_pro names
-# are intentionally excluded and rejected downstream.
+# Default live allowlist = current TIER_A + TIER_B only. Delayed Roshan/Aegis
+# labels can annotate or veto, but they are not TopLive primitive facts and must
+# not open trades.
 DEFAULT_TRADE_EVENTS = ",".join(sorted(
-    TIER_A_EVENTS | TIER_B_EVENTS | {"POLL_AEGIS_MOMENTUM"}
+    TIER_A_EVENTS | TIER_B_EVENTS
 ))
 TRADE_EVENTS = {e.strip() for e in os.getenv("TRADE_EVENTS", DEFAULT_TRADE_EVENTS).split(",") if e.strip()}
 ALLOW_CONFIRMATION_ONLY_LIVE_TRADES = os.getenv("ALLOW_CONFIRMATION_ONLY_LIVE_TRADES", "false").lower() in {"1", "true", "yes"}
@@ -74,6 +71,18 @@ LIVE_ATTEMPTS_CSV_PATH = os.getenv("LIVE_ATTEMPTS_CSV_PATH", "logs/live_attempts
 PAPER_ATTEMPTS_CSV_PATH = os.getenv("PAPER_ATTEMPTS_CSV_PATH", "logs/paper_attempts.csv")
 PAPER_EXITS_CSV_PATH = os.getenv("PAPER_EXITS_CSV_PATH", "logs/paper_exits.csv")
 PAPER_POSITIONS_PATH = os.getenv("PAPER_POSITIONS_PATH", "logs/paper_positions_v2.json")
+ACTUAL_DOTA_EVENTS_CSV_PATH = os.getenv("ACTUAL_DOTA_EVENTS_CSV_PATH", "logs/actual_dota_events.csv")
+LEGACY_DOTA_EVENTS_CSV_PATH = os.getenv("LEGACY_DOTA_EVENTS_CSV_PATH", "logs/legacy_dota_events.csv")
+STRATEGY_SIGNALS_CSV_PATH = os.getenv("STRATEGY_SIGNALS_CSV_PATH", "logs/strategy_signals.csv")
+
+EVENT_TRIGGERED_VALUE_ENABLED = os.getenv("EVENT_TRIGGERED_VALUE_ENABLED", "true").lower() in {"1", "true", "yes"}
+ENABLE_EVENT_TRIGGERED_VALUE_TRADING = os.getenv("ENABLE_EVENT_TRIGGERED_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}
+EVENT_VALUE_MIN_EDGE = float(os.getenv("EVENT_VALUE_MIN_EDGE", "0.10"))
+EVENT_VALUE_MIN_FAIR_DELTA = float(os.getenv("EVENT_VALUE_MIN_FAIR_DELTA", "0.06"))
+EVENT_VALUE_MAX_ASK = float(os.getenv("EVENT_VALUE_MAX_ASK", "0.84"))
+EVENT_VALUE_MIN_ASK = float(os.getenv("EVENT_VALUE_MIN_ASK", "0.50"))
+EVENT_VALUE_MAX_EDGE = float(os.getenv("EVENT_VALUE_MAX_EDGE", "0.30"))
+EVENT_VALUE_TRADE_USD = float(os.getenv("EVENT_VALUE_TRADE_USD", "5.0"))
 
 ENABLE_MATCH_WINNER_GAME3_PROXY = os.getenv(
     "ENABLE_MATCH_WINNER_GAME3_PROXY", "true"
@@ -87,13 +96,9 @@ ENABLE_MATCH_WINNER_TRADING = os.getenv(
     "ENABLE_MATCH_WINNER_TRADING", "false"
 ).lower() in {"1", "true", "yes"}
 
-SHADOW_TRADES_CSV_PATH = os.getenv(
-    "SHADOW_TRADES_CSV_PATH", "logs/shadow_trades.csv"
-)
-
 # Polling / reconnect
 # NOTE: GetLiveLeagueGames carries a ~120s Valve-imposed broadcast delay.
-# GetTopLiveGame is ~15–30s. The effective arb window is market_lag minus this delay.
+# GetTopLiveGame is ~15–30s.
 # If market lag is ~60s and Steam delay is ~30s, the actual capture window is ~30s.
 STEAM_POLL_SECONDS = float(os.getenv("STEAM_POLL_SECONDS", "3.0"))
 WS_RECONNECT_SECONDS = float(os.getenv("WS_RECONNECT_SECONDS", "5"))
@@ -191,6 +196,9 @@ EXIT_STOP_LOSS_REL = float(os.getenv("EXIT_STOP_LOSS_REL",  "0.10"))   # max los
 # Set to 0 to disable. Data: mid-game FIGHT_SWING peak-to-trough rarely exceeds 3c in winners.
 EXIT_TRAILING_STOP_CENTS = float(os.getenv("EXIT_TRAILING_STOP_CENTS", "0.10"))  # 2026-05-27: was 0.03 (too tight)
 EXIT_TRAILING_STOP_GRACE_SEC = float(os.getenv("EXIT_TRAILING_STOP_GRACE_SEC", "30.0"))  # 2026-05-27: was 10 (arm later, less noise)
+VALUE_EXIT_FAIR_INVALIDATION_ENABLED = os.getenv("VALUE_EXIT_FAIR_INVALIDATION_ENABLED", "true").lower() in {"1", "true", "yes"}
+VALUE_EXIT_FAIR_ENTRY_BUFFER = float(os.getenv("VALUE_EXIT_FAIR_ENTRY_BUFFER", "0.03"))
+VALUE_EXIT_FAIR_BID_BUFFER = float(os.getenv("VALUE_EXIT_FAIR_BID_BUFFER", "0.05"))
 # If the average market-latency edge window passes before price reaches model
 # value, close and stop waiting for the original stale edge to materialize.
 # Disabled (0): was forcing exits at 30s before the move completed on 4/7 sample trades.
@@ -249,7 +257,6 @@ EXIT_HORIZON_BY_EVENT: dict[str, int] = {
     # mean@30s=+0.121 win=52% vs mean@settle=+1.311 win=92%. Settlement
     # captures roughly 10× the per-trade PnL with a much higher win rate.
     "POLL_TEAM_WIPE": 60,
-    "POLL_AEGIS_MOMENTUM": 240, # hold most of the 5-min power window
     # Promoted to TIER_B 2026-05-26 — signal-quality audit shows n=20 +2.25c 75% win.
     # Hold-to-settle (0) per RANK 5 finding: +3.4c at nw_delta>=2000 with 82% win.
     "POLL_COMEBACK_RECOVERY": 0,

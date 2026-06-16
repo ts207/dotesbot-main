@@ -189,5 +189,67 @@ def test_catastrophe_salvage(monkeypatch):
     assert dec3.should_exit is True
     assert dec3.reason == "catastrophe_salvage"
 
+
+def test_value_fair_invalidation_exit(monkeypatch):
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_INVALIDATION_ENABLED", True)
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_ENTRY_BUFFER", 0.03)
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_BID_BUFFER", 0.05)
+    monkeypatch.setattr("live_exit_engine.CATASTROPHE_FLOOR", 0.0)
+    monkeypatch.setattr("live_exit_engine._current_fair_for_position", lambda position, game: 0.50)
+
+    from live_exit_engine import decide_live_exit
+
+    pos = MockPosition()
+    pos.trader_kind = "value"
+    pos.backed_direction = "radiant"
+    pos.entry_time_ns = time.time_ns() - int(600 * 1e9)
+    pos.match_id = "test_match_id"
+    pos.event_type = "VALUE"
+    pos.fair_price = 0.65
+    pos.entry_price = 0.60
+    pos.expected_move = 0.0
+
+    decision = decide_live_exit(
+        position=pos,
+        book={"best_bid": 0.57, "best_ask": 0.59},
+        game_over_match_ids=set(),
+        game={"radiant_lead": -2000, "game_time_sec": 1300},
+        now_ns=time.time_ns(),
+    )
+
+    assert decision.should_exit is True
+    assert decision.reason == "fair_invalidation"
+    assert decision.reference_bid == 0.57
+
+
+def test_value_fair_invalidation_holds_when_bid_already_below_fair(monkeypatch):
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_INVALIDATION_ENABLED", True)
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_ENTRY_BUFFER", 0.03)
+    monkeypatch.setattr("live_exit_engine.VALUE_EXIT_FAIR_BID_BUFFER", 0.05)
+    monkeypatch.setattr("live_exit_engine.CATASTROPHE_FLOOR", 0.0)
+    monkeypatch.setattr("live_exit_engine._current_fair_for_position", lambda position, game: 0.50)
+
+    from live_exit_engine import decide_live_exit
+
+    pos = MockPosition()
+    pos.trader_kind = "value"
+    pos.backed_direction = "radiant"
+    pos.entry_time_ns = time.time_ns() - int(600 * 1e9)
+    pos.match_id = "test_match_id"
+    pos.event_type = "VALUE"
+    pos.fair_price = 0.65
+    pos.entry_price = 0.60
+    pos.expected_move = 0.0
+
+    decision = decide_live_exit(
+        position=pos,
+        book={"best_bid": 0.53, "best_ask": 0.55},
+        game_over_match_ids=set(),
+        game={"radiant_lead": -2000, "game_time_sec": 1300},
+        now_ns=time.time_ns(),
+    )
+
+    assert decision.should_exit is False
+
 if __name__ == "__main__":
     pytest.main([__file__])

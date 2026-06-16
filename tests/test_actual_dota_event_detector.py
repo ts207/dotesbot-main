@@ -1,0 +1,86 @@
+from __future__ import annotations
+
+from actual_dota_event_detector import ActualDotaEventDetector
+from actual_dota_event_types import PRIMITIVE_EVENT_TYPES
+from config import DEFAULT_TRADE_EVENTS
+
+
+def _game(**overrides):
+    base = {
+        "match_id": "m1",
+        "lobby_id": "l1",
+        "league_id": "lg",
+        "data_source": "top_live",
+        "received_at_ns": 1_000_000_000,
+        "game_time_sec": 900,
+        "radiant_lead": 1000,
+        "radiant_score": 5,
+        "dire_score": 4,
+        "tower_state": (0x7FF | (0x7FF << 11)),
+        "game_over": False,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_kill_and_networth_events_are_primitive_toplive_facts():
+    detector = ActualDotaEventDetector()
+    assert detector.observe(_game()) == []
+    events = detector.observe(_game(
+        received_at_ns=2_000_000_000,
+        game_time_sec=930,
+        radiant_lead=4200,
+        radiant_score=8,
+        dire_score=4,
+    ))
+
+    event_types = {event.event_type for event in events}
+    assert "TEAM_KILL_SCORE_CHANGE" in event_types
+    assert "MULTI_KILL_WINDOW" in event_types
+    assert "NETWORTH_LEAD_CHANGE" in event_types
+    assert event_types <= PRIMITIVE_EVENT_TYPES
+    assert all(not event.event_type.startswith("POLL_") for event in events)
+    assert all(event.source == "top_live" for event in events)
+
+
+def test_networth_lead_flip_and_game_end_events():
+    detector = ActualDotaEventDetector()
+    detector.observe(_game(radiant_lead=1800))
+    events = detector.observe(_game(
+        received_at_ns=2_000_000_000,
+        game_time_sec=960,
+        radiant_lead=-2200,
+        game_over=True,
+    ))
+
+    assert {event.event_type for event in events} >= {"NETWORTH_LEAD_FLIP", "GAME_ENDED"}
+    flip = next(event for event in events if event.event_type == "NETWORTH_LEAD_FLIP")
+    assert flip.side == "dire"
+    assert flip.radiant_lead_before == 1800
+    assert flip.radiant_lead_after == -2200
+
+
+def test_tower_destroyed_and_tier_cleared_event_side():
+    full = 0x7FF
+    dire_without_t2 = full & ~(1 << 1) & ~(1 << 4) & ~(1 << 7)
+    detector = ActualDotaEventDetector()
+    detector.observe(_game(tower_state=full | (full << 11)))
+    events = detector.observe(_game(
+        received_at_ns=2_000_000_000,
+        game_time_sec=1000,
+        tower_state=full | (dire_without_t2 << 11),
+    ))
+
+    assert any(event.event_type == "TOWER_DESTROYED" and event.side == "radiant" for event in events)
+    cleared = next(event for event in events if event.event_type == "TOWER_TIER_CLEARED")
+    assert cleared.side == "radiant"
+    assert cleared.structure_team == "dire"
+    assert cleared.structure_tier == "T2"
+
+
+def test_non_toplive_and_aegis_are_not_entry_events():
+    detector = ActualDotaEventDetector()
+    detector.observe(_game(data_source="live_league"))
+    events = detector.observe(_game(data_source="live_league", received_at_ns=2_000_000_000, radiant_score=9))
+    assert events == []
+    assert "POLL_AEGIS_MOMENTUM" not in DEFAULT_TRADE_EVENTS

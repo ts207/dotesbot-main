@@ -1,10 +1,10 @@
 """DOTA-POLY LIVE COMMAND — operational dashboard, redesigned 2026-06-02.
 
 Built around what THIS session proved matters, in priority order:
-  1. SYSTEM HEALTH   — the zombie/hang failures: are supervisor+bot+binder+shadow
+  1. SYSTEM HEALTH   — the zombie/hang failures: are supervisor+bot+binder
                        actually alive (heartbeats), not just PID-present?
   2. CAPITAL & RISK  — sig-3 balance, today P&L, daily-DD vs kill-switch, exposure
-  3. LIVE VALIDATION — settlement-shadow live edge vs backtest (the gate to scaling)
+  3. LIVE VALIDATION — paper/live attempts and exits
   4. PIPELINE        — live → bound → in-window → OPEN winner market (the real ceiling)
   5. STRATEGY        — Option 3 config + the 30min tuning
   6. RECENT ACTIVITY — last signals + rejections-by-reason (gate diagnostics)
@@ -45,8 +45,7 @@ def panel_health():
     # each process's real cadence + margin (supervisor hang-kills past these anyway)
     procs=[("supervisor","supervisor.py",None,0),
            ("bot","python3 main.py","logs/heartbeat",240),
-           ("binder","auto_series_binder","logs/binder_heartbeat",200),
-           ("shadow","settlement_shadow","logs/shadow_heartbeat",500)]
+           ("binder","auto_series_binder","logs/binder_heartbeat",200)]
     cells=[]
     for name,pat,hb,thr in procs:
         alive=proc_alive(pat)
@@ -108,22 +107,17 @@ def panel_capital():
     return L
 
 def panel_validation():
-    L=[c("▐ LIVE VALIDATION  (settlement-shadow vs backtest) ▌",W)]
-    rows=read_csv("logs/settlement_shadow.csv")
-    settled=[r for r in rows if r.get("status") in ("WIN","LOSS")]
-    pending=[r for r in rows if r.get("status")=="PENDING"]
-    if settled:
-        W_=sum(1 for r in settled if r["status"]=="WIN"); n=len(settled)
-        edge=sum(float(r["pnl_per_1"]) for r in settled if r.get("pnl_per_1"))/n
-        wr=W_/n*100
-        # compare to backtest 84% / +0.116
-        verdict = (c("CONFIRMED ✓",G) if (n>=10 and wr>=80) else
-                   c("REGRESSING ✗",R) if (n>=10 and wr<75) else
-                   c(f"need {max(0,10-n)} more settled",Y))
-        L.append(f"  LIVE: {W_}/{n} = {c(f'{wr:.0f}%',G if wr>=80 else Y)}  edge {c(f'{edge:+.3f}/$1',G if edge>0 else R)}   {verdict}")
-        L.append(c(f"  backtest reference: 84% wr, +0.116/$1   |   pending: {len(pending)}",D))
-    else:
-        L.append(c(f"  no settled live trades yet  ({len(pending)} pending)  — waiting on live games to fire + settle",Y))
+    L=[c("▐ PAPER STRATEGY VALIDATION ▌",W)]
+    attempts=read_csv("logs/paper_attempts.csv")
+    exits=read_csv("logs/paper_exits.csv")
+    recent=[r for r in attempts if (r.get("timestamp_utc") or "").startswith(date.today().isoformat())]
+    by_kind={}
+    for row in recent:
+        kind=row.get("trader_kind") or row.get("event_type") or "unknown"
+        by_kind[kind]=by_kind.get(kind,0)+1
+    parts=[f"{k}={v}" for k,v in sorted(by_kind.items())] or ["none"]
+    L.append(f"  attempts today: {len(recent)}   " + "  ".join(parts))
+    L.append(c(f"  exits recorded: {len(exits)}   active strategies: VALUE, EVENT_TRIGGERED_VALUE, DSWING",D))
     return L
 
 def panel_pipeline():

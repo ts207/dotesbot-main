@@ -1,0 +1,253 @@
+from __future__ import annotations
+
+import time
+import uuid
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+import winprob
+from actual_dota_event_types import ActualDotaEvent
+from config import (
+    EVENT_TRIGGERED_VALUE_ENABLED,
+    EVENT_VALUE_MAX_ASK,
+    EVENT_VALUE_MAX_EDGE,
+    EVENT_VALUE_MIN_ASK,
+    EVENT_VALUE_MIN_EDGE,
+    EVENT_VALUE_MIN_FAIR_DELTA,
+    EVENT_VALUE_TRADE_USD,
+)
+from derived_game_state import derive_game_state
+from gettoplive_state import validate_top_live_state
+from value_engine import VALUE_FLIP_ASK_FLOOR, VALUE_FLIP_LEAD, VALUE_MAX_BOOK_AGE_MS
+
+
+_NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555560")
+
+
+def _make_signal_id(match_id: str, event_id: str, token_id: str) -> str:
+    return str(uuid.uuid5(_NAMESPACE, f"event_value|{match_id}|{event_id}|{token_id}"))
+
+
+def _side_fair(
+    *,
+    side: str,
+    radiant_lead: int,
+    game_time_sec: int,
+    game: Mapping[str, Any],
+) -> tuple[float, float | None]:
+    rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
+    rname, dname = game.get("radiant_team"), game.get("dire_team")
+    if side == "radiant":
+        elo = winprob.elo_diff(rtid, dtid, rname, dname)
+        side_lead = radiant_lead
+    else:
+        elo = winprob.elo_diff(dtid, rtid, dname, rname)
+        side_lead = -radiant_lead
+    p_leader = winprob.fair(abs(side_lead), game_time_sec, elo)
+    return (p_leader if side_lead >= 0 else 1.0 - p_leader), elo
+
+
+@dataclass(frozen=True)
+class EventTriggeredValueSignal:
+    signal_id: str
+    event_id: str
+    actual_event_type: str
+    match_id: str
+    received_at_ns: int
+    direction: str
+    side: str
+    token_id: str
+    fair_before: float
+    fair_price: float
+    fair_delta: float
+    ask: float
+    edge: float
+    lead: int
+    game_time_sec: int
+    elo_diff: float | None
+    sized_usd: float
+    book_age_ms: int
+    derived_state_flags: tuple[str, ...]
+    would_pass_live_gates: bool = True
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+
+    def to_signal_dict(self) -> dict:
+        return {
+            "signal_id": self.signal_id,
+            "match_id": self.match_id,
+            "decision": "paper_buy_yes",
+            "reason": "event_triggered_value_edge",
+            "token_id": self.token_id,
+            "side": self.side,
+            "fair_price": self.fair_price,
+            "fair_before": self.fair_before,
+            "fair_delta": self.fair_delta,
+            "executable_edge": self.edge,
+            "expected_move": 0.0,
+            "target_size_usd": self.sized_usd,
+            "event_type": "EVENT_TRIGGERED_VALUE",
+            "actual_event_type": self.actual_event_type,
+            "event_tier": "A",
+            "event_is_primary": True,
+            "event_family": "VALUE",
+            "event_quality": 1.0,
+            "event_direction": self.direction,
+            "derived_state_flags": ",".join(self.derived_state_flags),
+            "would_pass_live_gates": self.would_pass_live_gates,
+            "live_skip_reason": self.live_skip_reason,
+            "paper_only_bypass": self.paper_only_bypass,
+        }
+
+
+@dataclass(frozen=True)
+class EventTriggeredValueReject:
+    match_id: str
+    received_at_ns: int
+    reason: str
+    event_id: str = ""
+    actual_event_type: str = ""
+    direction: str = ""
+    side: str = ""
+    token_id: str = ""
+    fair_before: float | None = None
+    fair_price: float | None = None
+    fair_delta: float | None = None
+    ask: float | None = None
+    edge: float | None = None
+    lead: int | None = None
+    game_time_sec: int | None = None
+    elo_diff: float | None = None
+    book_age_ms: int | None = None
+    would_pass_live_gates: bool = False
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
+
+
+class EventTriggeredValueEngine:
+    def evaluate(
+        self,
+        *,
+        event: ActualDotaEvent,
+        game: Mapping[str, Any],
+        mapping: Mapping[str, Any],
+        book_store: Any,
+        entered_tokens: Any = None,
+    ) -> list[EventTriggeredValueSignal | EventTriggeredValueReject]:
+        if not EVENT_TRIGGERED_VALUE_ENABLED:
+            return []
+        match_id = str(game.get("match_id") or "")
+        cur_ns = int(game.get("received_at_ns") or event.received_at_ns or 0)
+        if not match_id:
+            return []
+        if game.get("data_source") != "top_live" or event.source != "top_live":
+            return [self._reject(event, match_id, cur_ns, "not_top_live")]
+        if event.event_type == "GAME_ENDED" or game.get("game_over"):
+            return [self._reject(event, match_id, cur_ns, "game_over")]
+        if event.side not in {"radiant", "dire"}:
+            return [self._reject(event, match_id, cur_ns, "event_side_not_tradeable")]
+
+        state_check = validate_top_live_state(game)
+        if not state_check.ok:
+            missing = ",".join(state_check.missing_fields)
+            reason = state_check.reason if not missing else f"{state_check.reason}:{missing}"
+            return [self._reject(event, match_id, cur_ns, reason)]
+
+        game_time = int(game.get("game_time_sec") or 0)
+        lead_after = event.radiant_lead_after
+        lead_before = event.radiant_lead_before
+        if lead_after is None or lead_before is None:
+            return [self._reject(event, match_id, cur_ns, "missing_event_lead")]
+
+        direction = event.side
+        market_type = str(mapping.get("market_type") or "").upper()
+        if market_type == "MATCH_WINNER":
+            try:
+                from market_scope import is_game3_match_proxy
+                is_g3 = is_game3_match_proxy(mapping)
+            except Exception:
+                is_g3 = False
+            if not is_g3:
+                return [self._reject(event, match_id, cur_ns, "series_market_unpriced", direction=direction)]
+        elif market_type != "MAP_WINNER":
+            return [self._reject(event, match_id, cur_ns, "unsupported_market_type", direction=direction)]
+
+        side_map = mapping.get("steam_side_mapping", "normal")
+        if side_map == "normal":
+            side = "YES" if direction == "radiant" else "NO"
+        elif side_map == "reversed":
+            side = "NO" if direction == "radiant" else "YES"
+        else:
+            return [self._reject(event, match_id, cur_ns, "unknown_side_mapping", direction=direction)]
+        token_id = mapping.get("yes_token_id") if side == "YES" else mapping.get("no_token_id")
+        if not token_id:
+            return [self._reject(event, match_id, cur_ns, "missing_token_id", direction=direction, side=side)]
+
+        entered = {str(t) for t in (entered_tokens or [])}
+        if str(token_id) in entered:
+            return [self._reject(event, match_id, cur_ns, "token_already_entered", direction=direction, side=side, token_id=token_id)]
+
+        book = book_store.get(token_id) if book_store else None
+        if not book:
+            return [self._reject(event, match_id, cur_ns, "missing_book", direction=direction, side=side, token_id=token_id)]
+        try:
+            ask = float(book.get("best_ask"))
+        except (TypeError, ValueError):
+            return [self._reject(event, match_id, cur_ns, "missing_ask", direction=direction, side=side, token_id=token_id)]
+        received_at_ns = book.get("received_at_ns")
+        if not received_at_ns:
+            return [self._reject(event, match_id, cur_ns, "book_no_timestamp", direction=direction, side=side, token_id=token_id, ask=ask)]
+        book_age_ms = int((time.time_ns() - received_at_ns) / 1_000_000)
+        if book_age_ms > VALUE_MAX_BOOK_AGE_MS:
+            return [self._reject(event, match_id, cur_ns, "book_stale", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
+        if ask > EVENT_VALUE_MAX_ASK:
+            return [self._reject(event, match_id, cur_ns, "price_too_high", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
+        if ask < EVENT_VALUE_MIN_ASK:
+            return [self._reject(event, match_id, cur_ns, "price_too_low", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
+        side_lead_after = lead_after if direction == "radiant" else -lead_after
+        if abs(side_lead_after) > VALUE_FLIP_LEAD and ask < VALUE_FLIP_ASK_FLOOR:
+            return [self._reject(event, match_id, cur_ns, "orientation_flip_suspected", direction=direction, side=side, token_id=token_id, ask=ask, lead=lead_after, book_age_ms=book_age_ms)]
+
+        fair_before, elo_diff = _side_fair(side=direction, radiant_lead=lead_before, game_time_sec=game_time, game=game)
+        fair_after, _ = _side_fair(side=direction, radiant_lead=lead_after, game_time_sec=game_time, game=game)
+        fair_delta = fair_after - fair_before
+        edge = fair_after - ask
+        if fair_delta < EVENT_VALUE_MIN_FAIR_DELTA:
+            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+        if edge < EVENT_VALUE_MIN_EDGE:
+            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+        if edge > EVENT_VALUE_MAX_EDGE:
+            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+
+        derived = derive_game_state(game)
+        return [EventTriggeredValueSignal(
+            signal_id=_make_signal_id(match_id, event.event_id, str(token_id)),
+            event_id=event.event_id,
+            actual_event_type=event.event_type,
+            match_id=match_id,
+            received_at_ns=cur_ns,
+            direction=direction,
+            side=side,
+            token_id=str(token_id),
+            fair_before=fair_before,
+            fair_price=fair_after,
+            fair_delta=fair_delta,
+            ask=ask,
+            edge=edge,
+            lead=lead_after,
+            game_time_sec=game_time,
+            elo_diff=elo_diff,
+            sized_usd=EVENT_VALUE_TRADE_USD,
+            book_age_ms=book_age_ms,
+            derived_state_flags=derived.flags,
+        )]
+
+    def _reject(self, event: ActualDotaEvent, match_id: str, received_at_ns: int, reason: str, **kwargs) -> EventTriggeredValueReject:
+        return EventTriggeredValueReject(
+            match_id=match_id,
+            received_at_ns=received_at_ns,
+            reason=reason,
+            event_id=event.event_id,
+            actual_event_type=event.event_type,
+            **kwargs,
+        )

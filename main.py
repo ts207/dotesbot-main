@@ -13,9 +13,11 @@ from steam_client import fetch_all_live_games
 from poly_ws import listen_books, BookStore
 from signal_engine import EventSignalEngine, apply_probability_move
 from paper_trader import PaperTrader
-from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, ShadowTradeLogger, BookMoveLogger, ValueAttemptLogger
+from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger, ActualDotaEventLogger, StrategySignalLogger
 from value_engine import ValueEngine, ValueSignal, VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
 from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED
+from actual_dota_event_detector import ActualDotaEventDetector
+from event_triggered_value_engine import EventTriggeredValueEngine, EventTriggeredValueSignal
 from config import EVENT_DETECTORS_ENABLED
 from book_move_detector import BookMoveDetector
 from mapping import load_valid_mappings
@@ -50,6 +52,7 @@ from config import (
     BOOK_MOVE_GRACE_SEC, BOOK_MOVE_ALPHA_THRESHOLD,
     LIVE_ATTEMPTS_CSV_PATH, PAPER_ATTEMPTS_CSV_PATH,
     PAPER_EXITS_CSV_PATH, PAPER_POSITIONS_PATH,
+    EVENT_TRIGGERED_VALUE_ENABLED, ENABLE_EVENT_TRIGGERED_VALUE_TRADING,
 )
 from sync_markets import sync_markets_to_games, load_markets, write_markets
 import team_id_cache  # 2026-05-27: backfills empty Steam team_names from team_ids
@@ -442,13 +445,16 @@ async def steam_loop(
     live_exit_executor: LiveExitExecutor | None = None,
     live_exit_logger: LiveExitLogger | None = None,
     check_live_exits_fn: Any | None = None,
-    shadow_logger: ShadowTradeLogger | None = None,
     last_steam_games: dict | None = None,
     pending_book_moves: list[dict] | None = None,
     value_engine: ValueEngine | None = None,
     value_logger: ValueAttemptLogger | None = None,
     dswing_engine: DecisiveSwingEngine | None = None,
     dswing_logger: DSwingAttemptLogger | None = None,
+    actual_event_detector: ActualDotaEventDetector | None = None,
+    actual_event_logger: ActualDotaEventLogger | None = None,
+    event_value_engine: EventTriggeredValueEngine | None = None,
+    strategy_signal_logger: StrategySignalLogger | None = None,
 ):
     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
         print("Missing STEAM_API_KEY. Copy .env.example to .env and fill it in.")
@@ -665,6 +671,7 @@ async def steam_loop(
                 # stops polling books for tokens of finished matches.
                 game_over_match_ids: set[str] = set()
                 current_game_times: dict[str, int | None] = {}
+                actual_events_by_match: dict[str, list] = {}
 
                 # 1. First pass: log and process only relevant games
                 active_games = []
@@ -736,6 +743,12 @@ async def steam_loop(
                         max_game_times[match_id] = game_time
 
                     current_game_times[match_id] = game_time
+                    if actual_event_detector is not None:
+                        actual_events = actual_event_detector.observe(game)
+                        if actual_events:
+                            actual_events_by_match[match_id] = actual_events
+                            if actual_event_logger is not None:
+                                actual_event_logger.log_events(actual_events)
                     if game.get("game_over"):
                         game_over_match_ids.add(match_id)
                         _PERSISTENT_GAME_OVER_MATCH_IDS.add(match_id)
@@ -925,15 +938,104 @@ async def steam_loop(
                                 book_mid = (book["best_bid"] + book["best_ask"]) / 2
                                 signal_engine.record_price(tok, book_mid, game_time)
 
+                        # tokens already held for THIS market
+                        _mkt_toks = {str(mapping.get("yes_token_id")), str(mapping.get("no_token_id"))}
+                        _entered_toks = ({
+                            str(p.token_id) for p in live_position_store.positions.values()
+                            if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}
+                            and str(p.token_id) in _mkt_toks
+                        } if live_position_store else set())
+
+                        # --- Event-Triggered Value Engine ---
+                        if event_value_engine is not None and strategy_signal_logger is not None:
+                            match_actual_events = actual_events_by_match.get(str(game.get("match_id") or ""), [])
+                            for actual_event in match_actual_events:
+                                ev_results = event_value_engine.evaluate(
+                                    event=actual_event,
+                                    game=game,
+                                    mapping=mapping,
+                                    book_store=book_store,
+                                    entered_tokens=_entered_toks,
+                                )
+                                for ev_result in ev_results:
+                                    if not isinstance(ev_result, EventTriggeredValueSignal):
+                                        strategy_signal_logger.log_reject(ev_result)
+                                        continue
+                                    strategy_signal_logger.log_signal(ev_result)
+                                    if not ENABLE_EVENT_TRIGGERED_VALUE_TRADING:
+                                        continue
+                                    opposing_tok = mapping["no_token_id"] if ev_result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+                                    if str(ev_result.token_id) in _entered_toks:
+                                        continue
+                                    if live_executor is not None and live_position_store is not None:
+                                        ev_attempt = await live_executor.try_buy_value(
+                                            signal=ev_result,
+                                            mapping=mapping,
+                                            game=game,
+                                            book_store=book_store,
+                                        )
+                                        if live_logger is not None:
+                                            live_logger.log_attempt(ev_attempt, phase="event_value_entry")
+                                        landed = (
+                                            ev_attempt.filled_size_usd > 0
+                                            or ev_attempt.order_status in ("delayed", "live", "matched", "filled")
+                                        )
+                                        if landed:
+                                            entry_px = ev_attempt.avg_fill_price or ev_attempt.price_cap or ev_result.ask
+                                            fill = _normalized_entry_fill(
+                                                filled_usd=ev_attempt.filled_size_usd,
+                                                filled_shares=None,
+                                                avg_fill_price=ev_attempt.avg_fill_price,
+                                                fallback_price=entry_px,
+                                            )
+                                            is_filled = fill is not None and ev_attempt.filled_size_usd > 0
+                                            if fill:
+                                                cost, shares, entry_px = fill
+                                            else:
+                                                cost = ev_attempt.submitted_size_usd or 0.0
+                                                shares = 0.0
+                                            live_position_store.add(LivePosition(
+                                                position_id=f"{ev_attempt.match_id}:{ev_attempt.token_id}:{ev_attempt.created_at_ns}",
+                                                state="OPEN" if is_filled else "PENDING_ENTRY",
+                                                token_id=ev_attempt.token_id,
+                                                opposing_token_id=opposing_tok or "",
+                                                match_id=ev_attempt.match_id,
+                                                market_name=mapping.get("name"),
+                                                side=ev_result.side,
+                                                entry_price=entry_px,
+                                                shares=shares,
+                                                cost_usd=cost,
+                                                entry_time_ns=ev_attempt.created_at_ns,
+                                                entry_game_time_sec=ev_result.game_time_sec,
+                                                event_type="EVENT_TRIGGERED_VALUE",
+                                                expected_move=0.0,
+                                                fair_price=ev_result.fair_price,
+                                                trader_kind="value",
+                                                exit_horizon_sec=None,
+                                                signal_id=ev_result.signal_id,
+                                                backed_direction=ev_result.direction,
+                                                pending_entry_order_id=ev_attempt.order_id if not is_filled else None,
+                                                strategy_kind="EVENT_TRIGGERED_VALUE",
+                                                entry_engine="event_triggered_value",
+                                                exit_engine="value_fair_invalidation",
+                                                hold_policy="thesis_invalidation",
+                                                entry_fair=ev_result.fair_price,
+                                                entry_edge=ev_result.edge,
+                                                entry_backed_side=ev_result.direction,
+                                                entry_radiant_lead=ev_result.lead,
+                                                entry_actual_event_type=ev_result.actual_event_type,
+                                                entry_derived_state_flags=list(ev_result.derived_state_flags),
+                                            ))
+                                            _entered_toks.add(str(ev_result.token_id))
+                                            print(
+                                                f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} "
+                                                f"event={ev_result.actual_event_type} entry≈{entry_px:.4f} edge={ev_result.edge:.4f} status={ev_attempt.order_status}"
+                                            )
+                                        else:
+                                            print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
+
                         # --- Value Engine ---
                         if value_engine is not None and value_logger is not None:
-                            # tokens already held for THIS market — enables the opposite-side hedge gate
-                            _mkt_toks = {str(mapping.get("yes_token_id")), str(mapping.get("no_token_id"))}
-                            _entered_toks = ({
-                                str(p.token_id) for p in live_position_store.positions.values()
-                                if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}
-                                and str(p.token_id) in _mkt_toks
-                            } if live_position_store else set())
                             value_results = value_engine.evaluate(game, mapping, book_store, entered_tokens=_entered_toks)
                             for result in value_results:
                                 if not isinstance(result, ValueSignal):
@@ -1005,8 +1107,17 @@ async def steam_loop(
                                             signal_id=result.signal_id,
                                             backed_direction=result.direction,
                                             pending_entry_order_id=v_attempt.order_id if not is_filled else None,
+                                            strategy_kind="VALUE",
+                                            entry_engine="value",
+                                            exit_engine="value_fair_invalidation",
+                                            hold_policy="thesis_invalidation",
+                                            entry_fair=result.fair_price,
+                                            entry_edge=result.edge,
+                                            entry_backed_side=result.direction,
+                                            entry_radiant_lead=result.lead,
                                         )
                                         live_position_store.add(v_pos)
+                                        _entered_toks.add(str(result.token_id))
                                         print(f"VALUE LIVE ENTER {mapping.get('name')} {result.side} entry≈{entry_px:.4f} edge={result.edge:.4f} status={v_attempt.order_status}")
                                     else:
                                         print(f"VALUE LIVE REJECT {mapping.get('name')} {result.side} reason={v_attempt.reason_if_rejected}")
@@ -1057,7 +1168,15 @@ async def steam_loop(
                                             entry_time_ns=a.created_at_ns, entry_game_time_sec=ds_res.game_time_sec,
                                             event_type="DSWING", expected_move=0.0, fair_price=ds_res.series_fair,
                                             trader_kind="dswing", exit_horizon_sec=None, signal_id=ds_res.signal_id,
-                                            backed_direction=ds_res.direction))
+                                            backed_direction=ds_res.direction,
+                                            strategy_kind="DSWING",
+                                            entry_engine="decisive_swing",
+                                            exit_engine="dswing_map_end",
+                                            hold_policy="map_end_convergence",
+                                            entry_fair=ds_res.series_fair,
+                                            entry_edge=ds_res.edge,
+                                            entry_backed_side=ds_res.direction,
+                                            entry_radiant_lead=ds_res.lead))
                                         mode = "LIVE" if ENABLE_REAL_LIVE_TRADING else "PAPER"
                                         print(f"DSWING {mode} ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")
                                     else:
@@ -1183,7 +1302,7 @@ async def steam_loop(
                                 signal["duplicate_match_id_error"] = game.get("duplicate_match_id_error")
 
                                 if signal.get("reason") == "no_primary_event":
-                                    shadow_signal = signal_engine.evaluate_cluster(
+                                    diagnostic_signal = signal_engine.evaluate_cluster(
                                         events=cluster_events,
                                         game=game,
                                         mapping=mapping,
@@ -1191,11 +1310,11 @@ async def steam_loop(
                                         no_book=no_book,
                                         require_primary=False,
                                     )
-                                    if shadow_signal.get("decision") == "paper_buy_yes":
-                                        shadow_signal = dict(shadow_signal)
-                                        shadow_signal["decision"] = "skip"
-                                        shadow_signal["reason"] = "shadow_no_primary"
-                                        signal = shadow_signal
+                                    if diagnostic_signal.get("decision") == "paper_buy_yes":
+                                        diagnostic_signal = dict(diagnostic_signal)
+                                        diagnostic_signal["decision"] = "skip"
+                                        diagnostic_signal["reason"] = "diagnostic_no_primary"
+                                        signal = diagnostic_signal
 
                                 # ── Stale-book rescue for Tier A/B events ──
                                 # When a Tier A/B signal is blocked by a stale/missing local book,
@@ -1543,9 +1662,6 @@ async def steam_loop(
                                             signal["decision"] = "skip"
                                             signal["reason"] = "research_mode_match_winner"
 
-                                # Shadow trade logging for MAP_WINNER, BO1 MATCH_WINNER (the
-                                # whole series IS one game), and Game3 MATCH_WINNER proxies.
-                                # Without the BO1 case shadow_trades.csv stayed empty for all
                                 if ENABLE_EVENT_ENTRY_STRATEGY and signal["decision"] == "paper_buy_yes":
                                     candidates.append({
                                         "signal": signal,
@@ -1922,6 +2038,8 @@ async def main():
     event_detector = EventDetector()
     signal_engine = EventSignalEngine()
     event_logger = DotaEventLogger()
+    actual_event_detector = ActualDotaEventDetector()
+    actual_event_logger = ActualDotaEventLogger()
     book_logger = BookEventLogger()
     position_logger = PositionLogger()
     snapshot_logger = RawSnapshotLogger()
@@ -1933,11 +2051,17 @@ async def main():
         print(f"VALUE_ENGINE mode ON")
     dswing_engine: DecisiveSwingEngine | None = None
     dswing_logger: DSwingAttemptLogger | None = None
-    if DSWING_ENABLED or DSWING_SHADOW_ENABLED:
+    if DSWING_ENABLED:
         dswing_engine = DecisiveSwingEngine()
         dswing_logger = DSwingAttemptLogger()
-        mode = "paper" if DSWING_ENABLED and not ENABLE_REAL_LIVE_TRADING else ("armed" if DSWING_ENABLED else "shadow")
+        mode = "paper" if not ENABLE_REAL_LIVE_TRADING else "armed"
         print(f"DECISIVE_SWING {mode} mode ON")
+    event_value_engine: EventTriggeredValueEngine | None = None
+    strategy_signal_logger: StrategySignalLogger | None = None
+    if EVENT_TRIGGERED_VALUE_ENABLED:
+        event_value_engine = EventTriggeredValueEngine()
+        strategy_signal_logger = StrategySignalLogger()
+        print("EVENT_TRIGGERED_VALUE mode ON")
     latency_logger = LatencyLogger()
     rich_context_logger = RichContextLogger()
     source_delay_logger = SourceDelayLogger()
@@ -1972,13 +2096,6 @@ async def main():
     rescue_logger = BookRefreshRescueLogger()
     match_winner_logger = MatchWinnerSignalLogger(log_dir="logs") if ENABLE_MATCH_WINNER_RESEARCH else None
     signal_markout_logger = SignalMarkoutLogger()
-    # 2026-05-30 — shadow logger disabled. Was redundant with signals.csv
-    # (which already logs every decision + reason). The 4 would_pnl markout
-    # columns it added were misleading: markouts are negative on every event
-    # because the bot detects after the market moves, but the actual strategy
-    # is hold-to-settle. Use signals.csv for decisions and paper_trades.csv
-    # for the trade ledger.
-    shadow_logger = None
     book_move_detector = BookMoveDetector()
     book_move_logger = BookMoveLogger()
     disk_guard = DiskGuard()
@@ -2009,6 +2126,7 @@ async def main():
     loggers = [
         signal_logger,
         event_logger,
+        actual_event_logger,
         book_logger,
         position_logger,
         snapshot_logger,
@@ -2017,8 +2135,8 @@ async def main():
         source_delay_logger,
         rescue_logger,
         signal_markout_logger,
-        shadow_logger,
         book_move_logger,
+        strategy_signal_logger,
     ]
     if match_winner_logger:
         loggers.append(match_winner_logger)
@@ -2653,12 +2771,15 @@ async def main():
                     live_exit_executor=live_exit_executor,
                     live_exit_logger=live_exit_logger,
                     check_live_exits_fn=_check_live_exits,
-                    shadow_logger=shadow_logger,
                     last_steam_games=_last_steam_games,
                     value_engine=value_engine,
                     value_logger=value_logger,
                     dswing_engine=dswing_engine,
                     dswing_logger=dswing_logger,
+                    actual_event_detector=actual_event_detector,
+                    actual_event_logger=actual_event_logger,
+                    event_value_engine=event_value_engine,
+                    strategy_signal_logger=strategy_signal_logger,
                 ),
                 proactive_refresh_loop(session),
             ]

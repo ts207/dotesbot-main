@@ -89,6 +89,9 @@ class ValueSignal:
     elo_diff: float | None
     sized_usd: float
     book_age_ms: int
+    would_pass_live_gates: bool = True
+    live_skip_reason: str = ""
+    paper_only_bypass: bool = False
 
     def to_signal_dict(self) -> dict:
         return {
@@ -109,6 +112,9 @@ class ValueSignal:
             "event_family": "VALUE",
             "event_quality": 1.0,
             "event_direction": self.direction,
+            "would_pass_live_gates": self.would_pass_live_gates,
+            "live_skip_reason": self.live_skip_reason,
+            "paper_only_bypass": self.paper_only_bypass,
         }
 
 @dataclass(frozen=True)

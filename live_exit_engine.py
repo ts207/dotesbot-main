@@ -4,6 +4,7 @@ import os
 import time
 from dataclasses import dataclass
 
+import winprob
 from config import (
     EXIT_TAKE_PROFIT,
     EXIT_STOP_LOSS_ABS,
@@ -17,11 +18,11 @@ from config import (
     UNDERDOG_REVERSAL_LEAD_THRESHOLD,
     EXIT_TRAILING_STOP_CENTS,
     EXIT_TRAILING_STOP_GRACE_SEC,
+    VALUE_EXIT_FAIR_INVALIDATION_ENABLED,
+    VALUE_EXIT_FAIR_ENTRY_BUFFER,
+    VALUE_EXIT_FAIR_BID_BUFFER,
 )
 
-CONTINUOUS_ADVERSE_STOP_MIN_HOLD_SEC = float(
-    os.getenv("CONTINUOUS_ADVERSE_STOP_MIN_HOLD_SEC", "15")
-)
 # Catastrophe-salvage floor for hold-to-settle positions: if the token bid falls
 # below this, cut to salvage residual value instead of riding to $0. Keep LOW so
 # recoverable dips aren't stopped. 0 disables.
@@ -51,34 +52,11 @@ def decide_live_exit(
     now_ns = now_ns or time.time_ns()
     adverse_token_ids = adverse_token_ids or set()
 
-    # Arb positions are immune to adverse-event exits. Closing one leg of a
-    # paired arb on a directional signal converts a hedged settlement-profit
-    # position into a one-sided bet. Arb only exits on game_over / max_hold.
     trader_kind = getattr(position, "trader_kind", "event")
 
-    if trader_kind not in ("arb", "value", "dswing") and position.token_id in adverse_token_ids:
+    if trader_kind not in ("value", "dswing") and position.token_id in adverse_token_ids:
         return ExitDecision(True, "adverse_event")
 
-    # 2026-05-29 Phase CS-4 — continuous positions use a flat exit rule set:
-    # exit at the carried horizon, at adverse 4c, or on game_over. No model
-    # value targets, no event-type lookups, no trailing stops.
-    if trader_kind == "continuous":
-        return _decide_continuous_exit(
-            position=position,
-            book=book,
-            game_over_match_ids=game_over_match_ids,
-            now_ns=now_ns,
-        )
-    # 2026-05-29 Phase AR-2 — arb positions are paired (YES + NO) and hold
-    # to settlement. The only exit triggers are game_over (collect $1 from
-    # the winning side) and the safety-net max_hold_timeout.
-    if trader_kind == "arb":
-        return _decide_arb_exit(
-            position=position,
-            book=book,
-            game_over_match_ids=game_over_match_ids,
-            now_ns=now_ns,
-        )
     if trader_kind == "dswing":
         return _decide_dswing_exit(
             position=position,
@@ -121,6 +99,18 @@ def decide_live_exit(
                 # cheap bid but net worth says we're NOT losing → flip/glitch: hold
             else:
                 return ExitDecision(True, "catastrophe_salvage", bid)  # no state → price-only
+        if (
+            VALUE_EXIT_FAIR_INVALIDATION_ENABLED
+            and bid is not None
+            and game is not None
+        ):
+            current_fair = _current_fair_for_position(position, game)
+            if (
+                current_fair is not None
+                and current_fair < position.entry_price - VALUE_EXIT_FAIR_ENTRY_BUFFER
+                and current_fair < bid - VALUE_EXIT_FAIR_BID_BUFFER
+            ):
+                return ExitDecision(True, "fair_invalidation", bid, current_fair)
         age_sec = (now_ns - position.entry_time_ns) / 1e9
         if age_sec >= MAX_HOLD_HOURS * 3600:
             return ExitDecision(True, "max_hold_timeout", None)
@@ -239,75 +229,25 @@ def decide_live_exit(
     return ExitDecision(False)
 
 
-def _decide_continuous_exit(
-    *,
-    position,
-    book: dict | None,
-    game_over_match_ids: set[str],
-    now_ns: int,
-) -> ExitDecision:
-    """Flat exit rule for continuous-strategy positions.
-
-    Triggers (priority order):
-      1. game_over → exit at current bid
-      2. adverse move: bid <= entry - 4c → stop_loss
-      3. age >= exit_horizon_sec → horizon
-      4. age >= MAX_HOLD_HOURS * 3600 → max_hold_timeout (safety)
-
-    Deliberately omits: take_profit (we ride the 60s window to capture drift),
-    trailing stop, model_value_exit, swing_take_profit. The strategy's edge
-    is a fixed-horizon momentum capture, not a target-price exit.
-    """
-    raw_bid = (book or {}).get("best_bid")
-    bid = float(raw_bid) if raw_bid is not None else None
-    age_sec = (now_ns - position.entry_time_ns) / 1e9
-
-    if position.match_id in game_over_match_ids:
-        return ExitDecision(True, "game_over", bid)
-
-    horizon = getattr(position, "exit_horizon_sec", None) or 60
-
-    if bid is not None:
-        # Adverse-move stop (hard) — same 4c floor the strategy was backtested at.
-        # Min-hold so trades opened across a wide spread (bid already > 4c below ask)
-        # aren't stopped out on the very next tick before the bet has a chance.
-        if (age_sec >= CONTINUOUS_ADVERSE_STOP_MIN_HOLD_SEC
-                and bid <= position.entry_price - 0.04):
-            return ExitDecision(True, "continuous_adverse_stop", bid)
-
-    if age_sec >= horizon:
-        return ExitDecision(True, "continuous_horizon", bid)
-
-    if age_sec >= MAX_HOLD_HOURS * 3600:
-        return ExitDecision(True, "max_hold_timeout", bid)
-
-    return ExitDecision(False)
-
-
-def _decide_arb_exit(
-    *,
-    position,
-    book: dict | None,
-    game_over_match_ids: set[str],
-    now_ns: int,
-) -> ExitDecision:
-    """Arb positions are risk-free at settlement — hold until game_over.
-
-    Only exit triggers:
-      1. game_over → both legs collect $1 from the winning side
-      2. max_hold_timeout → safety net for matches that never resolve
-    """
-    raw_bid = (book or {}).get("best_bid")
-    bid = float(raw_bid) if raw_bid is not None else None
-    age_sec = (now_ns - position.entry_time_ns) / 1e9
-
-    if position.match_id in game_over_match_ids:
-        return ExitDecision(True, "game_over", bid)
-
-    if age_sec >= MAX_HOLD_HOURS * 3600:
-        return ExitDecision(True, "max_hold_timeout", bid)
-
-    return ExitDecision(False)
+def _current_fair_for_position(position, game: dict) -> float | None:
+    backed = getattr(position, "backed_direction", None) or getattr(position, "entry_backed_side", None)
+    if backed not in ("radiant", "dire"):
+        return None
+    try:
+        radiant_lead = int(float(game.get("radiant_lead")))
+        game_time = int(float(game.get("game_time_sec") or 0))
+    except (TypeError, ValueError):
+        return None
+    rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
+    rname, dname = game.get("radiant_team"), game.get("dire_team")
+    if backed == "radiant":
+        elo = winprob.elo_diff(rtid, dtid, rname, dname)
+        side_lead = radiant_lead
+    else:
+        elo = winprob.elo_diff(dtid, rtid, dname, rname)
+        side_lead = -radiant_lead
+    leader_fair = winprob.fair(abs(side_lead), game_time, elo)
+    return leader_fair if side_lead >= 0 else 1.0 - leader_fair
 
 
 def _decide_dswing_exit(

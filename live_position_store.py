@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 LIVE_POSITIONS_PATH = "logs/live_positions.json"
@@ -34,9 +34,7 @@ class LivePosition:
     pending_entry_order_id: str | None = None
     is_underdog_reversal: bool = False
     peak_bid: float = 0.0
-    # 2026-05-29 Phase CS-3/4 — continuous positions carry their own fixed
-    # exit horizon and trader_kind. event-detector positions leave these at
-    # the defaults and fall through to the legacy exit logic.
+    # Strategy identity and exit horizon for active value-family positions.
     trader_kind: str = "event"
     exit_horizon_sec: int | None = None
     signal_id: str | None = None
@@ -47,6 +45,13 @@ class LivePosition:
     strategy_kind: str | None = None
     entry_engine: str | None = None
     exit_engine: str | None = None
+    hold_policy: str | None = None
+    entry_fair: float | None = None
+    entry_edge: float | None = None
+    entry_backed_side: str | None = None
+    entry_radiant_lead: int | None = None
+    entry_actual_event_type: str | None = None
+    entry_derived_state_flags: list[str] = field(default_factory=list)
 
 
 class LivePositionStore:
