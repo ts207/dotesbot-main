@@ -1,0 +1,9 @@
+{
+  "dota_universe_rows": 12310,
+  "market_max_ts": "2026-06-07T00:00:00+00:00",
+  "market_min_ts": "2025-10-04T00:00:00+00:00",
+  "max_start_ts": "2026-06-07T01:38:30+00:00",
+  "min_start_ts": "2026-01-06T21:03:10+00:00",
+  "unmapped_markets_outside_dota_universe_range": 70,
+  "unmapped_markets_with_team_aliases_but_no_games": 65
+}

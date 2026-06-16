@@ -1,0 +1,56 @@
+{
+  "condition_id": "0x9c0e065f8dc594b166a4497ae9e143397f3b8495226568656def4de63ffeb3f6",
+  "event_id": "520371",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:27+00:00",
+  "http_status": 200,
+  "market_id": "2346689",
+  "question": "Dota 2: PARIVISION vs Aurora - Game 4 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1779631206
+      },
+      {
+        "p": 0.505,
+        "t": 1779634807
+      },
+      {
+        "p": 0.55,
+        "t": 1779638407
+      },
+      {
+        "p": 0.555,
+        "t": 1779642007
+      },
+      {
+        "p": 0.575,
+        "t": 1779645608
+      },
+      {
+        "p": 0.375,
+        "t": 1779649205
+      },
+      {
+        "p": 0.0005,
+        "t": 1779652806
+      },
+      {
+        "p": 0.0005,
+        "t": 1779656405
+      },
+      {
+        "p": 0.0005,
+        "t": 1779660007
+      }
+    ]
+  },
+  "requested_end_ts": "1779662006",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1779630208",
+  "slug": "dota2-pari-aur1-2026-05-24-game4",
+  "source_universe": "polymarket_public_search",
+  "token_id": "43344264406424436457312403793238564970066518272557168786881199015853349479738"
+}

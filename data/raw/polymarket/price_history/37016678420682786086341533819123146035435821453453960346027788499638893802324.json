@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x35dbb0744eb833b3566ceb8739ac2eda084c7451c7dafebf59bf1ac083d93c2b",
+  "event_id": "321762",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:05+00:00",
+  "http_status": 200,
+  "market_id": "1776903",
+  "question": "Dota 2: Tundra Esports vs Team Yandex - Game 4 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1774796459
+      },
+      {
+        "p": 0.585,
+        "t": 1774800049
+      },
+      {
+        "p": 0.57,
+        "t": 1774810848
+      },
+      {
+        "p": 0.755,
+        "t": 1774814449
+      }
+    ]
+  },
+  "requested_end_ts": "1774829652",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1774794805",
+  "slug": "dota2-tundra-ty-2026-03-29-game4",
+  "source_universe": "polymarket_public_search",
+  "token_id": "37016678420682786086341533819123146035435821453453960346027788499638893802324"
+}

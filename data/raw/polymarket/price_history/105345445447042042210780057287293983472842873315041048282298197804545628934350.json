@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x55e58d45b103917e8eef804745f9e69d1998de852ac683b83d35d51d31dda6e1",
+  "event_id": "354661",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:52+00:00",
+  "http_status": 200,
+  "market_id": "1910281",
+  "question": "Dota 2: Yellow Submarine vs L1ga Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.9995,
+        "t": 1775588447
+      }
+    ]
+  },
+  "requested_end_ts": "1775601911",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775585562",
+  "slug": "dota2-yes-l1ga-2026-04-07-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "105345445447042042210780057287293983472842873315041048282298197804545628934350"
+}

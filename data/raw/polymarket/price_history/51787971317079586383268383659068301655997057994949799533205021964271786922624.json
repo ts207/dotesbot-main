@@ -1,0 +1,44 @@
+{
+  "condition_id": "0xfb174f89579bbb92d6df902fd69770e0d30a033006612d02fab6bcd38a68473a",
+  "event_id": "419841",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:18+00:00",
+  "http_status": 200,
+  "market_id": "2085191",
+  "question": "Dota 2: BetBoom Team vs Aurora - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.535,
+        "t": 1777204811
+      },
+      {
+        "p": 0.535,
+        "t": 1777208408
+      },
+      {
+        "p": 0.565,
+        "t": 1777212010
+      },
+      {
+        "p": 0.88,
+        "t": 1777215609
+      },
+      {
+        "p": 0.9995,
+        "t": 1777219208
+      },
+      {
+        "p": 0.9995,
+        "t": 1777222808
+      }
+    ]
+  },
+  "requested_end_ts": "1777225278",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777200864",
+  "slug": "dota2-bb4-aur1-2026-04-26-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "51787971317079586383268383659068301655997057994949799533205021964271786922624"
+}

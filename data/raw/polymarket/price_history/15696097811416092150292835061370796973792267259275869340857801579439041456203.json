@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xa24ebba2b1a45aa98272c55c571141cb1885d8d43c9112fe8efeb991ee1f7013",
+  "event_id": "88319",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:50:52+00:00",
+  "http_status": 200,
+  "market_id": "698278",
+  "question": "Dota 2: Team Spirit vs MOUZ - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.59,
+        "t": 1763906410
+      },
+      {
+        "p": 0.605,
+        "t": 1763910010
+      },
+      {
+        "p": 0.0005,
+        "t": 1763913609
+      },
+      {
+        "p": 0.0005,
+        "t": 1763917224
+      },
+      {
+        "p": 0.0005,
+        "t": 1763920811
+      }
+    ]
+  },
+  "requested_end_ts": "1763921461",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1763902866",
+  "slug": "dota2-ts8-mouz-2025-11-23-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "15696097811416092150292835061370796973792267259275869340857801579439041456203"
+}

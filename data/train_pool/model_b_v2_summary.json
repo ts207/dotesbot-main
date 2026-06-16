@@ -1,0 +1,50 @@
+{
+  "base_rows": 881,
+  "model_b_v1_status": "stopped_no_trade",
+  "model_b_v2_status": "feature_data_build_only",
+  "next_gate": {
+    "allowed_models": [
+      "B0_market_only",
+      "B1a_intercept_only",
+      "B1b_ultra_small",
+      "B1c_compact_v2"
+    ],
+    "forbidden": [
+      "GBM",
+      "CatBoost",
+      "calibration",
+      "threshold_tuning",
+      "execution_replay",
+      "locked_execution_audit",
+      "trading_logic"
+    ],
+    "minimum_non_locked_probability_ready": 500,
+    "minimum_validation_rows": 125
+  },
+  "no_leak_violations": 0,
+  "outputs": {
+    "candidates": "data/train_pool/model_b_v2_candidates.csv",
+    "summary": "data/train_pool/model_b_v2_summary.json"
+  },
+  "probability_ready_by_source_universe": {
+    "local_clean_v2": 37,
+    "polymarket_event": 24,
+    "polymarket_public_search": 457
+  },
+  "probability_ready_rows": 518,
+  "probability_ready_team_strength_available_rows": 509,
+  "probability_ready_team_strength_confidence_ge_0_5_rows": 475,
+  "probability_ready_team_strength_confidence_ge_0_8_rows": 452,
+  "reason_training_not_allowed": "do_not_train_until_non_locked_probability_ready_ge_500_and_validation_rows_ge_125",
+  "rows_by_source_universe": {
+    "local_clean_v2": 160,
+    "polymarket_event": 52,
+    "polymarket_public_search": 669
+  },
+  "status": "ok",
+  "team_strength_confidence_ge_0_5_rows": 585,
+  "team_strength_confidence_ge_0_8_rows": 552,
+  "team_strength_feature_available_rows": 651,
+  "training_allowed": false,
+  "v2_rows": 881
+}

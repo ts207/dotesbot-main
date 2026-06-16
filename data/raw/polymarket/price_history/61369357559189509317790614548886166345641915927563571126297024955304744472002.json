@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x62e3edd8ca1e5afe427f6a62d5b1f054a9eafc58b5706ae5f39bfe3afd84ce3a",
+  "event_id": "173024",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:13:46+00:00",
+  "http_status": 200,
+  "market_id": "1214768",
+  "question": "Dota 2: Rottweilas Latam vs GamerLegion - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1768770023
+      },
+      {
+        "p": 0.515,
+        "t": 1768773619
+      },
+      {
+        "p": 0.515,
+        "t": 1768777222
+      },
+      {
+        "p": 0.67,
+        "t": 1768780820
+      },
+      {
+        "p": 0.0035,
+        "t": 1768788030
+      }
+    ]
+  },
+  "requested_end_ts": "1768790592",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768766490",
+  "slug": "dota2-rl-gl-2026-01-18-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "61369357559189509317790614548886166345641915927563571126297024955304744472002"
+}

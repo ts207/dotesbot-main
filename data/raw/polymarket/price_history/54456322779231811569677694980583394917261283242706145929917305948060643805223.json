@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x8307eb22dbfe16f626aaea9a207a0b4135738d61d3f95c50330f17dd52407f5a",
+  "event_id": "419841",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:17+00:00",
+  "http_status": 200,
+  "market_id": "2085187",
+  "question": "Dota 2: BetBoom Team vs Aurora - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.675,
+        "t": 1777204809
+      },
+      {
+        "p": 0.9995,
+        "t": 1777208407
+      },
+      {
+        "p": 0.9995,
+        "t": 1777212009
+      },
+      {
+        "p": 0.9995,
+        "t": 1777215607
+      },
+      {
+        "p": 0.9995,
+        "t": 1777219206
+      }
+    ]
+  },
+  "requested_end_ts": "1777221580",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777200835",
+  "slug": "dota2-bb4-aur1-2026-04-26-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "54456322779231811569677694980583394917261283242706145929917305948060643805223"
+}

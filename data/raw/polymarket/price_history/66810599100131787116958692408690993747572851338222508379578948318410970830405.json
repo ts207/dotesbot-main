@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xa1521e241f0c87c36dfc5275437bccc5e4235f00582f1eb73b584a0a20624973",
+  "event_id": "396407",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:10+00:00",
+  "http_status": 200,
+  "market_id": "2024794",
+  "question": "Dota 2: Zero Tenacity vs Power Rangers - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776646859
+      },
+      {
+        "p": 0.5,
+        "t": 1776657657
+      },
+      {
+        "p": 0.46,
+        "t": 1776690006
+      },
+      {
+        "p": 0.475,
+        "t": 1776715258
+      },
+      {
+        "p": 0.0005,
+        "t": 1776718821
+      }
+    ]
+  },
+  "requested_end_ts": "1776734976",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776621332",
+  "slug": "dota2-z10-pr1-2026-04-20-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "66810599100131787116958692408690993747572851338222508379578948318410970830405"
+}

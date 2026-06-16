@@ -1,0 +1,315 @@
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from typing import Any
+
+from team_utils import norm_team
+from series_model import compute_bo3_match_p
+
+SUPPORTED_MARKET_TYPES = {"MAP_WINNER", "MATCH_WINNER"}
+PLACEHOLDER_MARKERS = {
+    "TOKEN_ID_HERE",
+    "MATCH_OR_LOBBY_ID_HERE",
+    "STEAM_MATCH_OR_LOBBY_ID_HERE",
+    "POLY_MARKET_ID_HERE",
+}
+
+
+@dataclass(frozen=True)
+class MappingError:
+    index: int
+    name: str | None
+    reason: str
+
+
+@dataclass
+class MappingValidationResult:
+    mapping_confidence: float = 0.0
+    mapping_errors: list[str] = field(default_factory=list)
+    series_id: str | None = None
+    series_type: int | None = None
+    game_number: int | None = None
+    team_id_match: bool | None = None
+    market_game_number_match: bool | None = None
+    duplicate_match_id_error: bool = False
+
+    @property
+    def ok(self) -> bool:
+        return not self.mapping_errors and self.mapping_confidence == 1.0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "mapping_confidence": self.mapping_confidence,
+            "mapping_errors": ";".join(self.mapping_errors),
+            "series_id": self.series_id,
+            "series_type": self.series_type,
+            "game_number": self.game_number,
+            "team_id_match": self.team_id_match,
+            "market_game_number_match": self.market_game_number_match,
+            "duplicate_match_id_error": self.duplicate_match_id_error,
+        }
+
+
+def has_placeholder(value: Any) -> bool:
+    text = str(value or "")
+    return any(marker in text for marker in PLACEHOLDER_MARKERS)
+
+
+def infer_game_number(mapping: dict) -> int | None:
+    raw = mapping.get("game_number")
+    if raw not in (None, ""):
+        try:
+            value = int(raw)
+            return value if value > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    text = " ".join(str(mapping.get(k) or "") for k in ("name", "question", "market_title", "title"))
+    match = re.search(r"\bgame\s*([1-5])\b", text, flags=re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def _to_int(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_str(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def _confidence(mapping: dict) -> float:
+    try:
+        return float(mapping.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def validate_mapping_schema(mapping: dict, index: int = 0) -> MappingValidationResult:
+    result = MappingValidationResult(
+        mapping_confidence=1.0 if _confidence(mapping) == 1.0 else 0.0,
+        series_id=_to_str(mapping.get("series_id")),
+        series_type=_to_int(mapping.get("series_type")),
+        game_number=infer_game_number(mapping),
+    )
+
+    required = ["market_type", "yes_team", "yes_token_id", "no_team", "no_token_id", "dota_match_id"]
+    missing = [field for field in required if not mapping.get(field)]
+    if missing:
+        result.mapping_errors.append(f"missing: {', '.join(missing)}")
+
+    for field_name in ["yes_token_id", "no_token_id", "dota_match_id", "market_id", "condition_id"]:
+        if has_placeholder(mapping.get(field_name)):
+            result.mapping_errors.append(f"placeholder value in {field_name}")
+
+    market_type = str(mapping.get("market_type", "")).upper()
+    if market_type not in SUPPORTED_MARKET_TYPES:
+        result.mapping_errors.append(f"unsupported market_type={market_type}")
+
+    if market_type == "MATCH_WINNER":
+        series_type_val = _to_int(mapping.get("series_type"))
+        if series_type_val is None:
+            # Auto-derive from the name when the yaml entry omits series_type.
+            # BLAST Slam / similar auto-added markets often have "(BO1)" /
+            # "(BO3)" / "(BO5)" in the name but no series_type field.
+            name_upper = str(mapping.get("name") or "").upper()
+            for needle, derived in (("(BO1)", 1), ("(BO3)", 3), ("(BO5)", 5)):
+                if needle in name_upper:
+                    series_type_val = derived
+                    break
+        if series_type_val is None:
+            result.mapping_errors.append("missing: series_type")
+        else:
+            try:
+                compute_bo3_match_p(0.5, 0.5, 0, 0, 1, series_type=int(series_type_val))
+            except (ValueError, TypeError) as e:
+                result.mapping_errors.append(f"invalid series_type: {e}")
+        current_game = _to_int(mapping.get("current_game_number"))
+        if current_game is not None and result.game_number is None:
+            result.game_number = current_game
+        score_yes = _to_int(mapping.get("series_score_yes"))
+        score_no = _to_int(mapping.get("series_score_no"))
+        p_next = mapping.get("p_next_yes")
+        if current_game is not None and score_yes is not None and score_no is not None and p_next is not None:
+            try:
+                compute_bo3_match_p(
+                    p_current_map_yes=0.5,
+                    p_next_yes=float(p_next),
+                    series_score_yes=int(score_yes),
+                    series_score_no=int(score_no),
+                    current_game_number=int(current_game),
+                    series_type=int(series_type_val),
+                )
+            except (ValueError, TypeError, KeyError) as e:
+                result.mapping_errors.append(str(e))
+
+    if mapping.get("confidence") in (None, ""):
+        result.mapping_errors.append("missing confidence")
+    elif _confidence(mapping) != 1.0:
+        result.mapping_errors.append("confidence below required 1.0")
+
+    yes_token = str(mapping.get("yes_token_id") or "")
+    no_token = str(mapping.get("no_token_id") or "")
+    if yes_token and no_token and yes_token == no_token:
+        result.mapping_errors.append("yes_token_id equals no_token_id")
+
+    yes_team = norm_team(mapping.get("yes_team") or "")
+    no_team = norm_team(mapping.get("no_team") or "")
+    if yes_team and no_team and yes_team == no_team:
+        result.mapping_errors.append("yes_team equals no_team")
+
+    if result.mapping_errors:
+        result.mapping_confidence = 0.0
+    return result
+
+
+def validate_active_mappings(mappings: list[dict]) -> list[MappingValidationResult]:
+    results = [validate_mapping_schema(mapping, i) for i, mapping in enumerate(mappings)]
+    by_match: dict[str, list[int]] = {}
+    for i, mapping in enumerate(mappings):
+        if not _is_active_mapping(mapping):
+            continue
+        mid = str(mapping.get("dota_match_id") or "")
+        if mid:
+            by_match.setdefault(mid, []).append(i)
+
+    for mid, indexes in by_match.items():
+        if len(indexes) <= 1:
+            continue
+        identities = {_market_identity(mappings[i]) for i in indexes}
+        if len(identities) <= 1:
+            continue
+        # Allow one MATCH_WINNER alongside MAP_WINNER(s) on the same match — they
+        # bet different things (series vs single game) and are intentionally co-active.
+        market_types = [str(mappings[i].get("market_type") or "").upper() for i in indexes]
+        match_winner_count = market_types.count("MATCH_WINNER")
+        map_winner_count = market_types.count("MAP_WINNER")
+        if match_winner_count <= 1 and map_winner_count <= 1:
+            continue
+        names = ", ".join(str(mappings[i].get("name") or f"#{i}") for i in indexes)
+        for i in indexes:
+            results[i].duplicate_match_id_error = True
+            results[i].mapping_confidence = 0.0
+            results[i].mapping_errors.append(f"duplicate active dota_match_id={mid}: {names}")
+
+    return results
+
+
+def _is_active_mapping(mapping: dict) -> bool:
+    return _confidence(mapping) == 1.0 and not has_placeholder(mapping.get("dota_match_id")) and bool(mapping.get("dota_match_id"))
+
+
+def _market_identity(mapping: dict) -> tuple[str, str, str, str]:
+    return (
+        str(mapping.get("market_id") or ""),
+        str(mapping.get("condition_id") or ""),
+        str(mapping.get("yes_token_id") or ""),
+        str(mapping.get("no_token_id") or ""),
+    )
+
+
+def validate_mapping_identity(mapping: dict, game: dict, liveleague_context: dict | None = None) -> MappingValidationResult:
+    result = validate_mapping_schema(mapping)
+    ctx = liveleague_context or game.get("liveleague_context") or {}
+
+    result.series_id = _to_str(mapping.get("series_id") or ctx.get("series_id") or game.get("series_id"))
+    result.series_type = _to_int(mapping.get("series_type") if mapping.get("series_type") is not None else ctx.get("series_type"))
+    result.game_number = infer_game_number(mapping)
+
+    yes_team = norm_team(mapping.get("yes_team") or "")
+    no_team = norm_team(mapping.get("no_team") or "")
+    radiant_team = norm_team(game.get("radiant_team") or ctx.get("radiant_team") or ctx.get("radiant_team_name") or "")
+    dire_team = norm_team(game.get("dire_team") or ctx.get("dire_team") or ctx.get("dire_team_name") or "")
+
+    # Per-mapping market-team aliases — handles the case where a Polymarket
+    # market team is reported by Steam under a different team-id (e.g.
+    # ex-HEROIC roster plays under Steam team-id "LGD Gaming" in BLAST Slam).
+    # markets.yaml entries can specify additional Steam team names that should
+    # be accepted as matching the market team:
+    #   yes_team_aliases: [lgd]       # accept Steam "lgd" as matching the YES team
+    #   no_team_aliases:  [lgd]       # accept Steam "lgd" as matching the NO team
+    def _aliases(field: str) -> set[str]:
+        raw = mapping.get(field) or []
+        if isinstance(raw, str): raw = [raw]
+        return {norm_team(x) for x in raw if x}
+    yes_aliases = _aliases("yes_team_aliases")
+    no_aliases = _aliases("no_team_aliases")
+
+    def _matches(market_team: str, steam_team: str, aliases: set[str]) -> bool:
+        if not market_team or not steam_team: return False
+        if market_team == steam_team: return True
+        if steam_team in aliases: return True
+        return False
+
+    if radiant_team and dire_team and yes_team and no_team:
+        normal = (_matches(yes_team, radiant_team, yes_aliases)
+                  and _matches(no_team, dire_team, no_aliases))
+        reversed_side = (_matches(yes_team, dire_team, yes_aliases)
+                         and _matches(no_team, radiant_team, no_aliases))
+        if not (normal or reversed_side):
+            result.mapping_errors.append(
+                f"team_name_mismatch yes={yes_team} no={no_team} radiant={radiant_team} dire={dire_team}"
+            )
+
+    mapped_league = _to_str(mapping.get("league_id"))
+    game_league = _to_str(game.get("league_id") or ctx.get("league_id"))
+    if mapped_league and game_league and mapped_league != game_league and mapped_league != "0" and game_league != "0":
+        result.mapping_errors.append(f"league_id_mismatch mapping={mapped_league} game={game_league}")
+
+    mapped_series = _to_str(mapping.get("series_id"))
+    game_series = _to_str(ctx.get("series_id") or game.get("series_id"))
+    if mapped_series and game_series and mapped_series != game_series:
+        result.mapping_errors.append(f"series_id_mismatch mapping={mapped_series} game={game_series}")
+
+    if result.game_number is not None and result.series_type is not None:
+        max_games = {0: 1, 1: 3, 2: 3, 3: 5}.get(result.series_type)
+        if max_games is not None:
+            result.market_game_number_match = result.game_number <= max_games
+            if not result.market_game_number_match:
+                result.mapping_errors.append(
+                    f"game_number={result.game_number} incompatible with series_type={result.series_type}"
+                )
+
+    result.team_id_match = _team_ids_match(mapping, game, ctx)
+    if result.team_id_match is False:
+        result.mapping_errors.append("team_id_mismatch")
+
+    if result.mapping_errors:
+        result.mapping_confidence = 0.0
+    return result
+
+
+def _team_ids_match(mapping: dict, game: dict, ctx: dict) -> bool | None:
+    yes_id = _to_str(mapping.get("yes_team_id"))
+    no_id = _to_str(mapping.get("no_team_id"))
+    radiant_id = _to_str(game.get("radiant_team_id") or ctx.get("radiant_team_id"))
+    dire_id = _to_str(game.get("dire_team_id") or ctx.get("dire_team_id"))
+
+    if not any((yes_id, no_id, radiant_id, dire_id)):
+        return None
+    if not (yes_id and no_id and radiant_id and dire_id):
+        return None
+
+    yes_team = norm_team(mapping.get("yes_team") or "")
+    no_team = norm_team(mapping.get("no_team") or "")
+    radiant_team = norm_team(game.get("radiant_team") or ctx.get("radiant_team") or "")
+    dire_team = norm_team(game.get("dire_team") or ctx.get("dire_team") or "")
+
+    if yes_team == radiant_team and no_team == dire_team:
+        return yes_id == radiant_id and no_id == dire_id
+    if yes_team == dire_team and no_team == radiant_team:
+        return yes_id == dire_id and no_id == radiant_id
+    return {yes_id, no_id} == {radiant_id, dire_id}
+
+
+def result_to_error(index: int, mapping: dict, result: MappingValidationResult) -> MappingError:
+    return MappingError(index=index, name=mapping.get("name"), reason="; ".join(result.mapping_errors))

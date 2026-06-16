@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-06-15T04:26:48.568023+00:00",
+  "total_entries": 12971,
+  "unique_matches": 127,
+  "decision_breakdown": {
+    "WOULD_SKIP": 4443,
+    "WOULD_REJECT": 8528
+  },
+  "reject_reason_breakdown": {
+    "game_too_early": 3013,
+    "series_market_unpriced": 3608,
+    "game_too_late": 1386,
+    "book_stale": 84,
+    "missing_ask": 630,
+    "game_over": 189,
+    "missing_book": 3991,
+    "missing_snapshot_timestamp": 70
+  },
+  "would_enter_count": 0,
+  "episode_metrics": {
+    "unique_episodes": 0,
+    "raw_would_enter_signals": 0,
+    "avg_signals_per_episode": 0,
+    "median_signals_per_episode": 0,
+    "max_signals_per_episode": 0,
+    "top_1_episode_share": 0.0,
+    "top_3_episode_share": 0.0,
+    "top_5_episode_share": 0.0,
+    "episode_gap_seconds": 180
+  },
+  "pnl_metrics": {
+    "episodes_scored": 0,
+    "episodes_settled": 0,
+    "total_settled_pnl": 0.0,
+    "avg_pnl_30s": 0.0,
+    "avg_pnl_60s": 0.0,
+    "avg_pnl_300s": 0.0,
+    "avg_pnl_to_convergence": 0.0
+  },
+  "episode_pnls": [],
+  "causality_violations": 0,
+  "operational_checks": {
+    "7_day_monitoring_complete": false,
+    "zero_causality_violations": true
+  }
+}

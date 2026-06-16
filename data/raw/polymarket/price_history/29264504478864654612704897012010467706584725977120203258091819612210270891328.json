@@ -1,0 +1,52 @@
+{
+  "condition_id": "0xb63fb0c790d537b30e51fc420276bb72ccf4d7b4c742c835eda2a3c16f2846da",
+  "event_id": "195919",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:41:43+00:00",
+  "http_status": 200,
+  "market_id": "1314450",
+  "question": "Dota 2: Team Rostikfacekid vs Team 9pasha - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1769972430
+      },
+      {
+        "p": 0.51,
+        "t": 1769976031
+      },
+      {
+        "p": 0.51,
+        "t": 1769979630
+      },
+      {
+        "p": 0.995,
+        "t": 1769983225
+      },
+      {
+        "p": 0.995,
+        "t": 1769986825
+      },
+      {
+        "p": 0.9995,
+        "t": 1769990436
+      },
+      {
+        "p": 0.9995,
+        "t": 1769994024
+      },
+      {
+        "p": 0.9995,
+        "t": 1769997652
+      }
+    ]
+  },
+  "requested_end_ts": "1770001202",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1769968967",
+  "slug": "dota2-rfk-9pas-2026-02-01-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "29264504478864654612704897012010467706584725977120203258091819612210270891328"
+}

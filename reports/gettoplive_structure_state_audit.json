@@ -1,0 +1,157 @@
+{
+  "building_change_without_tower_examples": [
+    {
+      "cur_building_state": "9633938",
+      "game_time_sec": 1373,
+      "match_id": "8842596730",
+      "prev_building_state": "9568402",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "13828242",
+      "game_time_sec": 1472,
+      "match_id": "8842596730",
+      "prev_building_state": "9633938",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "13828250",
+      "game_time_sec": 1623,
+      "match_id": "8842596730",
+      "prev_building_state": "13828242",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "13828314",
+      "game_time_sec": 1851,
+      "match_id": "8842596730",
+      "prev_building_state": "13828250",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "13828315",
+      "game_time_sec": 1911,
+      "match_id": "8842596730",
+      "prev_building_state": "13828314",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "13828900",
+      "game_time_sec": 2527,
+      "match_id": "8842596730",
+      "prev_building_state": "13828388",
+      "tower_state": "4044580"
+    },
+    {
+      "cur_building_state": "9634002",
+      "game_time_sec": 1975,
+      "match_id": "8842722527",
+      "prev_building_state": "9633938",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "9634010",
+      "game_time_sec": 2100,
+      "match_id": "8842722527",
+      "prev_building_state": "9634002",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "9634011",
+      "game_time_sec": 2858,
+      "match_id": "8842722527",
+      "prev_building_state": "9634010",
+      "tower_state": "4044726"
+    },
+    {
+      "cur_building_state": "29294810",
+      "game_time_sec": 2643,
+      "match_id": "8842807923",
+      "prev_building_state": "29229274",
+      "tower_state": "3745718"
+    }
+  ],
+  "generated_at": "2026-06-07T20:13:28+00:00",
+  "interpretation": {
+    "research_only": "raw TopLive building_state rax/base/T4 interpretation",
+    "survival_rule": "Do not trade rax/base pressure from raw TopLive building_state.",
+    "tradeable_now": "decoded lane-tower transitions only"
+  },
+  "matches": {
+    "8842596730": {
+      "building_change_without_tower_change": 6,
+      "building_state_changes": 14,
+      "first_game_time_sec": -90,
+      "invalid_structure_deltas": 85,
+      "last_game_time_sec": 2532,
+      "rows": 88,
+      "tower_count_increases": 0,
+      "tower_state_changes": 8,
+      "valid_tower_deltas": 2
+    },
+    "8842722527": {
+      "building_change_without_tower_change": 3,
+      "building_state_changes": 14,
+      "first_game_time_sec": -89,
+      "invalid_structure_deltas": 81,
+      "last_game_time_sec": 3129,
+      "rows": 85,
+      "tower_count_increases": 2,
+      "tower_state_changes": 11,
+      "valid_tower_deltas": 3
+    },
+    "8842807923": {
+      "building_change_without_tower_change": 1,
+      "building_state_changes": 5,
+      "first_game_time_sec": 90,
+      "invalid_structure_deltas": 22,
+      "last_game_time_sec": 2643,
+      "rows": 25,
+      "tower_count_increases": 0,
+      "tower_state_changes": 4,
+      "valid_tower_deltas": 2
+    },
+    "8842845018": {
+      "building_change_without_tower_change": 3,
+      "building_state_changes": 9,
+      "first_game_time_sec": 550,
+      "invalid_structure_deltas": 40,
+      "last_game_time_sec": 1889,
+      "rows": 44,
+      "tower_count_increases": 0,
+      "tower_state_changes": 6,
+      "valid_tower_deltas": 3
+    },
+    "8842905182": {
+      "building_change_without_tower_change": 3,
+      "building_state_changes": 10,
+      "first_game_time_sec": 168,
+      "invalid_structure_deltas": 39,
+      "last_game_time_sec": 1997,
+      "rows": 42,
+      "tower_count_increases": 0,
+      "tower_state_changes": 7,
+      "valid_tower_deltas": 2
+    }
+  },
+  "totals": {
+    "building_change_without_tower_change": 16,
+    "building_state_changes": 52,
+    "invalid_structure_deltas": 267,
+    "missing_required": {
+      "building_state": 0,
+      "dire_score": 0,
+      "game_time_sec": 0,
+      "match_id": 0,
+      "radiant_lead": 0,
+      "radiant_score": 0,
+      "received_at_ns": 0,
+      "tower_state": 0
+    },
+    "top_live_matches": 5,
+    "top_live_rows": 284,
+    "tower_count_increases": 2,
+    "tower_state_changes": 36,
+    "valid_tower_deltas": 12
+  }
+}

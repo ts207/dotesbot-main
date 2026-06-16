@@ -1,0 +1,47 @@
+{
+  "b0_validation": {
+    "actual_win_rate": 0.4772727272727273,
+    "brier": 0.2393657196969697,
+    "calibration": {
+      "intercept": -0.11130050154298747,
+      "slope": 0.7890502275581386
+    },
+    "log_loss": 0.675393783573605,
+    "mean_predicted_probability": 0.5045075757575759,
+    "rows": 132
+  },
+  "pass_fail": {
+    "b1a_intercept_only": {
+      "fail_reasons": [
+        "dominant_by_market_discovery_source_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 0.0
+    },
+    "b1b_ultra_small": {
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 100.0
+    },
+    "b1c_compact": {
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 100.0
+    }
+  },
+  "train_rows": 386,
+  "validation_rows": 132,
+  "verdict": "fail_current_best_b0_market_only"
+}

@@ -1,0 +1,28 @@
+{
+  "condition_id": "0x2b4763b2ae1e3f6e6273939806f2b07dad329e9ea41879aba01d8ff26ae756b4",
+  "event_id": "374671",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:24+00:00",
+  "http_status": 200,
+  "market_id": "1968279",
+  "question": "Dota 2: GLYPH vs REKONIX - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.9995,
+        "t": 1776085249
+      },
+      {
+        "p": 0.9995,
+        "t": 1776088856
+      }
+    ]
+  },
+  "requested_end_ts": "1776094171",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776081173",
+  "slug": "dota2-glyph-rnx-2026-04-13-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "114120433494207382015955810178049458642050085985297816700787804748318305117736"
+}

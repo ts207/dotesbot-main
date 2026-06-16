@@ -1,0 +1,48 @@
+{
+  "condition_id": "0x20c3bf87f6701cfe7e0f8668180ff3f161ab103250744c9a1520bda1edb8ee72",
+  "event_id": "554803",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:42:06+00:00",
+  "http_status": 200,
+  "market_id": "2426837",
+  "question": "Dota 2: Nigma Galaxy vs KO - Game 4 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780484407
+      },
+      {
+        "p": 0.465,
+        "t": 1780488003
+      },
+      {
+        "p": 0.5,
+        "t": 1780491603
+      },
+      {
+        "p": 0.455,
+        "t": 1780495204
+      },
+      {
+        "p": 0.5,
+        "t": 1780498805
+      },
+      {
+        "p": 0.5,
+        "t": 1780502404
+      },
+      {
+        "p": 0.5,
+        "t": 1780506004
+      }
+    ]
+  },
+  "requested_end_ts": "1780508109",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780482784",
+  "slug": "dota2-ngx-ko-2026-06-03-game4",
+  "source_universe": "polymarket_public_search",
+  "token_id": "24109331266360224557499020913430986985362861997925976424070514112926600283035"
+}

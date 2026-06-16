@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x53b377737bc42bc7c049992b2acaeade8cd5d02f548d5b637dacdc5d0c60ba26",
+  "event_id": "351116",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:27+00:00",
+  "http_status": 200,
+  "market_id": "1894260",
+  "question": "Dota 2:  Pipsqueak+4 vs Power Rangers - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1775505658
+      },
+      {
+        "p": 0.485,
+        "t": 1775512859
+      },
+      {
+        "p": 0.48,
+        "t": 1775527257
+      },
+      {
+        "p": 0.48,
+        "t": 1775534453
+      },
+      {
+        "p": 0.0005,
+        "t": 1775570439
+      }
+    ]
+  },
+  "requested_end_ts": "1775579297",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775499967",
+  "slug": "dota2-pi-pr1-2026-04-07-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "17491252273923040776209223120933191276085963459891257643676408456906898081920"
+}

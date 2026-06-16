@@ -1,0 +1,64 @@
+{
+  "condition_id": "0xd4216fc84e1f1ffea9727b4da5982883db0f2a8ed56a2a8adfacae97ad7b94ca",
+  "event_id": "547302",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:41:59+00:00",
+  "http_status": 200,
+  "market_id": "2408511",
+  "question": "Dota 2: Poor Rangers vs Team G - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780300805
+      },
+      {
+        "p": 0.5,
+        "t": 1780304405
+      },
+      {
+        "p": 0.38,
+        "t": 1780308004
+      },
+      {
+        "p": 0.65,
+        "t": 1780311605
+      },
+      {
+        "p": 0.66,
+        "t": 1780315207
+      },
+      {
+        "p": 0.6,
+        "t": 1780318805
+      },
+      {
+        "p": 0.26,
+        "t": 1780322406
+      },
+      {
+        "p": 0.0005,
+        "t": 1780326008
+      },
+      {
+        "p": 0.0005,
+        "t": 1780329608
+      },
+      {
+        "p": 0.0005,
+        "t": 1780333213
+      },
+      {
+        "p": 0.0005,
+        "t": 1780336807
+      }
+    ]
+  },
+  "requested_end_ts": "1780337690",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780299850",
+  "slug": "dota2-poorra-g-2026-06-01-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "19492592396211319242862291669161091312348344246566547721462012603331453646954"
+}

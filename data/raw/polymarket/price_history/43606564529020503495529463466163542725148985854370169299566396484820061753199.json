@@ -1,0 +1,48 @@
+{
+  "condition_id": "0x3ebbf824999ed8379bfe8c96808067ce6030399c3e3cf91d75a597e337ca4e10",
+  "event_id": "155153",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:41:27+00:00",
+  "http_status": 200,
+  "market_id": "1151574",
+  "question": "Dota 2: Ivory vs Team Nemesis - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.285,
+        "t": 1768046426
+      },
+      {
+        "p": 0.25,
+        "t": 1768050021
+      },
+      {
+        "p": 0.645,
+        "t": 1768053624
+      },
+      {
+        "p": 0.001,
+        "t": 1768057223
+      },
+      {
+        "p": 0.0005,
+        "t": 1768060831
+      },
+      {
+        "p": 0.0005,
+        "t": 1768064424
+      },
+      {
+        "p": 0.0005,
+        "t": 1768068025
+      }
+    ]
+  },
+  "requested_end_ts": "1768069018",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768044668",
+  "slug": "dota2-ivo-nem-2026-01-10-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "43606564529020503495529463466163542725148985854370169299566396484820061753199"
+}

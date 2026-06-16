@@ -1,0 +1,132 @@
+{
+  "profile_id": "survival_strategy_v1",
+  "generated_from": [
+    "reports/bot_performance_backtest_2026_06_07.json",
+    "reports/model_b_v2_corrected_diagnosis.json",
+    "reports/replay_existing_signals_report.json",
+    "reports/value_survival_feature_audit.json"
+  ],
+  "primary_strategy": "VALUE_HOLD_TO_SETTLEMENT",
+  "primary_signal_source": "GetTopLive top_live snapshots",
+  "source_state_requirements": {
+    "csv_path": "logs/raw_snapshots.csv",
+    "tail_rows": 2000,
+    "required_data_source": "top_live",
+    "required_fields": [
+      "received_at_ns",
+      "match_id",
+      "game_time_sec",
+      "radiant_lead",
+      "radiant_score",
+      "dire_score",
+      "building_state",
+      "tower_state"
+    ],
+    "recommended_fields": [
+      "players"
+    ],
+    "minimum_required_source_rows": 1
+  },
+  "structure_state_policy": {
+    "top_live_building_state": "required_for_audit_and_lane_tower_decode",
+    "top_live_tower_state": "decoded_from_validated_lane_tower_progress_bits",
+    "top_live_rax_and_t4": "research_only_until_layout_validated",
+    "runtime_schema_marker": "building_state_schema=top_live_lane_tower_progress",
+    "survival_rule": "Do not generate rax/base-pressure trades from raw GetTopLive building_state."
+  },
+  "positive_expectancy_lanes": {
+    "value": {
+      "enabled_env": "VALUE_ENGINE_ENABLED",
+      "trading_env": "ENABLE_VALUE_TRADING",
+      "market_types": ["MAP_WINNER", "MATCH_WINNER_GAME3_PROXY"],
+      "entry": "Back the net-worth leader when winprob fair minus executable ask clears the gate.",
+      "exit": "Hold to settlement except catastrophe salvage.",
+      "validated_no_confirmation": {
+        "trades": 18,
+        "wins": 14,
+        "losses": 4,
+        "roi_pct": 23.2
+      },
+      "gates": {
+        "VALUE_MIN_EDGE": {"op": ">=", "value": 0.15},
+        "VALUE_MIN_FAIR": {"op": ">=", "value": 0.70},
+        "VALUE_MIN_PRICE": {"op": ">=", "value": 0.55},
+        "VALUE_MAX_PRICE": {"op": "<=", "value": 0.84},
+        "VALUE_MAX_EDGE": {"op": "<=", "value": 0.25},
+        "VALUE_MAX_GAME_TIME": {"op": "<=", "value": 2400},
+        "VALUE_MAX_BOOK_AGE_MS": {"op": "<=", "value": 15000}
+      },
+      "must_be_false": ["VALUE_CONFIRM_ENABLED"],
+      "hard_guards": [
+        "orientation_flip_guard",
+        "per_match_value_cap",
+        "book_timestamp_required",
+        "top_live_only",
+        "series_market_only_if_game3_proxy"
+      ],
+      "research_overlays": {
+        "leader_score_and_lane_tower_alignment": {
+          "status": "research_only_not_live_gate",
+          "reason": "Current replay subgroup is stronger but too small for automatic live gating.",
+          "latest_report": "reports/value_survival_feature_audit.json"
+        }
+      }
+    },
+    "dswing": {
+      "enabled_env": "DSWING_ENABLED",
+      "default_state": "off",
+      "market_types": ["MATCH_WINNER"],
+      "entry": "After a decisive map swing, buy stale BO3 moneyline below series fair.",
+      "exit": "Exit at map-end convergence; do not hold non-decider ML to series settlement.",
+      "validated_best_sweep": {
+        "lead_threshold": 6000,
+        "trades": 15,
+        "win_pct": 67.0,
+        "roi_pct": 40.3
+      },
+      "gates": {
+        "DSWING_LEAD": {"op": "<=", "value": 6000},
+        "DSWING_MIN_EDGE": {"op": ">=", "value": 0.05}
+      },
+      "arming_requires": [
+        "manual_user_approval",
+        "reliable_series_state",
+        "trader_kind_dswing_map_end_exit",
+        "explicit_capital_plan",
+        "thin_exit_liquidity_acceptance"
+      ]
+    }
+  },
+  "secondary_event_coverage": {
+    "enabled_env": "EVENT_DETECTORS_ENABLED",
+    "role": "secondary_coverage_only",
+    "allowed_trade_events": [
+      "POLL_FIRST_SWING_SETTLE",
+      "POLL_PHASE_NORMALIZED_LEAD",
+      "POLL_VALUE_DISAGREEMENT",
+      "POLL_RAPID_STOMP",
+      "POLL_DECISIVE_STOMP"
+    ],
+    "warning": "Short-horizon markouts are fragile; events must not replace VALUE as the primary strategy."
+  },
+  "rejected_lanes": {
+    "model_b_residual": {
+      "status": "stop_no_trade",
+      "reason": "Residual variants failed source-robust validation; B0_market_only is current best."
+    },
+    "momentum_scalping": {
+      "status": "dead",
+      "reason": "Price often leads the Steam feed and longer markouts are unstable."
+    },
+    "manual_cockpit_trading": {
+      "status": "forbidden_for_strategy",
+      "reason": "Manual cockpit trading caused the account drawdown; bot-only trading is required."
+    }
+  },
+  "bankroll_rules": {
+    "max_trade_usd_fraction_of_nav": 0.12,
+    "max_total_live_usd_fraction_of_nav": 0.35,
+    "default_small_bankroll_trade_cap_usd": 6.0,
+    "default_small_bankroll_value_match_cap_usd": 6.0
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xa6b9e4caeaeb20cd1fc9109f429824a8fbfb766e351c4092a25b3de726b134c2",
+  "event_id": "173261",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:14+00:00",
+  "http_status": 200,
+  "market_id": "1215786",
+  "question": "Dota 2: Amaru Gaming vs Looking for Org - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1768777222
+      },
+      {
+        "p": 0.67,
+        "t": 1768780819
+      },
+      {
+        "p": 0.5,
+        "t": 1768788028
+      },
+      {
+        "p": 0.9955,
+        "t": 1768791619
+      },
+      {
+        "p": 0.995,
+        "t": 1768795221
+      }
+    ]
+  },
+  "requested_end_ts": "1768795938",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768775477",
+  "slug": "dota2-amaru-loo-2026-01-19-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "54953965564434550558120228841655917773855118143489156843950292485521581940199"
+}

@@ -1,0 +1,48 @@
+{
+  "condition_id": "0xf837aad1004eb13b97373eaf27a7471b7bdd6f5cb6358209b2be957518c5526d",
+  "event_id": "321762",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:04+00:00",
+  "http_status": 200,
+  "market_id": "1776901",
+  "question": "Dota 2: Tundra Esports vs Team Yandex - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1774796450
+      },
+      {
+        "p": 0.62,
+        "t": 1774800044
+      },
+      {
+        "p": 0.575,
+        "t": 1774803651
+      },
+      {
+        "p": 0.57,
+        "t": 1774807255
+      },
+      {
+        "p": 0.9915,
+        "t": 1774810843
+      },
+      {
+        "p": 0.9995,
+        "t": 1774814443
+      },
+      {
+        "p": 0.9995,
+        "t": 1774818052
+      }
+    ]
+  },
+  "requested_end_ts": "1774825238",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1774794774",
+  "slug": "dota2-tundra-ty-2026-03-29-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "81018835140566324082545455613771048659299656890719481714960081866499456620592"
+}

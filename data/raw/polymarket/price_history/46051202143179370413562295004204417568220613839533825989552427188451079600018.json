@@ -1,0 +1,52 @@
+{
+  "condition_id": "0xc6e040313d44c283e18dcfa1adbe676e3f546ba2c782e284984d3f0fb47b6148",
+  "event_id": "207205",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:36+00:00",
+  "http_status": 200,
+  "market_id": "1371518",
+  "question": "Dota 2: VP.Prodigy vs L1ga Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1770962436
+      },
+      {
+        "p": 0.37,
+        "t": 1770966024
+      },
+      {
+        "p": 0.37,
+        "t": 1770969621
+      },
+      {
+        "p": 0.375,
+        "t": 1770973237
+      },
+      {
+        "p": 0.4,
+        "t": 1770976823
+      },
+      {
+        "p": 0.94,
+        "t": 1770980422
+      },
+      {
+        "p": 0.9995,
+        "t": 1770984049
+      },
+      {
+        "p": 0.9995,
+        "t": 1770987627
+      }
+    ]
+  },
+  "requested_end_ts": "1770989195",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1770960745",
+  "slug": "dota2-vpp-l1ga-2026-02-13-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "46051202143179370413562295004204417568220613839533825989552427188451079600018"
+}

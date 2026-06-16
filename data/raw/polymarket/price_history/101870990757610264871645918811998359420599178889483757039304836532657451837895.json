@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x2bc1e5ebdb81ae0556a508fe44db248a791e92e7e703b453b8a65d5c7deb9e48",
+  "event_id": "520371",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:28+00:00",
+  "http_status": 200,
+  "market_id": "2346687",
+  "question": "Dota 2: PARIVISION vs Aurora - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.575,
+        "t": 1779631204
+      },
+      {
+        "p": 0.575,
+        "t": 1779634804
+      },
+      {
+        "p": 0.435,
+        "t": 1779638406
+      },
+      {
+        "p": 0.0005,
+        "t": 1779642004
+      },
+      {
+        "p": 0.0005,
+        "t": 1779645604
+      }
+    ]
+  },
+  "requested_end_ts": "1779648270",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1779630233",
+  "slug": "dota2-pari-aur1-2026-05-24-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "101870990757610264871645918811998359420599178889483757039304836532657451837895"
+}

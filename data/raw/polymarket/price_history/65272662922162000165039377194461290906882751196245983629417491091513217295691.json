@@ -1,0 +1,60 @@
+{
+  "condition_id": "0xd684640e22632eba073a471959f7081e46220bcd7b2367dedec064f7944204d7",
+  "event_id": "369112",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:13+00:00",
+  "http_status": 200,
+  "market_id": "1951179",
+  "question": "Dota 2: Team Resilience vs Cloud Rising - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775948449
+      },
+      {
+        "p": 0.515,
+        "t": 1775955643
+      },
+      {
+        "p": 0.505,
+        "t": 1775959244
+      },
+      {
+        "p": 0.915,
+        "t": 1775962846
+      },
+      {
+        "p": 0.5,
+        "t": 1775966444
+      },
+      {
+        "p": 0.5,
+        "t": 1775970046
+      },
+      {
+        "p": 0.92,
+        "t": 1775973653
+      },
+      {
+        "p": 0.9995,
+        "t": 1775977244
+      },
+      {
+        "p": 0.9995,
+        "t": 1775980845
+      },
+      {
+        "p": 0.9995,
+        "t": 1775984454
+      }
+    ]
+  },
+  "requested_end_ts": "1775984857",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775946899",
+  "slug": "dota2-tr7-clo-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "65272662922162000165039377194461290906882751196245983629417491091513217295691"
+}

@@ -1,0 +1,48 @@
+{
+  "condition_id": "0xad6aacdfa3fe761146aabadde81c49773be65648f7228148dd821ca2d5bdaa70",
+  "event_id": "195358",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:23+00:00",
+  "http_status": 200,
+  "market_id": "1312810",
+  "question": "Dota 2: Team TPaBoMaH vs Team 9pasha - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1769950823
+      },
+      {
+        "p": 0.51,
+        "t": 1769954448
+      },
+      {
+        "p": 0.505,
+        "t": 1769958039
+      },
+      {
+        "p": 0.505,
+        "t": 1769961649
+      },
+      {
+        "p": 0.9985,
+        "t": 1769965223
+      },
+      {
+        "p": 0.999,
+        "t": 1769968826
+      },
+      {
+        "p": 0.999,
+        "t": 1769972423
+      }
+    ]
+  },
+  "requested_end_ts": "1769974324",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1769947371",
+  "slug": "dota2-tpabo-9pas-2026-02-01-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "4805819817608455056226259453863726744184703295865744415626490328753450358044"
+}

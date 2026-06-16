@@ -1,0 +1,242 @@
+{
+  "branch_decision": {
+    "default": "Version B: Draft Market Residual Model",
+    "reason": "No reliable pre-draft sharp bookmaker odds corpus is present locally; earliest Polymarket mid is a post-draft market anchor, not p_anchor."
+  },
+  "inputs": {
+    "ask_move_min": 0.01,
+    "clean_book_rows": 2878,
+    "clean_matches": 49,
+    "mapped_matches": 159,
+    "market_type": "MAP_WINNER",
+    "nw_delta_min": 300.0,
+    "reaction_window_sec": 300.0
+  },
+  "test1_reaction_speed": {
+    "events": 721,
+    "lag_median": 9.7165,
+    "lag_p75": 41.33225,
+    "lag_p90": 121.41820000000001,
+    "lag_p95": 182.83774999999997,
+    "lag_p99": 273.96581,
+    "moves_within_window": 518,
+    "no_move_within_window": 203,
+    "pct_no_move_within_window": 0.2815533980582524,
+    "pct_over_180s": 0.3217753120665742,
+    "pct_under_120s": 0.6449375866851595,
+    "pct_under_30s": 0.507628294036061,
+    "segment_medians": {
+      "game_time_early": 13.8505,
+      "game_time_late": 10.6935,
+      "game_time_mid": 8.6965,
+      "magnitude_large": 4.5184999999999995,
+      "magnitude_medium": 11.017,
+      "magnitude_small": 10.214
+    },
+    "verdict": "temporal_tail_possible"
+  },
+  "test2_spread_behavior": {
+    "baseline_spread": 0.03,
+    "late_game_spread": 0.04,
+    "roshan_vs_baseline_ratio": 1.3333333333333335,
+    "roshan_window_spread": 0.04,
+    "spread_by_minute_bucket": [
+      {
+        "bucket": "00-05",
+        "mean": 0.1500281690140845,
+        "median": 0.02,
+        "n": 213,
+        "std": 0.2998767339166792
+      },
+      {
+        "bucket": "05-10",
+        "mean": 0.1752938775510204,
+        "median": 0.04,
+        "n": 245,
+        "std": 0.31685529331430007
+      },
+      {
+        "bucket": "10-15",
+        "mean": 0.16526470588235292,
+        "median": 0.03,
+        "n": 238,
+        "std": 0.3015893774983984
+      },
+      {
+        "bucket": "15-20",
+        "mean": 0.1672948717948718,
+        "median": 0.04,
+        "n": 312,
+        "std": 0.2951594683701902
+      },
+      {
+        "bucket": "20-25",
+        "mean": 0.16573684210526315,
+        "median": 0.02,
+        "n": 380,
+        "std": 0.3055772177553168
+      },
+      {
+        "bucket": "25-30",
+        "mean": 0.22403458213256483,
+        "median": 0.03,
+        "n": 347,
+        "std": 0.3503621493421973
+      },
+      {
+        "bucket": "30-35",
+        "mean": 0.20868996960486322,
+        "median": 0.03,
+        "n": 329,
+        "std": 0.34135017263115336
+      },
+      {
+        "bucket": "35-40",
+        "mean": 0.2848746268656716,
+        "median": 0.04,
+        "n": 335,
+        "std": 0.3887879164571215
+      },
+      {
+        "bucket": "40-45",
+        "mean": 0.18614835164835164,
+        "median": 0.03,
+        "n": 182,
+        "std": 0.31635040207479953
+      },
+      {
+        "bucket": "45-50",
+        "mean": 0.3006666666666667,
+        "median": 0.07,
+        "n": 297,
+        "std": 0.37771622790336773
+      }
+    ],
+    "verdict": "possible_hidden_state_spread_signal"
+  },
+  "test3_r2_decomposition": {
+    "n_games": 49,
+    "n_rows": 2878,
+    "r2_gap": 0.2828221541775485,
+    "r2_raw_state_linear": 0.459908557708569,
+    "r2_raw_state_poly": 0.573744697971923,
+    "r2_with_game_fe": 0.8565668521494715,
+    "verdict": "large_game_specific_component"
+  },
+  "test4_draft_residual_proxy": {
+    "calibration_by_price_bucket": [
+      {
+        "actual_win_rate": 0.0,
+        "avg_market_mid": 0.23966666666666667,
+        "bucket": "0.0-0.4",
+        "n": 15,
+        "residual_mean": -0.23966666666666667
+      },
+      {
+        "actual_win_rate": 0.2857142857142857,
+        "avg_market_mid": 0.44857142857142857,
+        "bucket": "0.4-0.5",
+        "n": 7,
+        "residual_mean": -0.16285714285714287
+      },
+      {
+        "actual_win_rate": 0.4166666666666667,
+        "avg_market_mid": 0.5141666666666667,
+        "bucket": "0.5-0.6",
+        "n": 12,
+        "residual_mean": -0.0975
+      },
+      {
+        "actual_win_rate": 0.6,
+        "avg_market_mid": 0.643,
+        "bucket": "0.6-0.7",
+        "n": 5,
+        "residual_mean": -0.04300000000000002
+      },
+      {
+        "actual_win_rate": 1.0,
+        "avg_market_mid": 0.7308333333333333,
+        "bucket": "0.7-0.8",
+        "n": 6,
+        "residual_mean": 0.26916666666666667
+      },
+      {
+        "actual_win_rate": 1.0,
+        "avg_market_mid": 0.929,
+        "bucket": "0.8-1.0",
+        "n": 4,
+        "residual_mean": 0.07100000000000001
+      }
+    ],
+    "constant_0_5_brier": 0.25,
+    "constant_0_5_mae": 0.5,
+    "early_brier": 0.1519636530612245,
+    "early_mae": 0.3530408163265306,
+    "early_vs_late_price_accuracy": {
+      "early_mae": 0.3530408163265306,
+      "late_15m_mae": 0.29323333333333335,
+      "late_15m_n": 45
+    },
+    "first_market_game_minute": {
+      "count_lt_1m": 26,
+      "count_lt_5m": 41,
+      "max": 39.78,
+      "median": 0.85,
+      "min": 0.0,
+      "p25": 0.4,
+      "p75": 1.92
+    },
+    "n_games": 49,
+    "outcome_mean": 0.40816326530612246,
+    "residual_by_duration_bucket": [
+      {
+        "actual_win_rate": 0.3157894736842105,
+        "avg_market_mid": 0.4371052631578947,
+        "bucket": "30-40",
+        "n": 19,
+        "residual_mean": -0.12131578947368421
+      },
+      {
+        "actual_win_rate": 0.46153846153846156,
+        "avg_market_mid": 0.5726923076923077,
+        "bucket": "40-50",
+        "n": 13,
+        "residual_mean": -0.11115384615384617
+      },
+      {
+        "actual_win_rate": 0.4444444444444444,
+        "avg_market_mid": 0.4984444444444444,
+        "bucket": "50+",
+        "n": 9,
+        "residual_mean": -0.05399999999999999
+      },
+      {
+        "actual_win_rate": 0.5,
+        "avg_market_mid": 0.498125,
+        "bucket": "<30",
+        "n": 8,
+        "residual_mean": 0.0018750000000000069
+      }
+    ],
+    "residual_by_mapping": [
+      {
+        "actual_win_rate": 0.4166666666666667,
+        "avg_market_mid": 0.505125,
+        "mae": 0.33195833333333336,
+        "mapping": "normal",
+        "n": 24,
+        "residual_mean": -0.08845833333333333
+      },
+      {
+        "actual_win_rate": 0.4,
+        "avg_market_mid": 0.48392,
+        "mae": 0.37328,
+        "mapping": "reversed",
+        "n": 25,
+        "residual_mean": -0.08392000000000001
+      }
+    ],
+    "residual_mean": -0.08614285714285715,
+    "residual_std": 0.3801881918530477
+  }
+}

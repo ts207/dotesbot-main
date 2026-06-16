@@ -1,0 +1,23 @@
+[Unit]
+Description=Dota Polymarket live trading bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/tstuv/dota/dotesbot-main/dotesbot-main
+EnvironmentFile=-/home/tstuv/dota/dotesbot-main/dotesbot-main/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/tstuv/dota/dotesbot-main/dotesbot-main/supervisor.py
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+# Python configures rotating logs/logs/bot.log itself. Keep stdout in journald
+# for startup failures and systemd health inspection.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

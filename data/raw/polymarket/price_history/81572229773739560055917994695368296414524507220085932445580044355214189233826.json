@@ -1,0 +1,64 @@
+{
+  "condition_id": "0x3e6f833b302eb38f6c83ae96205cfae74987e40e7e86d62447f99a2c242c03ab",
+  "event_id": "400752",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:34+00:00",
+  "http_status": 200,
+  "market_id": "2037421",
+  "question": "Dota 2: Xtreme Gaming vs Vici Gaming - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1776722453
+      },
+      {
+        "p": 0.555,
+        "t": 1776733253
+      },
+      {
+        "p": 0.555,
+        "t": 1776736856
+      },
+      {
+        "p": 0.555,
+        "t": 1776740458
+      },
+      {
+        "p": 0.555,
+        "t": 1776744045
+      },
+      {
+        "p": 0.565,
+        "t": 1776754853
+      },
+      {
+        "p": 0.56,
+        "t": 1776758409
+      },
+      {
+        "p": 0.57,
+        "t": 1776765622
+      },
+      {
+        "p": 0.765,
+        "t": 1776769254
+      },
+      {
+        "p": 0.9995,
+        "t": 1776780022
+      },
+      {
+        "p": 0.9995,
+        "t": 1776787255
+      }
+    ]
+  },
+  "requested_end_ts": "1776788160",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776721431",
+  "slug": "dota2-xtreme-vg-2026-04-21-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "81572229773739560055917994695368296414524507220085932445580044355214189233826"
+}

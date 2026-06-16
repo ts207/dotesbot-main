@@ -1,0 +1,56 @@
+{
+  "condition_id": "0x8a01e84afd1ebddfff4ad3d677ec24ddfd439eb8247bc56a9cc021899c9adca8",
+  "event_id": "314258",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:02+00:00",
+  "http_status": 200,
+  "market_id": "1743573",
+  "question": "Dota 2: Team Spirit vs Xtreme Gaming - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.595,
+        "t": 1774627240
+      },
+      {
+        "p": 0.62,
+        "t": 1774630856
+      },
+      {
+        "p": 0.61,
+        "t": 1774634453
+      },
+      {
+        "p": 0.5,
+        "t": 1774638042
+      },
+      {
+        "p": 0.635,
+        "t": 1774641651
+      },
+      {
+        "p": 0.255,
+        "t": 1774645251
+      },
+      {
+        "p": 0.0005,
+        "t": 1774648841
+      },
+      {
+        "p": 0.0005,
+        "t": 1774652455
+      },
+      {
+        "p": 0.0005,
+        "t": 1774656054
+      }
+    ]
+  },
+  "requested_end_ts": "1774659109",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1774626767",
+  "slug": "dota2-ts8-xtreme-2026-03-27-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "64652068338076333237704520096230219844404902021272479562664081446392177295672"
+}

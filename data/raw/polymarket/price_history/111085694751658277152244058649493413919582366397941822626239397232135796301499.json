@@ -1,0 +1,19 @@
+{
+  "condition_id": "0x9cfaeb0118108707f42ca301d5c2ba3d067995fff161b0d9ab6dba7e971d51b1",
+  "event_id": "371243",
+  "fetch_status": "empty",
+  "fetched_at": "2026-06-07T08:41:49+00:00",
+  "http_status": 200,
+  "market_id": "1957895",
+  "question": "Dota 2: Team Liquid vs Natus Vincere - Game 2 Winner",
+  "raw_response": {
+    "history": []
+  },
+  "requested_end_ts": "1776034513",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775997771",
+  "slug": "dota2-liquid-navi-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "111085694751658277152244058649493413919582366397941822626239397232135796301499"
+}

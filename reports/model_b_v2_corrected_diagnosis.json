@@ -1,0 +1,114 @@
+{
+  "b0_validation": {
+    "actual_win_rate": 0.4772727272727273,
+    "brier": 0.2393657196969697,
+    "calibration": {
+      "intercept": -0.11130050154298747,
+      "slope": 0.7890502275581386
+    },
+    "log_loss": 0.675393783573605,
+    "mean_predicted_probability": 0.5045075757575759,
+    "rows": 132
+  },
+  "corrected_reason": "residual_not_source_robust_cross_tab_confirmed",
+  "crosstab_summary": {
+    "mechanism_assessment": "residual_not_source_robust_cross_tab_confirmed",
+    "notes": [
+      "market_probability_source and discovery/source_universe are separate axes",
+      "cross-tab rows show overlap rather than additive source counts"
+    ],
+    "validation_interaction_failures": [
+      {
+        "failed_bucket_count": 5,
+        "failed_rows_total": 55,
+        "group": "probability_x_discovery",
+        "model": "b1a"
+      },
+      {
+        "failed_bucket_count": 6,
+        "failed_rows_total": 46,
+        "group": "probability_x_discovery",
+        "model": "b1b"
+      },
+      {
+        "failed_bucket_count": 4,
+        "failed_rows_total": 35,
+        "group": "probability_x_discovery",
+        "model": "b1c"
+      },
+      {
+        "failed_bucket_count": 2,
+        "failed_rows_total": 37,
+        "group": "probability_x_source_universe",
+        "model": "b1a"
+      },
+      {
+        "failed_bucket_count": 2,
+        "failed_rows_total": 103,
+        "group": "probability_x_source_universe",
+        "model": "b1b"
+      },
+      {
+        "failed_bucket_count": 2,
+        "failed_rows_total": 103,
+        "group": "probability_x_source_universe",
+        "model": "b1c"
+      }
+    ]
+  },
+  "current_best_model": "B0_market_only",
+  "forbidden_next_steps": [
+    "GBM",
+    "CatBoost",
+    "calibration",
+    "threshold_tuning",
+    "execution_replay",
+    "locked_execution_audit",
+    "trading_logic"
+  ],
+  "important_correction": "Do not add probability-source counts to discovery/source-universe counts. market_probability_source and source_universe are separate axes and can overlap.",
+  "model_b_v2_verdict": "fail_current_best_b0_market_only",
+  "next_valid_work": [
+    "use source crosstab when explaining failures",
+    "improve feature/data quality",
+    "consider source-aware validation design before any future residual gate"
+  ],
+  "residual_pass_fail": {
+    "b1a_intercept_only": {
+      "fail_reasons": [
+        "dominant_by_market_discovery_source_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 0.0
+    },
+    "b1b_ultra_small": {
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 100.0
+    },
+    "b1c_compact": {
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "passes_gate": false,
+      "selected_alpha": 100.0
+    }
+  },
+  "robustness_warnings": [
+    "b1b_ultra_small:price_history_proxy_bucket_fails",
+    "b1b_ultra_small:polymarket_public_search_bucket_fails",
+    "b1c_compact:price_history_proxy_bucket_fails",
+    "b1c_compact:polymarket_public_search_bucket_fails"
+  ],
+  "status": "stop_no_trade"
+}

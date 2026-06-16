@@ -1,0 +1,14 @@
+{
+  "candidate_file": "data/train_pool/model_b_v2_candidates.csv",
+  "candidate_rows": 518,
+  "game_overlap": 0,
+  "market_overlap": 0,
+  "mode": "v2",
+  "series_count": 512,
+  "series_overlap": 0,
+  "train_rows": 386,
+  "train_series": 384,
+  "v2_required_columns_present": true,
+  "validation_rows": 132,
+  "validation_series": 128
+}

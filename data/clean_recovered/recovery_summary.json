@@ -1,0 +1,14 @@
+{
+  "candidate_markets": 97,
+  "diagnostic_only": 44,
+  "duplicate_match_id_rows": 37,
+  "recovered": 53,
+  "status_reasons": {
+    "insufficient_book_rows": 1,
+    "insufficient_snapshots": 34,
+    "insufficient_snapshots,insufficient_book_rows": 6,
+    "insufficient_snapshots,insufficient_book_rows,missing_outcome,missing_mapping": 1,
+    "insufficient_snapshots,missing_outcome,missing_mapping": 2,
+    "recovered": 53
+  }
+}

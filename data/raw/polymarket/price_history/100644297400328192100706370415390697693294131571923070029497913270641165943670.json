@@ -1,0 +1,68 @@
+{
+  "condition_id": "0x234c96c506807659df0842cdb5b7fe1f2606f67b5ef9372a48b0b223a0acbe1d",
+  "event_id": "357230",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:28+00:00",
+  "http_status": 200,
+  "market_id": "1917839",
+  "question": "Dota 2: NAVI Junior vs BALU - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1775653259
+      },
+      {
+        "p": 0.51,
+        "t": 1775660439
+      },
+      {
+        "p": 0.71,
+        "t": 1775689250
+      },
+      {
+        "p": 0.71,
+        "t": 1775692842
+      },
+      {
+        "p": 0.71,
+        "t": 1775696457
+      },
+      {
+        "p": 0.715,
+        "t": 1775700059
+      },
+      {
+        "p": 0.525,
+        "t": 1775707258
+      },
+      {
+        "p": 0.525,
+        "t": 1775710857
+      },
+      {
+        "p": 0.535,
+        "t": 1775718055
+      },
+      {
+        "p": 0.57,
+        "t": 1775721656
+      },
+      {
+        "p": 0.005,
+        "t": 1775728857
+      },
+      {
+        "p": 0.0005,
+        "t": 1775732458
+      }
+    ]
+  },
+  "requested_end_ts": "1775736879",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775650366",
+  "slug": "dota2-navij-balu-2026-04-09-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "100644297400328192100706370415390697693294131571923070029497913270641165943670"
+}

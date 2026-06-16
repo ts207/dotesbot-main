@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x3e193ec03f4b63ca49768041b396c5c5cd1179163ef26971846f5cef96d03410",
+  "event_id": "369085",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:11+00:00",
+  "http_status": 200,
+  "market_id": "1950984",
+  "question": "Dota 2: OG vs GLYPH - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.69,
+        "t": 1775955653
+      },
+      {
+        "p": 0.67,
+        "t": 1775959258
+      },
+      {
+        "p": 0.5,
+        "t": 1775966457
+      },
+      {
+        "p": 0.69,
+        "t": 1775970059
+      },
+      {
+        "p": 0.9995,
+        "t": 1775977253
+      },
+      {
+        "p": 0.9995,
+        "t": 1775980859
+      }
+    ]
+  },
+  "requested_end_ts": "1775985273",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775946181",
+  "slug": "dota2-og-glyph-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "17369866120143885157979232863517275492453199101388366206767185689443442191073"
+}

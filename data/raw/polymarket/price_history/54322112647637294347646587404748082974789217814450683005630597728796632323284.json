@@ -1,0 +1,19 @@
+{
+  "condition_id": "0xba061e1c40ce9eb62b832154a9cf325e579f9f750e6f5579547a45752cfa6528",
+  "event_id": "378110",
+  "fetch_status": "empty",
+  "fetched_at": "2026-06-07T08:41:51+00:00",
+  "http_status": 200,
+  "market_id": "1979636",
+  "question": "Dota 2: Amaru Flame vs not - Game 1 Winner",
+  "raw_response": {
+    "history": []
+  },
+  "requested_end_ts": "1776211084",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776165761",
+  "slug": "dota2-amrfme-not2-2026-04-14-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "54322112647637294347646587404748082974789217814450683005630597728796632323284"
+}

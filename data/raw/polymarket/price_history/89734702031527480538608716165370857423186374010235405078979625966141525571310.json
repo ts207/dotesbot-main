@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x80230c2b05107ad4a05f5bc2f348ac13e85b0c7066a0147c4e7548c3bde2f0ce",
+  "event_id": "396839",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:12+00:00",
+  "http_status": 200,
+  "market_id": "2025749",
+  "question": "Dota 2: Heroic vs Virtus.pro - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.575,
+        "t": 1776661207
+      },
+      {
+        "p": 0.575,
+        "t": 1776672013
+      },
+      {
+        "p": 0.795,
+        "t": 1776679209
+      },
+      {
+        "p": 0.9995,
+        "t": 1776682807
+      },
+      {
+        "p": 0.9995,
+        "t": 1776690021
+      }
+    ]
+  },
+  "requested_end_ts": "1776691508",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776632369",
+  "slug": "dota2-heroic-vp-2026-04-20-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "89734702031527480538608716165370857423186374010235405078979625966141525571310"
+}

@@ -1,0 +1,36 @@
+{
+  "condition_id": "0xd73d5787e897ee7a8729fb94cda98b56a8c4f31bd3c7f0dd76b84188f951c1bf",
+  "event_id": "173024",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:13:46+00:00",
+  "http_status": 200,
+  "market_id": "1214766",
+  "question": "Dota 2: Rottweilas Latam vs GamerLegion - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1768770014
+      },
+      {
+        "p": 0.145,
+        "t": 1768773613
+      },
+      {
+        "p": 0.9995,
+        "t": 1768777214
+      },
+      {
+        "p": 0.9995,
+        "t": 1768780814
+      }
+    ]
+  },
+  "requested_end_ts": "1768782804",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768766486",
+  "slug": "dota2-rl-gl-2026-01-18-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "47981112834920386037438443709987333031578185482153317585882432647739177113844"
+}

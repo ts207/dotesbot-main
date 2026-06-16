@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x1aa9f31688a662955ec8d8fcf163cdf0c55ec2527246ba5b07f6bb1ba28b2e44",
+  "event_id": "379591",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:07+00:00",
+  "http_status": 200,
+  "market_id": "1985256",
+  "question": "Dota 2: Heroic vs South America Rejects - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.425,
+        "t": 1776204042
+      },
+      {
+        "p": 0.145,
+        "t": 1776211250
+      },
+      {
+        "p": 0.0005,
+        "t": 1776214840
+      },
+      {
+        "p": 0.0005,
+        "t": 1776218443
+      },
+      {
+        "p": 0.0005,
+        "t": 1776222044
+      }
+    ]
+  },
+  "requested_end_ts": "1776222140",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776200027",
+  "slug": "dota2-heroic-sar1-2026-04-14-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "115233596847567212580248473980773321760081767415118312109714741315987767744548"
+}

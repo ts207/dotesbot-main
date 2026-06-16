@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x204703f8650de6a7d12e2d12747b7861d07b818cfdcaea92efa1904ffec8e3b5",
+  "event_id": "171650",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:21:59+00:00",
+  "http_status": 200,
+  "market_id": "1211867",
+  "question": "Dota 2: Execration vs REKONIX - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1768723233
+      },
+      {
+        "p": 0.505,
+        "t": 1768726815
+      },
+      {
+        "p": 0.505,
+        "t": 1768730413
+      },
+      {
+        "p": 0.92,
+        "t": 1768734016
+      },
+      {
+        "p": 0.9995,
+        "t": 1768737631
+      },
+      {
+        "p": 0.9995,
+        "t": 1768741227
+      }
+    ]
+  },
+  "requested_end_ts": "1768743038",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768719673",
+  "slug": "dota2-xctn-rnx-2026-01-18-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "13845086165186365156495216686113943745427306150680018633248808800630225727273"
+}

@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x5adc5f3ba5556359b120fbb81d3d880d15094bf567afa6158846747e763804ce",
+  "event_id": "156818",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:24+00:00",
+  "http_status": 200,
+  "market_id": "1158232",
+  "question": "Dota 2: Execration vs Team Nemesis - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.515,
+        "t": 1768122007
+      },
+      {
+        "p": 0.305,
+        "t": 1768125608
+      },
+      {
+        "p": 0.9995,
+        "t": 1768129208
+      },
+      {
+        "p": 0.9995,
+        "t": 1768132808
+      }
+    ]
+  },
+  "requested_end_ts": "1768134206",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768118468",
+  "slug": "dota2-xctn-nem-2026-01-11-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "54363965819815227145759971644067307399350583841694747948159999036883159937566"
+}

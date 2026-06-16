@@ -1,0 +1,52 @@
+{
+  "condition_id": "0x2aae120096eed1876d8eeae68916664e70567c67665173da14b1b269e27af7a5",
+  "event_id": "471030",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:32+00:00",
+  "http_status": 200,
+  "market_id": "2223872",
+  "question": "Dota 2: PlayTime vs Nigma Galaxy - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1778436025
+      },
+      {
+        "p": 0.545,
+        "t": 1778439608
+      },
+      {
+        "p": 0.575,
+        "t": 1778443209
+      },
+      {
+        "p": 0.9995,
+        "t": 1778446809
+      },
+      {
+        "p": 0.9995,
+        "t": 1778450406
+      },
+      {
+        "p": 0.9995,
+        "t": 1778454007
+      },
+      {
+        "p": 0.9995,
+        "t": 1778457610
+      },
+      {
+        "p": 0.9995,
+        "t": 1778461204
+      }
+    ]
+  },
+  "requested_end_ts": "1778462454",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1778432640",
+  "slug": "dota2-playti-ngx-2026-05-10-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "93694063107985958248380963727870114757557042757844086381192771601225390795607"
+}

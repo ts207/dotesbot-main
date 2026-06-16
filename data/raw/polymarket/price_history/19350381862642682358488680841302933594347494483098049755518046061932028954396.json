@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x05f7b5e0fb62c3fe2140d96e41351a1499fa3a72687c7e7b85b24b87e885a08d",
+  "event_id": "393333",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:41:52+00:00",
+  "http_status": 200,
+  "market_id": "2016809",
+  "question": "Dota 2: Roar Gaming vs Nigma Galaxy - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.42,
+        "t": 1776574857
+      },
+      {
+        "p": 0.395,
+        "t": 1776582052
+      },
+      {
+        "p": 0.0005,
+        "t": 1776600000
+      }
+    ]
+  },
+  "requested_end_ts": "1776603528",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776548740",
+  "slug": "dota2-roar-ngx-2026-04-19-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "19350381862642682358488680841302933594347494483098049755518046061932028954396"
+}

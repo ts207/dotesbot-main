@@ -1,0 +1,52 @@
+{
+  "condition_id": "0xf69bc3306ecc881ebe38cfb63fd868de3f6b21e141ec39cf451b8bffa1d857f5",
+  "event_id": "562352",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:51+00:00",
+  "http_status": 200,
+  "market_id": "2444423",
+  "question": "Dota 2: Ilbirs eSports vs Spirit Academy - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780675217
+      },
+      {
+        "p": 0.485,
+        "t": 1780678804
+      },
+      {
+        "p": 0.5,
+        "t": 1780682406
+      },
+      {
+        "p": 0.5,
+        "t": 1780686004
+      },
+      {
+        "p": 0.415,
+        "t": 1780689607
+      },
+      {
+        "p": 0.51,
+        "t": 1780693205
+      },
+      {
+        "p": 0.0005,
+        "t": 1780696805
+      },
+      {
+        "p": 0.0005,
+        "t": 1780700405
+      }
+    ]
+  },
+  "requested_end_ts": "1780701571",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780671836",
+  "slug": "dota2-ill-spirit1-2026-06-05-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "43672679994832851827275130767526983108834466163938656636947139684177270783217"
+}

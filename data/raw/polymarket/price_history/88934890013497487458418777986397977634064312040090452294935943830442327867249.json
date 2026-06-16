@@ -1,0 +1,60 @@
+{
+  "condition_id": "0x7fb0176517b8c4975a5f36d6cee124c8f29d74c47afabbd9220992d6d6075643",
+  "event_id": "416772",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:14+00:00",
+  "http_status": 200,
+  "market_id": "2077584",
+  "question": "Dota 2: Nemiga Gaming vs L1ga Team - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1777125605
+      },
+      {
+        "p": 0.44,
+        "t": 1777129211
+      },
+      {
+        "p": 0.44,
+        "t": 1777132807
+      },
+      {
+        "p": 0.45,
+        "t": 1777136432
+      },
+      {
+        "p": 0.45,
+        "t": 1777140010
+      },
+      {
+        "p": 0.66,
+        "t": 1777143606
+      },
+      {
+        "p": 0.0055,
+        "t": 1777147209
+      },
+      {
+        "p": 0.0005,
+        "t": 1777150811
+      },
+      {
+        "p": 0.0005,
+        "t": 1777154420
+      },
+      {
+        "p": 0.0005,
+        "t": 1777158006
+      }
+    ]
+  },
+  "requested_end_ts": "1777160782",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777124047",
+  "slug": "dota2-nemiga-l1ga-2026-04-25-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "88934890013497487458418777986397977634064312040090452294935943830442327867249"
+}

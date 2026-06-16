@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x377796631562ba0c2a0d396c834fea38806045d561a8e9977eacdf160e2da1cc",
+  "event_id": "142469",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:00+00:00",
+  "http_status": 200,
+  "market_id": "1103522",
+  "question": "Dota 2: Yakult Brothers.Tearlaments vs Game Master - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1767520815
+      },
+      {
+        "p": 0.51,
+        "t": 1767524425
+      },
+      {
+        "p": 0.9995,
+        "t": 1767528025
+      },
+      {
+        "p": 0.9995,
+        "t": 1767531616
+      }
+    ]
+  },
+  "requested_end_ts": "1767533355",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1767519072",
+  "slug": "dota2-ybtear-gamema-2026-01-04-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "51262772436908311533338909536156605805968987459621419901936744221888271495299"
+}

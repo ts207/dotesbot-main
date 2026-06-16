@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x1d083abb24276e7cbece1b545a98c8abff7da8788904cb951d777d74ac480207",
+  "event_id": "375554",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:31+00:00",
+  "http_status": 200,
+  "market_id": "1971748",
+  "question": "Dota 2: Team Nemesis vs REKONIX - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.515,
+        "t": 1776106856
+      },
+      {
+        "p": 0.515,
+        "t": 1776110454
+      },
+      {
+        "p": 0.545,
+        "t": 1776128445
+      },
+      {
+        "p": 0.545,
+        "t": 1776132056
+      },
+      {
+        "p": 0.5,
+        "t": 1776139256
+      },
+      {
+        "p": 0.035,
+        "t": 1776142857
+      }
+    ]
+  },
+  "requested_end_ts": "1776153155",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776098596",
+  "slug": "dota2-nem-rnx-2026-04-14-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "44387522179141357450344339058498213966474778914970231784629086216775853868278"
+}

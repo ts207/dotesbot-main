@@ -1,0 +1,30 @@
+{
+  "date": "2026-06-15",
+  "feed_active_hours": 0.01,
+  "VALUE_evaluations": 10,
+  "VALUE_WOULD_ENTER_count": 0,
+  "VALUE_reject_distribution": {
+    "game_too_early": 10
+  },
+  "near_threshold_pressure_score": 0.017,
+  "deep_discount_candidate_count": 0,
+  "market_lag_candidate_count": 0,
+  "causality_violations": 0,
+  "stale_book_WOULD_ENTER_count": 0,
+  "degraded_source_WOULD_ENTER_count": 0,
+  "config_drift_detected": false,
+  "decision": "CONTINUE",
+  "validation_day_usable": true,
+  "validation_day_reject_reason": null,
+  "future_book_relative_to_snapshot_count": 0,
+  "future_book_relative_to_snapshot_would_enter_count": 0,
+  "negative_book_age_count": 0,
+  "negative_book_age_would_enter_count": 0,
+  "max_negative_book_age_ms": 0,
+  "excessive_skew_count": 0,
+  "excessive_skew_would_enter_count": 0,
+  "validation_eligible_false_detected": false,
+  "backlog_replay_mode_detected": false,
+  "monitor_process_down": false,
+  "affected_monitor": ""
+}

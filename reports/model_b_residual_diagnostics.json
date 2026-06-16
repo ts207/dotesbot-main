@@ -1,0 +1,3428 @@
+{
+  "b0_market_only": {
+    "train": {
+      "actual_win_rate": 0.5219298245614035,
+      "brier": 0.24302105263157894,
+      "log_loss": 0.6781403621045752,
+      "mean_predicted_probability": 0.5181140350877192,
+      "rows": 228
+    },
+    "validation": {
+      "actual_win_rate": 0.5256410256410257,
+      "brier": 0.2528500000000001,
+      "log_loss": 0.7089506921503812,
+      "mean_predicted_probability": 0.5237179487179489,
+      "rows": 78
+    }
+  },
+  "feature_variance_and_shift": {
+    "a_scaling_b_tempo": {
+      "train_mean": 0.2624638245614035,
+      "train_std": 0.06873797220340362,
+      "validation_mean": 0.28434246153846154,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.07694860588425612,
+      "zero_train_variance": false
+    },
+    "a_tempo_b_scaling": {
+      "train_mean": 0.2548012149122807,
+      "train_std": 0.06593937989409553,
+      "validation_mean": 0.2841358974358974,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.06836826635602179,
+      "zero_train_variance": false
+    },
+    "fallback_share": {
+      "train_mean": 0.0736842105263158,
+      "train_std": 0.0969288322565702,
+      "validation_mean": 0.04230769230769231,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.06308161333406435,
+      "zero_train_variance": false
+    },
+    "fight_diff": {
+      "train_mean": 0.012515320175438598,
+      "train_std": 0.12430754585879715,
+      "validation_mean": -0.004098423076923075,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.13030939773167857,
+      "zero_train_variance": false
+    },
+    "scaling_diff": {
+      "train_mean": 0.009716710526315791,
+      "train_std": 0.14440129166791954,
+      "validation_mean": -0.0017681410256410318,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.16231752107463152,
+      "zero_train_variance": false
+    },
+    "team_a_is_radiant": {
+      "train_mean": 0.4780701754385965,
+      "train_std": 0.4995188512906258,
+      "validation_mean": 0.5256410256410257,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.4993421049782167,
+      "zero_train_variance": false
+    },
+    "tempo_diff": {
+      "train_mean": -0.005384228070175438,
+      "train_std": 0.11006706997729422,
+      "validation_mean": -0.0020879102564102573,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.10579463779613324,
+      "zero_train_variance": false
+    },
+    "tower_diff": {
+      "train_mean": -0.004586434210526316,
+      "train_std": 0.10768929923660117,
+      "validation_mean": 0.015470692307692312,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.11299513044616727,
+      "zero_train_variance": false
+    },
+    "volatility_diff": {
+      "train_mean": 0.006916,
+      "train_std": 0.11249861302568027,
+      "validation_mean": -0.010659153846153846,
+      "validation_shift_gt_2_train_std": false,
+      "validation_std": 0.11985934958258761,
+      "zero_train_variance": false
+    }
+  },
+  "models": {
+    "b1a_intercept_only": {
+      "alpha_0.1": {
+        "alpha": 0.1,
+        "coefficients": {
+          "intercept": 0.015821419748001424
+        },
+        "features": [],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.24300461456199135,
+          "log_loss": 0.6781101787619253,
+          "mean_predicted_probability": 0.5219298028657626,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9014149436947874,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.263055579887942,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2527523464474943,
+          "log_loss": 0.7089497657924146,
+          "mean_predicted_probability": 0.5274466409754803,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": -0.0035881008809780235,
+            "log_loss_improvement": -0.007229796619320661,
+            "model_brier": 0.21061310088097804,
+            "model_log_loss": 0.6141992809382137,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.0007787763476749809,
+            "log_loss_improvement": -0.0018086378540890236,
+            "model_brier": 0.26015794301434164,
+            "model_log_loss": 0.7180039947643574,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.00459927879930544,
+            "log_loss_improvement": 0.009700515578977997,
+            "model_brier": 0.3737257212006946,
+            "model_log_loss": 0.9451488679673927,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": -0.0041171478393048355,
+            "log_loss_improvement": -0.008258342814982389,
+            "model_brier": 0.27474214783930484,
+            "model_log_loss": 0.7427160377190961,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": 0.0014748955850929224,
+            "log_loss_improvement": 0.0029485816534823295,
+            "model_brier": 0.2482751044149071,
+            "model_log_loss": 0.6896661170903764,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.003970916611249431,
+            "log_loss_improvement": -0.00794199921301375,
+            "model_brier": 0.25397091661124943,
+            "model_log_loss": 0.701089179772959,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": 0.004529109976072199,
+            "log_loss_improvement": 0.009383554701705377,
+            "model_brier": 0.3494958900239278,
+            "model_log_loss": 0.8944846571738925,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": -0.0002597033135041671,
+            "log_loss_improvement": -0.0005452964948708949,
+            "model_brier": 0.2641847033135042,
+            "model_log_loss": 0.7216377479200035,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0032563684819236494,
+            "log_loss_improvement": -0.006675510376495608,
+            "model_brier": 0.17965636848192362,
+            "model_log_loss": 0.5514026858181674,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -1.5644180005380814e-05,
+            "log_loss_improvement": -3.128933901297426e-05,
+            "model_brier": 0.2500156441800054,
+            "model_log_loss": 0.6931784698989583,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0014785957511652126,
+            "log_loss_improvement": -0.003010806770705421,
+            "model_brier": 0.27455359575116517,
+            "model_log_loss": 0.7425786764418199,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.0006069796452164433,
+            "log_loss_improvement": -0.0013742767345847895,
+            "model_brier": 0.26505697964521646,
+            "model_log_loss": 0.7252329147942416,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.0013027799637426452,
+            "log_loss_improvement": 0.002605613952320507,
+            "model_brier": 0.24869722003625735,
+            "model_log_loss": 0.6905415666076248,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0001377108731582255,
+            "log_loss_improvement": -0.0003211904753743777,
+            "model_brier": 0.26968771087315824,
+            "model_log_loss": 0.7327790569892513,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.00048656580458503185,
+            "log_loss_improvement": 0.000360846355753508,
+            "model_brier": 0.24445093419541494,
+            "model_log_loss": 0.7241756152719547,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -3.6454120625140085e-05,
+            "log_loss_improvement": -0.00012318398609800774,
+            "model_brier": 0.2556149023964872,
+            "model_log_loss": 0.7036994728684354,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": 0.00013840666113501543,
+            "log_loss_improvement": 0.000238698631434886,
+            "model_brier": 0.2619158486580139,
+            "model_log_loss": 0.7179845675289647,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 9.765355250579422e-05,
+          "log_loss_improvement": 9.263579665574895e-07
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9162224588911622,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.13179990151715246,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        }
+      },
+      "alpha_1": {
+        "alpha": 1.0,
+        "coefficients": {
+          "intercept": 0.015821419748001424
+        },
+        "features": [],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.24300461456199135,
+          "log_loss": 0.6781101787619253,
+          "mean_predicted_probability": 0.5219298028657626,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9014149436947874,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.263055579887942,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2527523464474943,
+          "log_loss": 0.7089497657924146,
+          "mean_predicted_probability": 0.5274466409754803,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": -0.0035881008809780235,
+            "log_loss_improvement": -0.007229796619320661,
+            "model_brier": 0.21061310088097804,
+            "model_log_loss": 0.6141992809382137,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.0007787763476749809,
+            "log_loss_improvement": -0.0018086378540890236,
+            "model_brier": 0.26015794301434164,
+            "model_log_loss": 0.7180039947643574,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.00459927879930544,
+            "log_loss_improvement": 0.009700515578977997,
+            "model_brier": 0.3737257212006946,
+            "model_log_loss": 0.9451488679673927,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": -0.0041171478393048355,
+            "log_loss_improvement": -0.008258342814982389,
+            "model_brier": 0.27474214783930484,
+            "model_log_loss": 0.7427160377190961,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": 0.0014748955850929224,
+            "log_loss_improvement": 0.0029485816534823295,
+            "model_brier": 0.2482751044149071,
+            "model_log_loss": 0.6896661170903764,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.003970916611249431,
+            "log_loss_improvement": -0.00794199921301375,
+            "model_brier": 0.25397091661124943,
+            "model_log_loss": 0.701089179772959,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": 0.004529109976072199,
+            "log_loss_improvement": 0.009383554701705377,
+            "model_brier": 0.3494958900239278,
+            "model_log_loss": 0.8944846571738925,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": -0.0002597033135041671,
+            "log_loss_improvement": -0.0005452964948708949,
+            "model_brier": 0.2641847033135042,
+            "model_log_loss": 0.7216377479200035,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0032563684819236494,
+            "log_loss_improvement": -0.006675510376495608,
+            "model_brier": 0.17965636848192362,
+            "model_log_loss": 0.5514026858181674,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -1.5644180005380814e-05,
+            "log_loss_improvement": -3.128933901297426e-05,
+            "model_brier": 0.2500156441800054,
+            "model_log_loss": 0.6931784698989583,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0014785957511652126,
+            "log_loss_improvement": -0.003010806770705421,
+            "model_brier": 0.27455359575116517,
+            "model_log_loss": 0.7425786764418199,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.0006069796452164433,
+            "log_loss_improvement": -0.0013742767345847895,
+            "model_brier": 0.26505697964521646,
+            "model_log_loss": 0.7252329147942416,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.0013027799637426452,
+            "log_loss_improvement": 0.002605613952320507,
+            "model_brier": 0.24869722003625735,
+            "model_log_loss": 0.6905415666076248,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0001377108731582255,
+            "log_loss_improvement": -0.0003211904753743777,
+            "model_brier": 0.26968771087315824,
+            "model_log_loss": 0.7327790569892513,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.00048656580458503185,
+            "log_loss_improvement": 0.000360846355753508,
+            "model_brier": 0.24445093419541494,
+            "model_log_loss": 0.7241756152719547,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -3.6454120625140085e-05,
+            "log_loss_improvement": -0.00012318398609800774,
+            "model_brier": 0.2556149023964872,
+            "model_log_loss": 0.7036994728684354,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": 0.00013840666113501543,
+            "log_loss_improvement": 0.000238698631434886,
+            "model_brier": 0.2619158486580139,
+            "model_log_loss": 0.7179845675289647,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 9.765355250579422e-05,
+          "log_loss_improvement": 9.263579665574895e-07
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9162224588911622,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.13179990151715246,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        }
+      },
+      "alpha_10": {
+        "alpha": 10.0,
+        "coefficients": {
+          "intercept": 0.015821419748001424
+        },
+        "features": [],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.24300461456199135,
+          "log_loss": 0.6781101787619253,
+          "mean_predicted_probability": 0.5219298028657626,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9014149436947874,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.263055579887942,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2527523464474943,
+          "log_loss": 0.7089497657924146,
+          "mean_predicted_probability": 0.5274466409754803,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": -0.0035881008809780235,
+            "log_loss_improvement": -0.007229796619320661,
+            "model_brier": 0.21061310088097804,
+            "model_log_loss": 0.6141992809382137,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.0007787763476749809,
+            "log_loss_improvement": -0.0018086378540890236,
+            "model_brier": 0.26015794301434164,
+            "model_log_loss": 0.7180039947643574,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.00459927879930544,
+            "log_loss_improvement": 0.009700515578977997,
+            "model_brier": 0.3737257212006946,
+            "model_log_loss": 0.9451488679673927,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": -0.0041171478393048355,
+            "log_loss_improvement": -0.008258342814982389,
+            "model_brier": 0.27474214783930484,
+            "model_log_loss": 0.7427160377190961,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": 0.0014748955850929224,
+            "log_loss_improvement": 0.0029485816534823295,
+            "model_brier": 0.2482751044149071,
+            "model_log_loss": 0.6896661170903764,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.003970916611249431,
+            "log_loss_improvement": -0.00794199921301375,
+            "model_brier": 0.25397091661124943,
+            "model_log_loss": 0.701089179772959,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": 0.004529109976072199,
+            "log_loss_improvement": 0.009383554701705377,
+            "model_brier": 0.3494958900239278,
+            "model_log_loss": 0.8944846571738925,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": -0.0002597033135041671,
+            "log_loss_improvement": -0.0005452964948708949,
+            "model_brier": 0.2641847033135042,
+            "model_log_loss": 0.7216377479200035,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0032563684819236494,
+            "log_loss_improvement": -0.006675510376495608,
+            "model_brier": 0.17965636848192362,
+            "model_log_loss": 0.5514026858181674,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -1.5644180005380814e-05,
+            "log_loss_improvement": -3.128933901297426e-05,
+            "model_brier": 0.2500156441800054,
+            "model_log_loss": 0.6931784698989583,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0014785957511652126,
+            "log_loss_improvement": -0.003010806770705421,
+            "model_brier": 0.27455359575116517,
+            "model_log_loss": 0.7425786764418199,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.0006069796452164433,
+            "log_loss_improvement": -0.0013742767345847895,
+            "model_brier": 0.26505697964521646,
+            "model_log_loss": 0.7252329147942416,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.0013027799637426452,
+            "log_loss_improvement": 0.002605613952320507,
+            "model_brier": 0.24869722003625735,
+            "model_log_loss": 0.6905415666076248,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0001377108731582255,
+            "log_loss_improvement": -0.0003211904753743777,
+            "model_brier": 0.26968771087315824,
+            "model_log_loss": 0.7327790569892513,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.00048656580458503185,
+            "log_loss_improvement": 0.000360846355753508,
+            "model_brier": 0.24445093419541494,
+            "model_log_loss": 0.7241756152719547,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -3.6454120625140085e-05,
+            "log_loss_improvement": -0.00012318398609800774,
+            "model_brier": 0.2556149023964872,
+            "model_log_loss": 0.7036994728684354,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": 0.00013840666113501543,
+            "log_loss_improvement": 0.000238698631434886,
+            "model_brier": 0.2619158486580139,
+            "model_log_loss": 0.7179845675289647,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 9.765355250579422e-05,
+          "log_loss_improvement": 9.263579665574895e-07
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9162224588911622,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.13179990151715246,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        }
+      },
+      "alpha_100": {
+        "alpha": 100.0,
+        "coefficients": {
+          "intercept": 0.015821419748001424
+        },
+        "features": [],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.24300461456199135,
+          "log_loss": 0.6781101787619253,
+          "mean_predicted_probability": 0.5219298028657626,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9014149436947874,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.263055579887942,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2527523464474943,
+          "log_loss": 0.7089497657924146,
+          "mean_predicted_probability": 0.5274466409754803,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": -0.0035881008809780235,
+            "log_loss_improvement": -0.007229796619320661,
+            "model_brier": 0.21061310088097804,
+            "model_log_loss": 0.6141992809382137,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.0007787763476749809,
+            "log_loss_improvement": -0.0018086378540890236,
+            "model_brier": 0.26015794301434164,
+            "model_log_loss": 0.7180039947643574,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.00459927879930544,
+            "log_loss_improvement": 0.009700515578977997,
+            "model_brier": 0.3737257212006946,
+            "model_log_loss": 0.9451488679673927,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": -0.0041171478393048355,
+            "log_loss_improvement": -0.008258342814982389,
+            "model_brier": 0.27474214783930484,
+            "model_log_loss": 0.7427160377190961,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": 0.0014748955850929224,
+            "log_loss_improvement": 0.0029485816534823295,
+            "model_brier": 0.2482751044149071,
+            "model_log_loss": 0.6896661170903764,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.003970916611249431,
+            "log_loss_improvement": -0.00794199921301375,
+            "model_brier": 0.25397091661124943,
+            "model_log_loss": 0.701089179772959,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": 0.004529109976072199,
+            "log_loss_improvement": 0.009383554701705377,
+            "model_brier": 0.3494958900239278,
+            "model_log_loss": 0.8944846571738925,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.003939628251238697,
+            "log_loss_improvement": 0.007879420534987691,
+            "model_brier": 0.2460603717487613,
+            "model_log_loss": 0.6852677600249576,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": -0.0002597033135041671,
+            "log_loss_improvement": -0.0005452964948708949,
+            "model_brier": 0.2641847033135042,
+            "model_log_loss": 0.7216377479200035,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0032563684819236494,
+            "log_loss_improvement": -0.006675510376495608,
+            "model_brier": 0.17965636848192362,
+            "model_log_loss": 0.5514026858181674,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -1.5644180005380814e-05,
+            "log_loss_improvement": -3.128933901297426e-05,
+            "model_brier": 0.2500156441800054,
+            "model_log_loss": 0.6931784698989583,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0014785957511652126,
+            "log_loss_improvement": -0.003010806770705421,
+            "model_brier": 0.27455359575116517,
+            "model_log_loss": 0.7425786764418199,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.0006069796452164433,
+            "log_loss_improvement": -0.0013742767345847895,
+            "model_brier": 0.26505697964521646,
+            "model_log_loss": 0.7252329147942416,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.0013027799637426452,
+            "log_loss_improvement": 0.002605613952320507,
+            "model_brier": 0.24869722003625735,
+            "model_log_loss": 0.6905415666076248,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0001377108731582255,
+            "log_loss_improvement": -0.0003211904753743777,
+            "model_brier": 0.26968771087315824,
+            "model_log_loss": 0.7327790569892513,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.00048656580458503185,
+            "log_loss_improvement": 0.000360846355753508,
+            "model_brier": 0.24445093419541494,
+            "model_log_loss": 0.7241756152719547,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -3.6454120625140085e-05,
+            "log_loss_improvement": -0.00012318398609800774,
+            "model_brier": 0.2556149023964872,
+            "model_log_loss": 0.7036994728684354,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.0007290847027930092,
+            "log_loss_improvement": 0.0009481246301581425,
+            "model_brier": 0.24463966529720702,
+            "model_log_loss": 0.7175316806822488,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": -0.002340881263562744,
+            "log_loss_improvement": -0.004843081554265383,
+            "model_brier": 0.21904088126356278,
+            "model_log_loss": 0.6188638173675768,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": 0.00013840666113501543,
+            "log_loss_improvement": 0.000238698631434886,
+            "model_brier": 0.2619158486580139,
+            "model_log_loss": 0.7179845675289647,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 9.765355250579422e-05,
+          "log_loss_improvement": 9.263579665574895e-07
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9162224588911622,
+          "max_residual_adjustment": 0.015821419748001424,
+          "mean_residual_adjustment": 0.015821419748001418,
+          "min_p_model": 0.13179990151715246,
+          "min_residual_adjustment": 0.015821419748001424,
+          "p1_residual_adjustment": 0.015821419748001424,
+          "p99_residual_adjustment": 0.015821419748001424,
+          "std_residual_adjustment": 6.938893903907228e-18
+        }
+      }
+    },
+    "b1b_ultra_small": {
+      "alpha_0.1": {
+        "alpha": 0.1,
+        "coefficients": {
+          "fallback_share": 0.21897393657597958,
+          "fight_diff": 0.23015404339025067,
+          "intercept": 0.02276841325420073,
+          "scaling_diff": 0.025017546765896886,
+          "team_a_is_radiant": 0.1462421810379652,
+          "tempo_diff": -0.15456725080630757,
+          "tower_diff": 0.06743648760990209
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.23714083931877455,
+          "log_loss": 0.6639426279154538,
+          "mean_predicted_probability": 0.5219298239887137,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9245410008664147,
+          "max_residual_adjustment": 0.9415126061096181,
+          "mean_residual_adjustment": 0.022768413254200728,
+          "min_p_model": 0.2635636683605962,
+          "min_residual_adjustment": -0.774378797820982,
+          "p1_residual_adjustment": -0.6729157585157962,
+          "p99_residual_adjustment": 0.8544212476027838,
+          "std_residual_adjustment": 0.3506044620285385
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.25381828255570194,
+          "log_loss": 0.7149055439454348,
+          "mean_predicted_probability": 0.5079879389486261,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04892318146351113,
+            "log_loss_improvement": 0.09958299487788524,
+            "model_brier": 0.1677768185364889,
+            "model_log_loss": 0.5144377409354262,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.11540550095400154,
+            "log_loss_improvement": 0.24644839540229613,
+            "model_brier": 0.09161949904599848,
+            "model_log_loss": 0.36052108891659695,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.012976644404550652,
+            "log_loss_improvement": -0.03138211800014956,
+            "model_brier": 0.2723558110712173,
+            "model_log_loss": 0.7475774749104179,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": -0.012368174647002406,
+            "log_loss_improvement": -0.028683267180620864,
+            "model_brier": 0.39069317464700243,
+            "model_log_loss": 0.9835326507269916,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.045015655481892625,
+            "log_loss_improvement": 0.09174072722936255,
+            "model_brier": 0.22560934451810738,
+            "model_log_loss": 0.6427169676747512,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.014766259790796987,
+            "log_loss_improvement": -0.03026060251588747,
+            "model_brier": 0.264516259790797,
+            "model_log_loss": 0.7228753012597462,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.08991443826958051,
+            "log_loss_improvement": -0.18157419523314233,
+            "model_brier": 0.3399144382695805,
+            "model_log_loss": 0.8747213757930876,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.13775563019716008,
+            "log_loss_improvement": -0.3043493397384225,
+            "model_brier": 0.49178063019716006,
+            "model_log_loss": 1.2082175516140203,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.09856585921705435,
+            "log_loss_improvement": -0.20038711864818637,
+            "model_brier": 0.34856585921705435,
+            "model_log_loss": 0.8935342992081317,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.0748175134494809,
+            "log_loss_improvement": -0.15124566177951193,
+            "model_brier": 0.3248175134494809,
+            "model_log_loss": 0.8443928423394572,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.003558154029230931,
+            "log_loss_improvement": 0.0056792999630866925,
+            "model_brier": 0.2603668459707691,
+            "model_log_loss": 0.7154131514620459,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.009026770778029047,
+            "log_loss_improvement": -0.010434300948788167,
+            "model_brier": 0.18542677077802902,
+            "model_log_loss": 0.55516147639046,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.06065604105489886,
+            "log_loss_improvement": -0.12235462980737366,
+            "model_brier": 0.31065604105489886,
+            "model_log_loss": 0.815501810367319,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0010329578749359025,
+            "log_loss_improvement": -0.002319477772867451,
+            "model_brier": 0.27410795787493586,
+            "model_log_loss": 0.7418873474439819,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.029011065472110575,
+            "log_loss_improvement": -0.058726886969528436,
+            "model_brier": 0.2934610654721106,
+            "model_log_loss": 0.7825855250291852,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.04898484080668292,
+            "log_loss_improvement": -0.10066719373312982,
+            "model_brier": 0.2989848408066829,
+            "model_log_loss": 0.7938143742930751,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": 0.007462840383456459,
+            "log_loss_improvement": 0.015034917581383533,
+            "model_brier": 0.26208715961654355,
+            "model_log_loss": 0.7174229489324934,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.020360795414178262,
+            "log_loss_improvement": 0.03006005907632492,
+            "model_brier": 0.22500795458582176,
+            "model_log_loss": 0.688419746236082,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.018439872906650417,
+            "log_loss_improvement": 0.024031261566245576,
+            "model_brier": 0.22649762709334956,
+            "model_log_loss": 0.7005052000614627,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.007660749956513113,
+            "log_loss_improvement": -0.0162948908851569,
+            "model_brier": 0.2632391982323752,
+            "model_log_loss": 0.7198711797674943,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.020360795414178262,
+            "log_loss_improvement": 0.03006005907632492,
+            "model_brier": 0.22500795458582176,
+            "model_log_loss": 0.688419746236082,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04892318146351113,
+            "log_loss_improvement": 0.09958299487788524,
+            "model_brier": 0.1677768185364889,
+            "model_log_loss": 0.5144377409354262,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.01929037020275759,
+            "log_loss_improvement": -0.040063847276408215,
+            "model_brier": 0.2813446255219065,
+            "model_log_loss": 0.7582871134368078,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.0009682825557018604,
+          "log_loss_improvement": -0.005954851795053617
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9331859220866643,
+          "max_residual_adjustment": 0.5926175793276505,
+          "mean_residual_adjustment": -0.059006690904734094,
+          "min_p_model": 0.1434837185948474,
+          "min_residual_adjustment": -0.753941741911845,
+          "p1_residual_adjustment": -0.6770221088112798,
+          "p99_residual_adjustment": 0.5495640855335174,
+          "std_residual_adjustment": 0.3099460160736379
+        }
+      },
+      "alpha_1": {
+        "alpha": 1.0,
+        "coefficients": {
+          "fallback_share": 0.2149639933860784,
+          "fight_diff": 0.22523081868662215,
+          "intercept": 0.0225316853526937,
+          "scaling_diff": 0.022861256684827726,
+          "team_a_is_radiant": 0.1434599657648374,
+          "tempo_diff": -0.14884115312415616,
+          "tower_diff": 0.06597193419625298
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.23711742233420333,
+          "log_loss": 0.6639507692350991,
+          "mean_predicted_probability": 0.5219298238390924,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9241733669260928,
+          "max_residual_adjustment": 0.921686437389517,
+          "mean_residual_adjustment": 0.022531685352693686,
+          "min_p_model": 0.2648926145578058,
+          "min_residual_adjustment": -0.7577205458010419,
+          "p1_residual_adjustment": -0.655992002829023,
+          "p99_residual_adjustment": 0.8379480546087236,
+          "std_residual_adjustment": 0.3431219587605402
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2535923679525329,
+          "log_loss": 0.7143757510225437,
+          "mean_predicted_probability": 0.5083657151550006,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04801055605807564,
+            "log_loss_improvement": 0.09757739432703483,
+            "model_brier": 0.1686894439419244,
+            "model_log_loss": 0.5164433414862766,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.11355483145209568,
+            "log_loss_improvement": 0.24207670413154936,
+            "model_brier": 0.09347016854790434,
+            "model_log_loss": 0.3648927801873437,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.012378142362205913,
+            "log_loss_improvement": -0.029934043434355906,
+            "model_brier": 0.2717573090288726,
+            "model_log_loss": 0.7461294003446243,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": -0.012378536864692147,
+            "log_loss_improvement": -0.028609249833066897,
+            "model_brier": 0.39070353686469217,
+            "model_log_loss": 0.9834586333794376,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.044366649050875895,
+            "log_loss_improvement": 0.09033638748284001,
+            "model_brier": 0.2262583509491241,
+            "model_log_loss": 0.6441213074212737,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.014144586826618455,
+            "log_loss_improvement": -0.029002427186425428,
+            "model_brier": 0.2638945868266185,
+            "model_log_loss": 0.7216171259302842,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.08816904285848126,
+            "log_loss_improvement": -0.17798625721252914,
+            "model_brier": 0.33816904285848126,
+            "model_log_loss": 0.8711334377724744,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.13427653043850407,
+            "log_loss_improvement": -0.2960652758799873,
+            "model_brier": 0.48830153043850405,
+            "model_log_loss": 1.1999334877555852,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.09617088064552415,
+            "log_loss_improvement": -0.19536187795773086,
+            "model_brier": 0.34617088064552415,
+            "model_log_loss": 0.8885090585176761,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.07285030910789586,
+            "log_loss_improvement": -0.14720593236762192,
+            "model_brier": 0.32285030910789586,
+            "model_log_loss": 0.8403531129275672,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.0034197936099487625,
+            "log_loss_improvement": 0.005450974777285844,
+            "model_brier": 0.26050520639005126,
+            "model_log_loss": 0.7156414766478467,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.008550317695821902,
+            "log_loss_improvement": -0.009814363905280121,
+            "model_brier": 0.18495031769582188,
+            "model_log_loss": 0.5545415393469519,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.05897823031954208,
+            "log_loss_improvement": -0.11893019148934214,
+            "model_brier": 0.3089782303195421,
+            "model_log_loss": 0.8120773720492874,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0008691454380601038,
+            "log_loss_improvement": -0.0019530931691016384,
+            "model_brier": 0.27394414543806006,
+            "model_log_loss": 0.7415209628402161,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.028230558626428537,
+            "log_loss_improvement": -0.05718522703739326,
+            "model_brier": 0.29268055862642856,
+            "model_log_loss": 0.78104386509705,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.047294870739539085,
+            "log_loss_improvement": -0.097073478837567,
+            "model_brier": 0.2972948707395391,
+            "model_log_loss": 0.7902206593975123,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": 0.007473974855428112,
+            "log_loss_improvement": 0.015058538158995938,
+            "model_brier": 0.2620760251445719,
+            "model_log_loss": 0.717399328354881,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.020085959787712188,
+            "log_loss_improvement": 0.02967638552560814,
+            "model_brier": 0.22528279021228784,
+            "model_log_loss": 0.6888034197867988,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.018208949937412233,
+            "log_loss_improvement": 0.023771336835057943,
+            "model_brier": 0.22672855006258774,
+            "model_log_loss": 0.7007651247926503,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.007277305155962199,
+            "log_loss_improvement": -0.015492781529824695,
+            "model_brier": 0.26285575343182427,
+            "model_log_loss": 0.7190690704121621,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.020085959787712188,
+            "log_loss_improvement": 0.02967638552560814,
+            "model_brier": 0.22528279021228784,
+            "model_log_loss": 0.6888034197867988,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04801055605807564,
+            "log_loss_improvement": 0.09757739432703483,
+            "model_brier": 0.1686894439419244,
+            "model_log_loss": 0.5164433414862766,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.01863918356615285,
+            "log_loss_improvement": -0.03868999159430886,
+            "model_brier": 0.28069343888530174,
+            "model_log_loss": 0.7569132577547084,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.0007423679525328519,
+          "log_loss_improvement": -0.0054250588721624915
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9329159792715098,
+          "max_residual_adjustment": 0.5802292803548695,
+          "mean_residual_adjustment": -0.057482129540866275,
+          "min_p_model": 0.14349545241289735,
+          "min_residual_adjustment": -0.7341564831105137,
+          "p1_residual_adjustment": -0.6614059854980322,
+          "p99_residual_adjustment": 0.5381234781508046,
+          "std_residual_adjustment": 0.3032771024787032
+        }
+      },
+      "alpha_10": {
+        "alpha": 10.0,
+        "coefficients": {
+          "fallback_share": 0.18165020612152225,
+          "fight_diff": 0.1858655670647704,
+          "intercept": 0.020800237947126057,
+          "scaling_diff": 0.011159886373086172,
+          "team_a_is_radiant": 0.1207835378058344,
+          "tempo_diff": -0.10952003386710052,
+          "tower_diff": 0.05474084494521598
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.2371598835635801,
+          "log_loss": 0.6644707259979588,
+          "mean_predicted_probability": 0.5219298245405409,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9209675718037535,
+          "max_residual_adjustment": 0.7639036038659142,
+          "mean_residual_adjustment": 0.02080023794712603,
+          "min_p_model": 0.2761161366424961,
+          "min_residual_adjustment": -0.6245851205908132,
+          "p1_residual_adjustment": -0.5274762247079728,
+          "p99_residual_adjustment": 0.7033178236100353,
+          "std_residual_adjustment": 0.28411699661968143
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.252168697630849,
+          "log_loss": 0.7109063575621051,
+          "mean_predicted_probability": 0.5114360895348791,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04063058267126465,
+            "log_loss_improvement": 0.08170293390915562,
+            "model_brier": 0.17606941732873538,
+            "model_log_loss": 0.5323178019041558,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.09825991779206782,
+            "log_loss_improvement": 0.20679707153272464,
+            "model_brier": 0.1087650822079322,
+            "model_log_loss": 0.40017241278616844,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.008296899496213817,
+            "log_loss_improvement": -0.020133325906159683,
+            "model_brier": 0.2676760661628805,
+            "model_log_loss": 0.736328682816428,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": -0.011609216884471918,
+            "log_loss_improvement": -0.026173793569657544,
+            "model_brier": 0.38993421688447194,
+            "model_log_loss": 0.9810231771160283,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.03876901289695489,
+            "log_loss_improvement": 0.07844599301422084,
+            "model_brier": 0.2318559871030451,
+            "model_log_loss": 0.6560117018898929,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.009561760808317776,
+            "log_loss_improvement": -0.019740857573766313,
+            "model_brier": 0.2593117608083178,
+            "model_log_loss": 0.712355556317625,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.0742525056433131,
+            "log_loss_improvement": -0.14950222552283365,
+            "model_brier": 0.3242525056433131,
+            "model_log_loss": 0.8426494060827789,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.10721195843057596,
+            "log_loss_improvement": -0.23289552775421152,
+            "model_brier": 0.46123695843057594,
+            "model_log_loss": 1.1367637396298094,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.077802296345302,
+            "log_loss_improvement": -0.1572015912286745,
+            "model_brier": 0.327802296345302,
+            "model_log_loss": 0.8503487717886198,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.057815756985398314,
+            "log_loss_improvement": -0.11645699139494947,
+            "model_brier": 0.3078157569853983,
+            "model_log_loss": 0.8096041719548948,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.002511892026482443,
+            "log_loss_improvement": 0.004010880693620655,
+            "model_brier": 0.2614131079735176,
+            "model_log_loss": 0.7170815707315119,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.005454518736673408,
+            "log_loss_improvement": -0.005960236031065547,
+            "model_brier": 0.18185451873667338,
+            "model_log_loss": 0.5506874114727374,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.046626994312013004,
+            "log_loss_improvement": -0.09379535621440127,
+            "model_brier": 0.296626994312013,
+            "model_log_loss": 0.7869425367743466,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -8.95534584293145e-05,
+            "log_loss_improvement": -0.00018268052591652317,
+            "model_brier": 0.27316455345842927,
+            "model_log_loss": 0.739750550197031,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.022393292546070864,
+            "log_loss_improvement": -0.04568267539796822,
+            "model_brier": 0.2868432925460709,
+            "model_log_loss": 0.769541313457625,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.03542781564395031,
+            "log_loss_improvement": -0.07210970489830659,
+            "model_brier": 0.2854278156439503,
+            "model_log_loss": 0.7652568854582519,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": 0.007229540016985558,
+            "log_loss_improvement": 0.014586928867218907,
+            "model_brier": 0.26232045998301445,
+            "model_log_loss": 0.717870937646658,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.01761933434255536,
+            "log_loss_improvement": 0.02619625232837941,
+            "model_brier": 0.22774941565744466,
+            "model_log_loss": 0.6922835529840276,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.016107897558062412,
+            "log_loss_improvement": 0.021331720219080808,
+            "model_brier": 0.22882960244193756,
+            "model_log_loss": 0.7032047414086274,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.004638213213232156,
+            "log_loss_improvement": -0.009985798387863731,
+            "model_brier": 0.2602166614890942,
+            "model_log_loss": 0.7135620872702011,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.01761933434255536,
+            "log_loss_improvement": 0.02619625232837941,
+            "model_brier": 0.22774941565744466,
+            "model_log_loss": 0.6922835529840276,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04063058267126465,
+            "log_loss_improvement": 0.08170293390915562,
+            "model_brier": 0.17606941732873538,
+            "model_log_loss": 0.5323178019041558,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.01391779825800854,
+            "log_loss_improvement": -0.028790904156588915,
+            "model_brier": 0.27597205357715743,
+            "model_log_loss": 0.7470141703169885,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 0.0006813023691510933,
+          "log_loss_improvement": -0.0019556654117238725
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9304710592421384,
+          "max_residual_adjustment": 0.48192542643061553,
+          "mean_residual_adjustment": -0.045311582921715964,
+          "min_p_model": 0.14293955289266772,
+          "min_residual_adjustment": -0.5871138291696194,
+          "p1_residual_adjustment": -0.5420748722542971,
+          "p99_residual_adjustment": 0.44496289713044623,
+          "std_residual_adjustment": 0.25101438663201525
+        }
+      },
+      "alpha_100": {
+        "alpha": 100.0,
+        "coefficients": {
+          "fallback_share": 0.07175429883588375,
+          "fight_diff": 0.06922007514286313,
+          "intercept": 0.017085433932896816,
+          "scaling_diff": 0.0026962325308392252,
+          "team_a_is_radiant": 0.047674029028731975,
+          "tempo_diff": -0.029995848389630323,
+          "tower_diff": 0.022349687141643856
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.23967702769462368,
+          "log_loss": 0.6707352686923268,
+          "mean_predicted_probability": 0.5219298218941681,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9093329153138535,
+          "max_residual_adjustment": 0.29450314469107997,
+          "mean_residual_adjustment": 0.017085433932896812,
+          "min_p_model": 0.28488936343874055,
+          "min_residual_adjustment": -0.2247004178902828,
+          "p1_residual_adjustment": -0.18504220102143976,
+          "p99_residual_adjustment": 0.26917582776579446,
+          "std_residual_adjustment": 0.10858163135397828
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2511065944604967,
+          "log_loss": 0.7068819113516718,
+          "mean_predicted_probability": 0.5212009880979501,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.015772357137367243,
+            "log_loss_improvement": 0.03097484971976361,
+            "model_brier": 0.2009276428626328,
+            "model_log_loss": 0.5830458860935478,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.04261392190950619,
+            "log_loss_improvement": 0.0869746860734597,
+            "model_brier": 0.16441107809049382,
+            "model_log_loss": 0.5199947982454334,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.001134683911966028,
+            "log_loss_improvement": -0.003051249192988159,
+            "model_brier": 0.2605138505786327,
+            "model_log_loss": 0.7192466061032565,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": -0.0034417615630690235,
+            "log_loss_improvement": -0.007231497554331501,
+            "model_brier": 0.38176676156306905,
+            "model_log_loss": 0.9620808811007022,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.01591941908528377,
+            "log_loss_improvement": 0.031856327825462105,
+            "model_brier": 0.25470558091471623,
+            "model_log_loss": 0.7026013670786516,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -5.8197401699572326e-05,
+            "log_loss_improvement": -0.00042327952370369015,
+            "model_brier": 0.2498081974016996,
+            "model_log_loss": 0.6930379782675624,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.03207846619239674,
+            "log_loss_improvement": -0.06424117217644343,
+            "model_brier": 0.28207846619239674,
+            "model_log_loss": 0.7573883527363887,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.03254562366119973,
+            "log_loss_improvement": -0.06832652932861982,
+            "model_brier": 0.3865706236611997,
+            "model_log_loss": 0.9721947412042177,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.02713554385298067,
+            "log_loss_improvement": -0.05434337011223633,
+            "model_brier": 0.27713554385298067,
+            "model_log_loss": 0.7474905506721816,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.017366301275115736,
+            "log_loss_improvement": -0.03476689000556632,
+            "model_brier": 0.26736630127511574,
+            "model_log_loss": 0.7279140705655116,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.0006929843123537061,
+            "log_loss_improvement": 0.0011766649665255757,
+            "model_brier": 0.2632320156876463,
+            "model_log_loss": 0.719915786458607,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0016751852693271396,
+            "log_loss_improvement": -0.002690345772057734,
+            "model_brier": 0.1780751852693271,
+            "model_log_loss": 0.5474175212137296,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.015637445890266943,
+            "log_loss_improvement": -0.03130089985941309,
+            "model_brier": 0.26563744589026694,
+            "model_log_loss": 0.7244480804193584,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.0006148965994114963,
+            "log_loss_improvement": -0.0011368447676955995,
+            "model_brier": 0.27368989659941145,
+            "model_log_loss": 0.74070471443881,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.00782436711780643,
+            "log_loss_improvement": -0.01660257077666971,
+            "model_brier": 0.27227436711780645,
+            "model_log_loss": 0.7404612088363265,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.009813069174320399,
+            "log_loss_improvement": -0.0196783650254424,
+            "model_brier": 0.2598130691743204,
+            "model_log_loss": 0.7128255455853877,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": 0.003950513843663572,
+            "log_loss_improvement": 0.008005593198619487,
+            "model_brier": 0.26559948615633644,
+            "model_log_loss": 0.7244522733152574,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.007896940456572937,
+            "log_loss_improvement": 0.011835424432387054,
+            "model_brier": 0.2374718095434271,
+            "model_log_loss": 0.7066443808800199,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.007307388188174835,
+            "log_loss_improvement": 0.009861226078581309,
+            "model_brier": 0.23763011181182514,
+            "model_log_loss": 0.7146752355491269,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.00017520916693514188,
+            "log_loss_improvement": -0.0006182692977981796,
+            "model_brier": 0.2557536574427972,
+            "model_log_loss": 0.7041945581801355,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.007896940456572937,
+            "log_loss_improvement": 0.011835424432387054,
+            "model_brier": 0.2374718095434271,
+            "model_log_loss": 0.7066443808800199,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.015772357137367243,
+            "log_loss_improvement": 0.03097484971976361,
+            "model_brier": 0.2009276428626328,
+            "model_log_loss": 0.5830458860935478,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.00348824337953324,
+            "log_loss_improvement": -0.007223600683325837,
+            "model_brier": 0.26554249869868213,
+            "model_log_loss": 0.7254468668437254,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": 0.001743405539503362,
+          "log_loss_improvement": 0.0020687807987094242
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9217994768062907,
+          "max_residual_adjustment": 0.1890128323034022,
+          "mean_residual_adjustment": -0.007803184071529738,
+          "min_p_model": 0.13745944441790506,
+          "min_residual_adjustment": -0.21294693667792455,
+          "p1_residual_adjustment": -0.2047762914806617,
+          "p99_residual_adjustment": 0.1827457479272429,
+          "std_residual_adjustment": 0.09695350164297982
+        }
+      }
+    },
+    "b1c_compact_hygiene": {
+      "alpha_0.1": {
+        "alpha": 0.1,
+        "coefficients": {
+          "a_scaling_b_tempo": -1.3242871283004263,
+          "a_tempo_b_scaling": 0.7582486670662075,
+          "fallback_share": 0.11797872905994833,
+          "fight_diff": 0.263403480692958,
+          "intercept": 0.032583749345248374,
+          "scaling_diff": 1.2134827307178206,
+          "team_a_is_radiant": 0.18968424744127235,
+          "tempo_diff": -1.018030763418465,
+          "tower_diff": 0.07561170720588492,
+          "volatility_diff": 0.0601351047145106
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "volatility_diff",
+          "a_tempo_b_scaling",
+          "a_scaling_b_tempo",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.22435390185084286,
+          "log_loss": 0.6352006365508712,
+          "mean_predicted_probability": 0.5219298439051123,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9362625641655682,
+          "max_residual_adjustment": 1.6391103911381655,
+          "mean_residual_adjustment": 0.03258374934524812,
+          "min_p_model": 0.11156439415247593,
+          "min_residual_adjustment": -2.074860219611482,
+          "p1_residual_adjustment": -1.5109329454810638,
+          "p99_residual_adjustment": 1.4694520154469317,
+          "std_residual_adjustment": 0.6302377397153227
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.27142983480561195,
+          "log_loss": 0.7651883639939857,
+          "mean_predicted_probability": 0.46789303190888504,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04104965127157045,
+            "log_loss_improvement": 0.0895205365395203,
+            "model_brier": 0.17565034872842958,
+            "model_log_loss": 0.5245001992737911,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.1761507658621375,
+            "log_loss_improvement": 0.41373582094577255,
+            "model_brier": 0.03087423413786252,
+            "model_log_loss": 0.19323366337312053,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.07721332582749718,
+            "log_loss_improvement": -0.20095937004561426,
+            "model_brier": 0.33659249249416384,
+            "model_log_loss": 0.9171547269558826,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.1330215387626403,
+            "log_loss_improvement": 0.2717047634408598,
+            "model_brier": 0.24530346123735972,
+            "model_log_loss": 0.6831446201055109,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.05155427434191756,
+            "log_loss_improvement": 0.10815031951548126,
+            "model_brier": 0.21907072565808244,
+            "model_log_loss": 0.6263073753886325,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.11780590606921798,
+            "log_loss_improvement": -0.27054857955244915,
+            "model_brier": 0.367555906069218,
+            "model_log_loss": 0.9631632782963079,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.09555857330475351,
+            "log_loss_improvement": 0.19393656626073563,
+            "model_brier": 0.1544414266952465,
+            "model_log_loss": 0.49921061429920965,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.08648212427047458,
+            "log_loss_improvement": -0.18590458237020235,
+            "model_brier": 0.44050712427047456,
+            "model_log_loss": 1.0897727942458002,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.14401182951609776,
+            "log_loss_improvement": -0.30724686474841134,
+            "model_brier": 0.39401182951609776,
+            "model_log_loss": 1.0003940453083566,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.1419025996215968,
+            "log_loss_improvement": -0.29771950958621807,
+            "model_brier": 0.3919025996215968,
+            "model_log_loss": 0.9908666901461634,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.09695033597922503,
+            "log_loss_improvement": 0.19867144747691878,
+            "model_brier": 0.166974664020775,
+            "model_log_loss": 0.5224210039482138,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.0966726270841077,
+            "log_loss_improvement": -0.1913179316296889,
+            "model_brier": 0.2730726270841077,
+            "model_log_loss": 0.7360451070713607,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.17391142072599874,
+            "log_loss_improvement": -0.42956116049780413,
+            "model_brier": 0.42391142072599874,
+            "model_log_loss": 1.1227083410577494,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.02339717632220678,
+            "log_loss_improvement": -0.0529518410151244,
+            "model_brier": 0.29647217632220674,
+            "model_log_loss": 0.7925197106862388,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.06179725651020268,
+            "log_loss_improvement": -0.1335122395459899,
+            "model_brier": 0.3262472565102027,
+            "model_log_loss": 0.8573708776056467,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.11480718556599107,
+            "log_loss_improvement": -0.25209536648441777,
+            "model_brier": 0.36480718556599107,
+            "model_log_loss": 0.9452425470443631,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.07741358290940314,
+            "log_loss_improvement": -0.17498599998109454,
+            "model_brier": 0.34696358290940316,
+            "model_log_loss": 0.9074438664949714,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.030443378986523523,
+            "log_loss_improvement": 0.03293747045197115,
+            "model_brier": 0.2149253710134765,
+            "model_log_loss": 0.6855423348604358,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.026970027414317727,
+            "log_loss_improvement": 0.01792545733100137,
+            "model_brier": 0.21796747258568225,
+            "model_log_loss": 0.7066110042967069,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.03428668384696698,
+            "log_loss_improvement": -0.08181116466243421,
+            "model_brier": 0.28986513212282905,
+            "model_log_loss": 0.7853874535447716,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.030443378986523523,
+            "log_loss_improvement": 0.03293747045197115,
+            "model_brier": 0.2149253710134765,
+            "model_log_loss": 0.6855423348604358,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.04104965127157045,
+            "log_loss_improvement": 0.0895205365395203,
+            "model_brier": 0.17565034872842958,
+            "model_log_loss": 0.5245001992737911,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.05249395254075073,
+            "log_loss_improvement": -0.12348258405159807,
+            "model_brier": 0.3145482078598996,
+            "model_log_loss": 0.8417058502119976,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.018579834805611872,
+          "log_loss_improvement": -0.05623767184360451
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9488214706159884,
+          "max_residual_adjustment": 1.4727125841618067,
+          "mean_residual_adjustment": -0.2292432883839465,
+          "min_p_model": 0.16909551069560053,
+          "min_residual_adjustment": -1.480462454283693,
+          "p1_residual_adjustment": -1.480462454283693,
+          "p99_residual_adjustment": 1.335109339036212,
+          "std_residual_adjustment": 0.6848292911668132
+        }
+      },
+      "alpha_1": {
+        "alpha": 1.0,
+        "coefficients": {
+          "a_scaling_b_tempo": -0.49265013111017103,
+          "a_tempo_b_scaling": -0.04330543878588152,
+          "fallback_share": 0.12602860995416176,
+          "fight_diff": 0.2478891570790812,
+          "intercept": 0.03074241364435562,
+          "scaling_diff": 0.2928257534892665,
+          "team_a_is_radiant": 0.18707556624466712,
+          "tempo_diff": -0.34719207493060833,
+          "tower_diff": 0.06154087441613284,
+          "volatility_diff": 0.06417210737115764
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "volatility_diff",
+          "a_tempo_b_scaling",
+          "a_scaling_b_tempo",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.2253492045436658,
+          "log_loss": 0.6378952444146743,
+          "mean_predicted_probability": 0.5219298339587467,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9493467812888607,
+          "max_residual_adjustment": 1.575439237157876,
+          "mean_residual_adjustment": 0.03074241364435548,
+          "min_p_model": 0.16895041765994165,
+          "min_residual_adjustment": -1.6152619044802283,
+          "p1_residual_adjustment": -1.4931036960954474,
+          "p99_residual_adjustment": 1.3804782707482457,
+          "std_residual_adjustment": 0.6023324188412457
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2703720265805689,
+          "log_loss": 0.7621405380937976,
+          "mean_predicted_probability": 0.4670025600480555,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.03324159341270391,
+            "log_loss_improvement": 0.07175354421731384,
+            "model_brier": 0.18345840658729612,
+            "model_log_loss": 0.5422671915959976,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.18349927608551847,
+            "log_loss_improvement": 0.4404650037860607,
+            "model_brier": 0.023525723914481548,
+            "model_log_loss": 0.16650448053283237,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.08665606621527078,
+            "log_loss_improvement": -0.2100384653880023,
+            "model_brier": 0.34603523288193744,
+            "model_log_loss": 0.9262338222982707,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.1215132580545229,
+            "log_loss_improvement": 0.24793237919933042,
+            "model_brier": 0.2568117419454771,
+            "model_log_loss": 0.7069170043470403,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.054488248144225926,
+            "log_loss_improvement": 0.11436431315757223,
+            "model_brier": 0.21613675185577408,
+            "model_log_loss": 0.6200933817465415,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.11918265345619888,
+            "log_loss_improvement": -0.2670441289710681,
+            "model_brier": 0.3689326534561989,
+            "model_log_loss": 0.9596588277149268,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.11165988392162349,
+            "log_loss_improvement": 0.22802599427580938,
+            "model_brier": 0.1383401160783765,
+            "model_log_loss": 0.4651211862841359,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.052474735836572806,
+            "log_loss_improvement": -0.11106486984404484,
+            "model_brier": 0.4064997358365728,
+            "model_log_loss": 1.0149330817196427,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.1257572554290185,
+            "log_loss_improvement": -0.2646370309739391,
+            "model_brier": 0.3757572554290185,
+            "model_log_loss": 0.9577842115338844,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.17853965772016678,
+            "log_loss_improvement": -0.372495340818222,
+            "model_brier": 0.4285396577201668,
+            "model_log_loss": 1.0656425213781673,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.09402264274449379,
+            "log_loss_improvement": 0.19204788486100954,
+            "model_brier": 0.16990235725550623,
+            "model_log_loss": 0.529044566564123,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.07786988485758986,
+            "log_loss_improvement": -0.14771232968061265,
+            "model_brier": 0.25426988485758983,
+            "model_log_loss": 0.6924395051222845,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.18311228841640026,
+            "log_loss_improvement": -0.4581401884522184,
+            "model_brier": 0.43311228841640026,
+            "model_log_loss": 1.1512873690121637,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.028897388876125973,
+            "log_loss_improvement": -0.06667231220637326,
+            "model_brier": 0.30197238887612593,
+            "model_log_loss": 0.8062401818774877,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.07373966009263894,
+            "log_loss_improvement": -0.165622240949297,
+            "model_brier": 0.33818966009263896,
+            "model_log_loss": 0.8894808790089538,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.08158999942376266,
+            "log_loss_improvement": -0.172299402334265,
+            "model_brier": 0.33158999942376266,
+            "model_log_loss": 0.8654465828942103,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.05941077815859569,
+            "log_loss_improvement": -0.13683463925152484,
+            "model_brier": 0.3289607781585957,
+            "model_log_loss": 0.8692925057654017,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.03242869709906751,
+            "log_loss_improvement": 0.035315976810388006,
+            "model_brier": 0.2129400529009325,
+            "model_log_loss": 0.683163828502019,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.027721913559317413,
+            "log_loss_improvement": 0.017500143542926616,
+            "model_brier": 0.21721558644068256,
+            "model_log_loss": 0.7070363180847816,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.03312338524949526,
+            "log_loss_improvement": -0.07756570438698307,
+            "model_brier": 0.28870183352535733,
+            "model_log_loss": 0.7811419932693204,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.03242869709906751,
+            "log_loss_improvement": 0.035315976810388006,
+            "model_brier": 0.2129400529009325,
+            "model_log_loss": 0.683163828502019,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.03324159341270391,
+            "log_loss_improvement": 0.07175354421731384,
+            "model_brier": 0.18345840658729612,
+            "model_log_loss": 0.5422671915959976,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.05058931824576435,
+            "log_loss_improvement": -0.11699289865014872,
+            "model_brier": 0.31264357356491324,
+            "model_log_loss": 0.8352161648105483,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.01752202658056884,
+          "log_loss_improvement": -0.05318984594341636
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9484081510584592,
+          "max_residual_adjustment": 1.3638617322261393,
+          "mean_residual_adjustment": -0.23369060354732318,
+          "min_p_model": 0.15338097637739026,
+          "min_residual_adjustment": -1.5389228085331297,
+          "p1_residual_adjustment": -1.5303871630657013,
+          "p99_residual_adjustment": 1.2266269965796095,
+          "std_residual_adjustment": 0.6636582893708827
+        }
+      },
+      "alpha_10": {
+        "alpha": 10.0,
+        "coefficients": {
+          "a_scaling_b_tempo": -0.22984689611073106,
+          "a_tempo_b_scaling": -0.23931186114854122,
+          "fallback_share": 0.11390745127721848,
+          "fight_diff": 0.1983730020551146,
+          "intercept": 0.02760608959165578,
+          "scaling_diff": 0.026776799312235436,
+          "team_a_is_radiant": 0.1532518086510373,
+          "tempo_diff": -0.12234671196142635,
+          "tower_diff": 0.047321927861690025,
+          "volatility_diff": 0.06098510850507132
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "volatility_diff",
+          "a_tempo_b_scaling",
+          "a_scaling_b_tempo",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.22600632861897624,
+          "log_loss": 0.6399754713568631,
+          "mean_predicted_probability": 0.5219298249308179,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9431906800091,
+          "max_residual_adjustment": 1.4542359357991912,
+          "mean_residual_adjustment": 0.02760608959165569,
+          "min_p_model": 0.2002126883366891,
+          "min_residual_adjustment": -1.411041464679106,
+          "p1_residual_adjustment": -1.2612626076616977,
+          "p99_residual_adjustment": 1.2224159610797316,
+          "std_residual_adjustment": 0.5213196742146043
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.2659525502985807,
+          "log_loss": 0.7491734552664799,
+          "mean_predicted_probability": 0.472741548984931,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.028403495521307,
+            "log_loss_improvement": 0.059490994464742486,
+            "model_brier": 0.18829650447869303,
+            "model_log_loss": 0.5545297413485689,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.1761974990978163,
+            "log_loss_improvement": 0.41389720011175835,
+            "model_brier": 0.03082750090218371,
+            "model_log_loss": 0.19307228420713476,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.07463253579227946,
+            "log_loss_improvement": -0.1766571836498877,
+            "model_brier": 0.3340117024589461,
+            "model_log_loss": 0.8928525405601561,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.10525389955832043,
+            "log_loss_improvement": 0.2143351910170609,
+            "model_brier": 0.2730711004416796,
+            "model_log_loss": 0.7405141925293098,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.05265126182029628,
+            "log_loss_improvement": 0.10895672534980783,
+            "model_brier": 0.21797373817970372,
+            "model_log_loss": 0.6255009695543059,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.1052703717262779,
+            "log_loss_improvement": -0.22842207622284405,
+            "model_brier": 0.35502037172627793,
+            "model_log_loss": 0.9210367749667028,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.11044647051578677,
+            "log_loss_improvement": 0.22543110737804029,
+            "model_brier": 0.13955352948421323,
+            "model_log_loss": 0.467716073181905,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": -0.026936096779095364,
+            "log_loss_improvement": -0.05642785836738229,
+            "model_brier": 0.38096109677909534,
+            "model_log_loss": 0.9602960702429801,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.10111785943916363,
+            "log_loss_improvement": -0.20976907778361065,
+            "model_brier": 0.3511178594391636,
+            "model_log_loss": 0.9029162583435559,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.16280368546888502,
+            "log_loss_improvement": -0.3364614717088862,
+            "model_brier": 0.412803685468885,
+            "model_log_loss": 1.0296086522688315,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.08397026897869114,
+            "log_loss_improvement": 0.17073563627121302,
+            "model_brier": 0.17995473102130888,
+            "model_log_loss": 0.5503568151539195,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.06034535592233592,
+            "log_loss_improvement": -0.11221235976223021,
+            "model_brier": 0.2367453559223359,
+            "model_log_loss": 0.656939535203902,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.1622760721463689,
+            "log_loss_improvement": -0.39017931174401144,
+            "model_brier": 0.4122760721463689,
+            "model_log_loss": 1.0833264923039567,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.025047412276945902,
+            "log_loss_improvement": -0.0563516836111283,
+            "model_brier": 0.29812241227694586,
+            "model_log_loss": 0.7959195532822427,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.06139325378840599,
+            "log_loss_improvement": -0.13534663834579952,
+            "model_brier": 0.325843253788406,
+            "model_log_loss": 0.8592052764054563,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.05809287745335784,
+            "log_loss_improvement": -0.12017955847893669,
+            "model_brier": 0.30809287745335784,
+            "model_log_loss": 0.813326739038882,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0491258875237916,
+            "log_loss_improvement": -0.11016186290449892,
+            "model_brier": 0.3186758875237916,
+            "model_log_loss": 0.8426197294183758,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.029584580712799458,
+            "log_loss_improvement": 0.03305967279434763,
+            "model_brier": 0.21578416928720057,
+            "model_log_loss": 0.6854201325180593,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.024412186338549136,
+            "log_loss_improvement": 0.015647730684663852,
+            "model_brier": 0.22052531366145084,
+            "model_log_loss": 0.7088887309430444,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.02603866638034963,
+            "log_loss_improvement": -0.059488450633603085,
+            "model_brier": 0.2816171146562117,
+            "model_log_loss": 0.7630647395159404,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.029584580712799458,
+            "log_loss_improvement": 0.03305967279434763,
+            "model_brier": 0.21578416928720057,
+            "model_log_loss": 0.6854201325180593,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.028403495521307,
+            "log_loss_improvement": 0.059490994464742486,
+            "model_brier": 0.18829650447869303,
+            "model_log_loss": 0.5545297413485689,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.0410819857243751,
+            "log_loss_improvement": -0.0924945666249628,
+            "model_brier": 0.303136241043524,
+            "model_log_loss": 0.8107178327853624,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.01310255029858065,
+          "log_loss_improvement": -0.040222763116098736
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.942638830835212,
+          "max_residual_adjustment": 1.1694702059975879,
+          "mean_residual_adjustment": -0.20731348990881798,
+          "min_p_model": 0.1629873523174038,
+          "min_residual_adjustment": -1.3710708473805837,
+          "p1_residual_adjustment": -1.36725360562688,
+          "p99_residual_adjustment": 1.064693784501127,
+          "std_residual_adjustment": 0.5752056427705712
+        }
+      },
+      "alpha_100": {
+        "alpha": 100.0,
+        "coefficients": {
+          "a_scaling_b_tempo": -0.10773418688230152,
+          "a_tempo_b_scaling": -0.12554940492328978,
+          "fallback_share": 0.05633214065238559,
+          "fight_diff": 0.07096497169056513,
+          "intercept": 0.019376806581018768,
+          "scaling_diff": 0.003257162262451868,
+          "team_a_is_radiant": 0.05391528557665348,
+          "tempo_diff": -0.029992996879611194,
+          "tower_diff": 0.019877271427881017,
+          "volatility_diff": 0.033484604010488334
+        },
+        "features": [
+          "team_a_is_radiant",
+          "scaling_diff",
+          "tempo_diff",
+          "fight_diff",
+          "tower_diff",
+          "volatility_diff",
+          "a_tempo_b_scaling",
+          "a_scaling_b_tempo",
+          "fallback_share"
+        ],
+        "train": {
+          "actual_win_rate": 0.5219298245614035,
+          "brier": 0.23140950073969946,
+          "log_loss": 0.6531871087960224,
+          "mean_predicted_probability": 0.5219298244630095,
+          "rows": 228
+        },
+        "train_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9042349609133694,
+          "max_residual_adjustment": 0.7134521459430906,
+          "mean_residual_adjustment": 0.019376806581018736,
+          "min_p_model": 0.2602289749250645,
+          "min_residual_adjustment": -0.6424038515178659,
+          "p1_residual_adjustment": -0.5576183962873466,
+          "p99_residual_adjustment": 0.5698424423983249,
+          "std_residual_adjustment": 0.24637394321254708
+        },
+        "validation": {
+          "actual_win_rate": 0.5256410256410257,
+          "brier": 0.25475231242878177,
+          "log_loss": 0.7175633470796223,
+          "mean_predicted_probability": 0.49910761015825206,
+          "rows": 78
+        },
+        "validation_by_discovery_source": {
+          "gamma_events_closed_False_active_True": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.014686120419413418,
+            "log_loss_improvement": 0.028459658966552115,
+            "model_brier": 0.2020138795805866,
+            "model_log_loss": 0.5855610768467593,
+            "rows": 7
+          },
+          "gamma_public_search:Aurora Dota": {
+            "b0_brier": 0.20702500000000001,
+            "b0_log_loss": 0.6069694843188931,
+            "brier_improvement": 0.1117331190524534,
+            "log_loss_improvement": 0.23779701283481258,
+            "model_brier": 0.09529188094754662,
+            "model_log_loss": 0.3691724714840805,
+            "rows": 1
+          },
+          "gamma_public_search:DreamLeague Dota": {
+            "b0_brier": 0.25937916666666666,
+            "b0_log_loss": 0.7161953569102684,
+            "brier_improvement": -0.027948689510765012,
+            "log_loss_improvement": -0.06693349768247125,
+            "model_brier": 0.2873278561774317,
+            "model_log_loss": 0.7831288545927396,
+            "rows": 6
+          },
+          "gamma_public_search:European Pro League Dota": {
+            "b0_brier": 0.378325,
+            "b0_log_loss": 0.9548493835463707,
+            "brier_improvement": 0.053257403808379844,
+            "log_loss_improvement": 0.1099473314501227,
+            "model_brier": 0.3250675961916202,
+            "model_log_loss": 0.844902052096248,
+            "rows": 2
+          },
+          "gamma_public_search:Execration Dota": {
+            "b0_brier": 0.270625,
+            "b0_log_loss": 0.7344576949041137,
+            "brier_improvement": 0.02882053528045675,
+            "log_loss_improvement": 0.05792558037660722,
+            "model_brier": 0.24180446471954326,
+            "model_log_loss": 0.6765321145275065,
+            "rows": 2
+          },
+          "gamma_public_search:Falcons Dota": {
+            "b0_brier": 0.24975000000000003,
+            "b0_log_loss": 0.6926146987438587,
+            "brier_improvement": -0.04822495954199174,
+            "log_loss_improvement": -0.09804383835097352,
+            "model_brier": 0.29797495954199177,
+            "model_log_loss": 0.7906585370948322,
+            "rows": 6
+          },
+          "gamma_public_search:GamerLegion Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": 0.06871089620882262,
+            "log_loss_improvement": 0.138403486622115,
+            "model_brier": 0.18128910379117738,
+            "model_log_loss": 0.5547436939378303,
+            "rows": 1
+          },
+          "gamma_public_search:LGD Dota": {
+            "b0_brier": 0.354025,
+            "b0_log_loss": 0.9038682118755978,
+            "brier_improvement": 0.005893284518210751,
+            "log_loss_improvement": 0.01220453699245072,
+            "model_brier": 0.34813171548178923,
+            "model_log_loss": 0.8916636748831471,
+            "rows": 1
+          },
+          "gamma_public_search:Nigma Galaxy Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.040384782878994774,
+            "log_loss_improvement": -0.08145649684261225,
+            "model_brier": 0.2903847828789948,
+            "model_log_loss": 0.7746036774025575,
+            "rows": 2
+          },
+          "gamma_public_search:North America DPC Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.07045971745532775,
+            "log_loss_improvement": -0.14189117675197638,
+            "model_brier": 0.32045971745532775,
+            "model_log_loss": 0.8350383573119217,
+            "rows": 2
+          },
+          "gamma_public_search:PARIVISION Dota": {
+            "b0_brier": 0.263925,
+            "b0_log_loss": 0.7210924514251326,
+            "brier_improvement": 0.04454232525073509,
+            "log_loss_improvement": 0.08963649680664199,
+            "model_brier": 0.21938267474926493,
+            "model_log_loss": 0.6314559546184906,
+            "rows": 4
+          },
+          "gamma_public_search:PlayTime Dota": {
+            "b0_brier": 0.17639999999999997,
+            "b0_log_loss": 0.5447271754416718,
+            "brier_improvement": -0.023562177686972274,
+            "log_loss_improvement": -0.044783437387736935,
+            "model_brier": 0.19996217768697225,
+            "model_log_loss": 0.5895106128294088,
+            "rows": 2
+          },
+          "gamma_public_search:Team Liquid Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.07062450295823997,
+            "log_loss_improvement": -0.14819851716261978,
+            "model_brier": 0.32062450295823997,
+            "model_log_loss": 0.8413456977225651,
+            "rows": 2
+          },
+          "gamma_public_search:Team Spirit Dota": {
+            "b0_brier": 0.27307499999999996,
+            "b0_log_loss": 0.7395678696711144,
+            "brier_improvement": -0.00841499934294182,
+            "log_loss_improvement": -0.017132138501310457,
+            "model_brier": 0.2814899993429418,
+            "model_log_loss": 0.7567000081724249,
+            "rows": 3
+          },
+          "gamma_public_search:Tundra Dota": {
+            "b0_brier": 0.26445,
+            "b0_log_loss": 0.7238586380596568,
+            "brier_improvement": -0.01567752493814517,
+            "log_loss_improvement": -0.03215956015848498,
+            "model_brier": 0.2801275249381452,
+            "model_log_loss": 0.7560181982181418,
+            "rows": 4
+          },
+          "gamma_public_search:Vici Gaming Dota": {
+            "b0_brier": 0.25,
+            "b0_log_loss": 0.6931471805599453,
+            "brier_improvement": -0.01852111973138143,
+            "log_loss_improvement": -0.037315027559643665,
+            "model_brier": 0.26852111973138143,
+            "model_log_loss": 0.730462208119589,
+            "rows": 3
+          },
+          "gamma_public_search:dota 2": {
+            "b0_brier": 0.26955,
+            "b0_log_loss": 0.7324578665138769,
+            "brier_improvement": -0.0229421613928511,
+            "log_loss_improvement": -0.046902163222590554,
+            "model_brier": 0.2924921613928511,
+            "model_log_loss": 0.7793600297364675,
+            "rows": 6
+          },
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.015351249594470623,
+            "log_loss_improvement": 0.018425601919451307,
+            "model_brier": 0.2300175004055294,
+            "model_log_loss": 0.7000542033929557,
+            "rows": 24
+          }
+        },
+        "validation_by_proxy_source": {
+          "early_snapshot_mid": {
+            "b0_brier": 0.24493749999999997,
+            "b0_log_loss": 0.7245364616277082,
+            "brier_improvement": 0.011349863060792775,
+            "log_loss_improvement": 0.0076906240781066115,
+            "model_brier": 0.2335876369392072,
+            "model_log_loss": 0.7168458375496016,
+            "rows": 20
+          },
+          "price_history_proxy": {
+            "b0_brier": 0.25557844827586207,
+            "b0_log_loss": 0.7035762888823374,
+            "brier_improvement": -0.006472028114841988,
+            "log_loss_improvement": -0.014234475276602154,
+            "model_brier": 0.26205047639070406,
+            "model_log_loss": 0.7178107641589395,
+            "rows": 58
+          }
+        },
+        "validation_by_source_universe": {
+          "local_clean_v2": {
+            "b0_brier": 0.24536875000000002,
+            "b0_log_loss": 0.718479805312407,
+            "brier_improvement": 0.015351249594470623,
+            "log_loss_improvement": 0.018425601919451307,
+            "model_brier": 0.2300175004055294,
+            "model_log_loss": 0.7000542033929557,
+            "rows": 24
+          },
+          "polymarket_event": {
+            "b0_brier": 0.21670000000000003,
+            "b0_log_loss": 0.6140207358133114,
+            "brier_improvement": 0.014686120419413418,
+            "log_loss_improvement": 0.028459658966552115,
+            "model_brier": 0.2020138795805866,
+            "model_log_loss": 0.5855610768467593,
+            "rows": 7
+          },
+          "polymarket_public_search": {
+            "b0_brier": 0.2620542553191489,
+            "b0_log_loss": 0.7182232661603996,
+            "brier_improvement": -0.013183259630812072,
+            "log_loss_improvement": -0.02794083283645754,
+            "model_brier": 0.27523751494996096,
+            "model_log_loss": 0.7461640989968571,
+            "rows": 47
+          }
+        },
+        "validation_delta_vs_b0": {
+          "brier_improvement": -0.001902312428781694,
+          "log_loss_improvement": -0.008612654929241126
+        },
+        "validation_residual_stats": {
+          "count_p_model_gt_0_95": 0,
+          "count_p_model_gt_0_999": 0,
+          "count_p_model_lt_0_001": 0,
+          "count_p_model_lt_0_05": 0,
+          "max_p_model": 0.9213984139206238,
+          "max_residual_adjustment": 0.5571608564949717,
+          "mean_residual_adjustment": -0.09603891013341884,
+          "min_p_model": 0.148467419329001,
+          "min_residual_adjustment": -0.6582585330874658,
+          "p1_residual_adjustment": -0.6332227169197173,
+          "p99_residual_adjustment": 0.45648636597464753,
+          "std_residual_adjustment": 0.2684406497154092
+        }
+      }
+    }
+  },
+  "offset_reproduction_check": {
+    "passes": true,
+    "train_max_abs_diff": 1.1102230246251565e-16,
+    "validation_max_abs_diff": 1.1102230246251565e-16
+  },
+  "train_rows": 228,
+  "validation_rows": 78,
+  "warnings": []
+}

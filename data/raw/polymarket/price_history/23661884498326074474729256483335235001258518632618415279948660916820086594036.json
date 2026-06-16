@@ -1,0 +1,48 @@
+{
+  "condition_id": "0x49bbb7975c06c7ba2ec2c1383bb30a211f5235428e7aeb03f34c12bca7d76519",
+  "event_id": "547298",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:44+00:00",
+  "http_status": 200,
+  "market_id": "2408440",
+  "question": "Dota 2: Enjoy vs Two Move - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780304407
+      },
+      {
+        "p": 0.61,
+        "t": 1780308004
+      },
+      {
+        "p": 0.26,
+        "t": 1780311606
+      },
+      {
+        "p": 0.0005,
+        "t": 1780315209
+      },
+      {
+        "p": 0.0005,
+        "t": 1780318806
+      },
+      {
+        "p": 0.0005,
+        "t": 1780322407
+      },
+      {
+        "p": 0.0005,
+        "t": 1780326010
+      }
+    ]
+  },
+  "requested_end_ts": "1780328573",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780299974",
+  "slug": "dota2-enjoy-tm6-2026-06-01-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "23661884498326074474729256483335235001258518632618415279948660916820086594036"
+}

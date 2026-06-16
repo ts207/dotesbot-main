@@ -1,0 +1,48 @@
+{
+  "condition_id": "0xdb3cd8d6485c7fce2dfb3699356cd698acda26f232b3e9e65e894b879f34dc1e",
+  "event_id": "193202",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:21+00:00",
+  "http_status": 200,
+  "market_id": "1298020",
+  "question": "Dota 2: Yakutou Brothers vs Game Master - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1769767224
+      },
+      {
+        "p": 0.38,
+        "t": 1769770852
+      },
+      {
+        "p": 0.995,
+        "t": 1769774449
+      },
+      {
+        "p": 0.9995,
+        "t": 1769778025
+      },
+      {
+        "p": 0.9995,
+        "t": 1769781625
+      },
+      {
+        "p": 0.9995,
+        "t": 1769785229
+      },
+      {
+        "p": 0.9995,
+        "t": 1769788826
+      }
+    ]
+  },
+  "requested_end_ts": "1769792036",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1769763765",
+  "slug": "dota2-yb1-gamema-2026-01-30-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "79422227484471246196267093631367486569140462540247107137939905748010615500651"
+}

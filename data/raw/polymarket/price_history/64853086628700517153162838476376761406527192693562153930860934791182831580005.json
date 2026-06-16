@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x6efe5f9abb0e01fb801e4f889249839477daf1e8fab75737c6124de0c0bed20b",
+  "event_id": "374020",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:10+00:00",
+  "http_status": 200,
+  "market_id": "1966746",
+  "question": "Dota 2: Carstensz vs GLYPH - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776067253
+      },
+      {
+        "p": 0.055,
+        "t": 1776074458
+      },
+      {
+        "p": 0.0005,
+        "t": 1776078058
+      }
+    ]
+  },
+  "requested_end_ts": "1776083745",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776063220",
+  "slug": "dota2-carst-glyph-2026-04-13-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "64853086628700517153162838476376761406527192693562153930860934791182831580005"
+}

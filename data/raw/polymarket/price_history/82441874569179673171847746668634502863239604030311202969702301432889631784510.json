@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x4f5a851fb62bee2fe8bee02a9b03e980c827284fd76662b16e811850506cf77c",
+  "event_id": "408988",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:36+00:00",
+  "http_status": 200,
+  "market_id": "2058329",
+  "question": "Dota 2: Carstensz vs Ivory - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.0995,
+        "t": 1776931225
+      },
+      {
+        "p": 0.004,
+        "t": 1776934809
+      },
+      {
+        "p": 0.0005,
+        "t": 1776938407
+      }
+    ]
+  },
+  "requested_end_ts": "1776939880",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776928872",
+  "slug": "dota2-carst-ivo-2026-04-23-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "82441874569179673171847746668634502863239604030311202969702301432889631784510"
+}

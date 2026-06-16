@@ -1,0 +1,116 @@
+{
+  "as_of": "2026-06-07",
+  "status": "completed",
+  "scope": "current live bot strategy backtests, not Model B residual research",
+  "model_b_status": "stopped_no_trade; not used in this backtest",
+  "data_notes": [
+    "Backtests use historical local data_v2 snapshots/book_ticks and markets.yaml mappings.",
+    "backtest_value_engine.py was patched to skip 0-byte parquet files instead of failing.",
+    "decisive_swing_pnl.py was patched only for current loader/schema compatibility.",
+    "No live trading, calibration, threshold optimization, locked audit, or Model B training was run."
+  ],
+  "value_settlement_backtest": {
+    "params": {
+      "min_edge": 0.15,
+      "min_fair": 0.7,
+      "min_lead": 0,
+      "min_time": 600,
+      "max_price": 0.84,
+      "min_price": 0.55,
+      "max_edge": 0.25,
+      "max_time": 2400,
+      "book_age_ms": 15000,
+      "flip_lead": 5000,
+      "flip_ask_floor": 0.35,
+      "stake": 20.0
+    },
+    "coverage": {
+      "outcome_labels": 688,
+      "valid_markets": 164,
+      "snapshot_matches": 125,
+      "joined_matches": 125,
+      "snapshot_rows": 6773,
+      "book_ticks": 141679,
+      "resolved_matches": 124,
+      "unresolved_matches": 1
+    },
+    "no_confirmation": {
+      "raw_signals": 18,
+      "trades": 18,
+      "wins": 14,
+      "losses": 4,
+      "win_pct": 77.8,
+      "pnl_usd": 83.58,
+      "stake_usd": 360.0,
+      "roi_pct": 23.2,
+      "avg_pnl_usd": 4.64
+    },
+    "with_confirmation": {
+      "raw_signals": 28,
+      "trades": 5,
+      "wins": 4,
+      "losses": 1,
+      "win_pct": 80.0,
+      "pnl_usd": 29.27,
+      "stake_usd": 100.0,
+      "roi_pct": 29.3,
+      "avg_pnl_usd": 5.85
+    }
+  },
+  "decisive_swing_ml_sniper_backtest": {
+    "notional_usd": 5.0,
+    "half_spread_assumption": 0.005,
+    "ml_markets_with_book": 71,
+    "sweep": [
+      {
+        "lead_threshold": 6000,
+        "trades": 15,
+        "win_pct": 67.0,
+        "avg_pnl_usd": 2.014,
+        "total_pnl_usd": 30.21,
+        "roi_pct": 40.3,
+        "held": 57,
+        "decisive": 68
+      },
+      {
+        "lead_threshold": 8000,
+        "trades": 15,
+        "win_pct": 67.0,
+        "avg_pnl_usd": 1.695,
+        "total_pnl_usd": 25.43,
+        "roi_pct": 33.9,
+        "held": 57,
+        "decisive": 68
+      },
+      {
+        "lead_threshold": 10000,
+        "trades": 17,
+        "win_pct": 59.0,
+        "avg_pnl_usd": 0.262,
+        "total_pnl_usd": 4.46,
+        "roi_pct": 5.2,
+        "held": 59,
+        "decisive": 68
+      },
+      {
+        "lead_threshold": 12000,
+        "trades": 18,
+        "win_pct": 61.0,
+        "avg_pnl_usd": 0.095,
+        "total_pnl_usd": 1.71,
+        "roi_pct": 1.9,
+        "held": 59,
+        "decisive": 67
+      }
+    ]
+  },
+  "interpretation": {
+    "value_bot": "Positive in the current historical replay, but sample is small: 18 trades without confirmation and 5 with confirmation.",
+    "decisive_swing": "Best observed ROI at lower decisive thresholds, but uses an optimistic half-spread assumption and a small tradeable sample.",
+    "do_not_infer": [
+      "Do not use these results to advance Model B.",
+      "Do not run locked audit or live trading from this report alone.",
+      "Do not treat ROI as stable because samples are small and book coverage is limited."
+    ]
+  }
+}

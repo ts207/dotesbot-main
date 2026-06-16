@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x2eaa6ededc12a1ab53ab8cd7e4095de67c7945578449304011c44d1152187b05",
+  "event_id": "361584",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:56+00:00",
+  "http_status": 200,
+  "market_id": "1929777",
+  "question": "Dota 2: Nigma Galaxy vs Team Liquid - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.31,
+        "t": 1775800837
+      },
+      {
+        "p": 0.295,
+        "t": 1775804458
+      },
+      {
+        "p": 0.31,
+        "t": 1775808005
+      },
+      {
+        "p": 0.305,
+        "t": 1775811603
+      },
+      {
+        "p": 0.9995,
+        "t": 1775818857
+      },
+      {
+        "p": 0.9995,
+        "t": 1775826012
+      }
+    ]
+  },
+  "requested_end_ts": "1775826623",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775758361",
+  "slug": "dota2-ngx-liquid-2026-04-10-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "39627849447920056430753977566815445064856955582028741541368272665762962575354"
+}

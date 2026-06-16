@@ -1,0 +1,72 @@
+{
+  "condition_id": "0x856417a18330b10f93978ba4f0ae2925a2612df5f0af73aa52f5f7cc8e6bf68c",
+  "event_id": "399579",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:33+00:00",
+  "http_status": 200,
+  "market_id": "2033876",
+  "question": "Dota 2: South America Rejects vs L1ga Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776715252
+      },
+      {
+        "p": 0.5,
+        "t": 1776718809
+      },
+      {
+        "p": 0.5,
+        "t": 1776722459
+      },
+      {
+        "p": 0.5,
+        "t": 1776733258
+      },
+      {
+        "p": 0.59,
+        "t": 1776744049
+      },
+      {
+        "p": 0.57,
+        "t": 1776758416
+      },
+      {
+        "p": 0.57,
+        "t": 1776765629
+      },
+      {
+        "p": 0.575,
+        "t": 1776780029
+      },
+      {
+        "p": 0.59,
+        "t": 1776790821
+      },
+      {
+        "p": 0.67,
+        "t": 1776794447
+      },
+      {
+        "p": 0.005,
+        "t": 1776798038
+      },
+      {
+        "p": 0.0005,
+        "t": 1776801611
+      },
+      {
+        "p": 0.0005,
+        "t": 1776805210
+      }
+    ]
+  },
+  "requested_end_ts": "1776805456",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776695787",
+  "slug": "dota2-sar1-l1ga-2026-04-21-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "50016692779293121050125983383970256028153323046348082024169455914126681555283"
+}

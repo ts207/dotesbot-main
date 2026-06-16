@@ -1,0 +1,56 @@
+{
+  "condition_id": "0xd470aae7fb256d44b3cf721a2843be99b18151fa2fada08685f945fc4c523ee7",
+  "event_id": "171700",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:12+00:00",
+  "http_status": 200,
+  "market_id": "1212023",
+  "question": "Dota 2: Nemiga Gaming vs Valinor - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1768723246
+      },
+      {
+        "p": 0.585,
+        "t": 1768726820
+      },
+      {
+        "p": 0.495,
+        "t": 1768730417
+      },
+      {
+        "p": 0.5,
+        "t": 1768734020
+      },
+      {
+        "p": 0.505,
+        "t": 1768737638
+      },
+      {
+        "p": 0.505,
+        "t": 1768741231
+      },
+      {
+        "p": 0.0055,
+        "t": 1768744819
+      },
+      {
+        "p": 0.001,
+        "t": 1768748421
+      },
+      {
+        "p": 0.0005,
+        "t": 1768752017
+      }
+    ]
+  },
+  "requested_end_ts": "1768755520",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768721468",
+  "slug": "dota2-nemiga-valino-2026-01-18-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "67470432004220294278985490824021795640899739521583101768201040118842659412604"
+}

@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x8c317bea34aebcfa073796287db9e55482d998928c0418cb0e835e09c620f630",
+  "event_id": "365833",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:06+00:00",
+  "http_status": 200,
+  "market_id": "1942222",
+  "question": "Dota 2: MOUZ vs Nigma Galaxy - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.54,
+        "t": 1775887201
+      },
+      {
+        "p": 0.54,
+        "t": 1775894458
+      },
+      {
+        "p": 0.51,
+        "t": 1775901628
+      }
+    ]
+  },
+  "requested_end_ts": "1775920337",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775863984",
+  "slug": "dota2-mouz-ngx-2026-04-11-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "51886400806741487585994945754741348203464164979816813303166647889808068514240"
+}

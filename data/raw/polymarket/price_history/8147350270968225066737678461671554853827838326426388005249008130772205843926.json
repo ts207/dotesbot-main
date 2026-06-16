@@ -1,0 +1,48 @@
+{
+  "condition_id": "0x0dfe085c93d7d744b56789da632bbc890eb7ea4d892bf42aa0f77a107afd0b88",
+  "event_id": "437128",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:39+00:00",
+  "http_status": 200,
+  "market_id": "2131098",
+  "question": "Dota 2: Xtreme Gaming vs Yakult Brothers - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.495,
+        "t": 1777622405
+      },
+      {
+        "p": 0.63,
+        "t": 1777626005
+      },
+      {
+        "p": 0.64,
+        "t": 1777629604
+      },
+      {
+        "p": 0.82,
+        "t": 1777633203
+      },
+      {
+        "p": 0.9995,
+        "t": 1777636806
+      },
+      {
+        "p": 0.9995,
+        "t": 1777640404
+      },
+      {
+        "p": 0.9995,
+        "t": 1777644004
+      }
+    ]
+  },
+  "requested_end_ts": "1777644444",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777621476",
+  "slug": "dota2-xtreme-yb1-2026-05-01-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "8147350270968225066737678461671554853827838326426388005249008130772205843926"
+}

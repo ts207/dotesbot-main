@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xea72a2719033a4e83d40f4f8c349b8eeb851ad1890ea2c7eaff911fc1c8de249",
+  "event_id": "400754",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:33+00:00",
+  "http_status": 200,
+  "market_id": "2037462",
+  "question": "Dota 2: Virtus.pro vs MOUZ - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.485,
+        "t": 1776744056
+      },
+      {
+        "p": 0.43,
+        "t": 1776751212
+      },
+      {
+        "p": 0.45,
+        "t": 1776758427
+      },
+      {
+        "p": 0.45,
+        "t": 1776765640
+      },
+      {
+        "p": 0.245,
+        "t": 1776780041
+      }
+    ]
+  },
+  "requested_end_ts": "1776790342",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776721429",
+  "slug": "dota2-vp-mouz-2026-04-21-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "60858548164826837778321442049668307976879644595856772316227823235274649732047"
+}

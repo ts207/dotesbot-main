@@ -1,0 +1,38 @@
+level_thresholds:
+  networth_lead_usd:
+    - 3000
+    - 5000
+    - 7000
+
+change_thresholds:
+  networth_delta_30s:
+    - 1500
+    - 3000
+  networth_delta_60s:
+    - 2500
+    - 5000
+
+exit_horizons_seconds:
+  - 30
+  - 60
+  - 300
+
+convergence:
+  enabled: true
+  take_profit_price_move_cents:
+    - 5
+    - 10
+  max_hold_seconds:
+    - 300
+    - 600
+  exit_price: bid
+
+manual_windows_excluded: true
+use_locked_audit_for_tuning: false
+entry_price: ask
+exit_price: bid
+fill_model: conservative_trade_through
+
+value_reconciliation:
+  expected_trades: 18
+  expected_pnl_usd: 83.58

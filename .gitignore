@@ -1,0 +1,32 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+signals.csv
+*.csv
+*.jsonl
+*.log
+*:Zone.Identifier
+
+logs/
+*.joblib
+
+# 2026-05-28 — data consolidation Phase 0.
+# `cold_storage/` holds immutable baselines of pre-migration data.
+# Bulk files are too large to commit; small text artefacts (README, MANIFEST)
+# are explicitly re-included so the directory's purpose is discoverable
+# from the repo without the data itself.
+cold_storage/**
+!cold_storage/**/README.md
+!cold_storage/**/MANIFEST.sha256
+
+# `data_v2/` — Phase 1 Parquet + SQLite home. All append-only stream files
+# and the operational SQLite DB live under here.
+data_v2/
+
+# Rotated logs the Phase 0 work introduces.
+*.bak
+*.log.[0-9]*

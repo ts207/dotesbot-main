@@ -1,0 +1,9 @@
+{
+  "feature_group": "recent_form",
+  "input": "data/features/team_strength_features.csv",
+  "no_leak_violations": 0,
+  "output": "data/features/recent_form_features.csv",
+  "rows": 881,
+  "status": "ok",
+  "team_recent_form_diff_non_null": 649
+}

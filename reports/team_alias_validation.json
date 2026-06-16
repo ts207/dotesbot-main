@@ -1,0 +1,40 @@
+{
+  "alias_rows": 78,
+  "aliases_mapping_to_multiple_canonical_teams": {},
+  "ambiguous_short_alias_warnings": [],
+  "canonical_team_not_present_in_dota_universe_count": 3,
+  "canonical_team_not_present_in_dota_universe_warnings": [
+    {
+      "alias": "Gaimin Gladiators",
+      "canonical_team_name": "Gaimin Gladiators",
+      "confidence": "1.00",
+      "notes": ""
+    },
+    {
+      "alias": "GG",
+      "canonical_team_name": "Gaimin Gladiators",
+      "confidence": "0.95",
+      "notes": "ambiguous short alias"
+    },
+    {
+      "alias": "1win",
+      "canonical_team_name": "1win",
+      "confidence": "1.00",
+      "notes": ""
+    }
+  ],
+  "duplicate_alias_rows": 15,
+  "hard_failures": [],
+  "hard_reject_rules": [
+    "one alias maps to multiple canonical teams without context rule",
+    "accepted mapping creates result mismatch",
+    "accepted mapping creates non-unique candidate"
+  ],
+  "mapping_candidate_checks": {
+    "accepted_result_mismatch_rows": 0,
+    "accepted_rows": 459,
+    "markets_with_multiple_accepted_matches": 0,
+    "multiple_accepted_examples": {}
+  },
+  "status": "pass"
+}

@@ -1,0 +1,19 @@
+{
+  "condition_id": "0x85181718ed709f2583349ff450444f9c43d2a6aba7291200c2a5c0b51d2823ab",
+  "event_id": "371883",
+  "fetch_status": "empty",
+  "fetched_at": "2026-06-07T08:41:49+00:00",
+  "http_status": 200,
+  "market_id": "1959921",
+  "question": "Dota 2: Nemiga Gaming vs 1win - Game 1 Winner",
+  "raw_response": {
+    "history": []
+  },
+  "requested_end_ts": "1776027169",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776010721",
+  "slug": "dota2-nemiga-1win-2026-04-12-game1",
+  "source_universe": "polymarket_event",
+  "token_id": "91956742181618482138273215636206291182634050978677134514710137205234989973234"
+}

@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x654b463796a2536ea315fc0d0647c85fa4a6e045e5295ae848e1ca1f2f2ab457",
+  "event_id": "551505",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:42:05+00:00",
+  "http_status": 200,
+  "market_id": "2418647",
+  "question": "Dota 2: KO vs ALL GOOD - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.995,
+        "t": 1780408811
+      },
+      {
+        "p": 0.9995,
+        "t": 1780412409
+      },
+      {
+        "p": 0.9995,
+        "t": 1780416004
+      },
+      {
+        "p": 0.9995,
+        "t": 1780419638
+      }
+    ]
+  },
+  "requested_end_ts": "1780421792",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780404801",
+  "slug": "dota2-ko-ag5-2026-06-02-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "29236444538724438802785903857618357625889932714512133407674826861785066262237"
+}

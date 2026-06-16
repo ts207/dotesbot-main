@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x5945a19dc057a58afe7c8c4df58c574f3f4f3cf65b9e44229d0ad359a6a8cc60",
+  "event_id": "559621",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:59+00:00",
+  "http_status": 200,
+  "market_id": "2438233",
+  "question": "Dota 2: GamerLegion vs Ignite - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780603205
+      },
+      {
+        "p": 0.9995,
+        "t": 1780606807
+      },
+      {
+        "p": 0.9995,
+        "t": 1780610404
+      }
+    ]
+  },
+  "requested_end_ts": "1780612314",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780602207",
+  "slug": "dota2-gl-ign-2026-06-04-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "60773950947011344364567931020256791747792417539901474908141935140117463996978"
+}

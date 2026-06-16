@@ -1,0 +1,27 @@
+{
+  "diagnostic_only": true,
+  "model_name": "b0_market_only",
+  "not_for_trading": true,
+  "train": {
+    "actual_win_rate": 0.4740932642487047,
+    "brier": 0.2444182001295337,
+    "calibration": {
+      "intercept": -0.12182228227970246,
+      "slope": 0.90357403874532
+    },
+    "log_loss": 0.6811111147914439,
+    "mean_predicted_probability": 0.5041049222797928,
+    "rows": 386
+  },
+  "validation": {
+    "actual_win_rate": 0.4772727272727273,
+    "brier": 0.2393657196969697,
+    "calibration": {
+      "intercept": -0.11130050154298747,
+      "slope": 0.7890502275581386
+    },
+    "log_loss": 0.675393783573605,
+    "mean_predicted_probability": 0.5045075757575759,
+    "rows": 132
+  }
+}

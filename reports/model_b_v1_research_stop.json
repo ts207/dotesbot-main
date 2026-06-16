@@ -1,0 +1,116 @@
+{
+  "advancement_gate": [
+    "residual_model_beats_b0_global_log_loss",
+    "residual_model_beats_b0_global_brier",
+    "residual_model_beats_b0_in_dominant_price_history_proxy_bucket",
+    "residual_model_beats_b0_in_dominant_polymarket_public_search_bucket",
+    "source_specific_refits_are_not_negative"
+  ],
+  "allowed_next_steps": [
+    "collect_more_non_locked_rows",
+    "improve_features",
+    "rebuild_fresh_validation_split",
+    "rerun_b0_market_only",
+    "rerun_b1a_intercept_only",
+    "rerun_b1b_ultra_small",
+    "rerun_b1c_compact"
+  ],
+  "b0_validation": {
+    "actual_win_rate": 0.5256410256410257,
+    "brier": 0.2528500000000001,
+    "log_loss": 0.7089506921503812,
+    "mean_predicted_probability": 0.5237179487179489,
+    "rows": 78
+  },
+  "benchmark": "B0 = p_market_early_mid",
+  "best_residual_variant": {
+    "alpha": 100.0,
+    "brier_improvement": 0.00174341,
+    "interpretation": "diagnostic_only_not_source_robust",
+    "log_loss_improvement": 0.00206878,
+    "model_brier": 0.25110659,
+    "model_log_loss": 0.70688191,
+    "name": "ultra_small"
+  },
+  "dataset": {
+    "locked_execution_audit_expected": 103,
+    "locked_execution_audit_materialized": 91,
+    "locked_missing_or_unresolved": 12,
+    "non_locked_probability_ready": 306,
+    "train_rows": null,
+    "validation_rows": null
+  },
+  "decision": {
+    "advance_model_class": false,
+    "calibrate": false,
+    "run_locked_audit": false,
+    "simulate_execution": false,
+    "trade": false,
+    "tune_thresholds": false
+  },
+  "diagnostic_variants": {
+    "compact_hygiene": {
+      "brier_improvement": -0.00190231,
+      "log_loss_improvement": -0.00861265,
+      "model_brier": 0.25475231,
+      "model_log_loss": 0.71756335
+    },
+    "ultra_small": {
+      "brier_improvement": 0.00174341,
+      "log_loss_improvement": 0.00206878,
+      "model_brier": 0.25110659,
+      "model_log_loss": 0.70688191
+    }
+  },
+  "forbidden_next_steps": [
+    "GBM",
+    "CatBoost",
+    "hero_categorical_model",
+    "calibration",
+    "threshold_tuning",
+    "execution_replay",
+    "locked_audit",
+    "execution_simulation",
+    "trading_logic",
+    "live_logic"
+  ],
+  "formal_b1_compact_validation": {
+    "brier": 0.2703720265805689,
+    "log_loss": 0.7621405380937976,
+    "selected_alpha": 1.0,
+    "verdict": "fail"
+  },
+  "leakage_checks": {
+    "last_trade_proxy_rows": 0,
+    "locked_rows_in_train": 0,
+    "locked_rows_in_validation": 0,
+    "proxy_ts_gt_decision_ts_violations": 0,
+    "status": "pass",
+    "train_validation_series_overlap": 0
+  },
+  "model_target": "p_fair = sigmoid(logit(p_market_early_mid) + residual_adjustment)",
+  "model_version": "model_b_v1",
+  "next_research_order": [
+    "freeze_current_result_as_model_b_v1_failed",
+    "keep_b0_as_benchmark",
+    "expand_non_locked_dataset_toward_250_to_500_plus_rows",
+    "add_stronger_non_market_features",
+    "rebuild_fresh_temporal_series_split",
+    "rerun_only_constrained_residual_models"
+  ],
+  "reason": "residual_not_source_robust",
+  "robustness_failures": [
+    "dominant price_history_proxy bucket worsens",
+    "dominant polymarket_public_search bucket worsens",
+    "source-specific refits 0/2 improve",
+    "compact hygiene fails"
+  ],
+  "source_robustness_warnings": [
+    "ultra_small_global_improvement_tiny",
+    "compact_hygiene_global_fails",
+    "ultra_small_dominant_market_probability_source_bucket_fails:price_history_proxy",
+    "ultra_small_dominant_source_universe_bucket_fails:polymarket_public_search",
+    "within_source_refits_do_not_improve"
+  ],
+  "status": "stop_no_trade"
+}

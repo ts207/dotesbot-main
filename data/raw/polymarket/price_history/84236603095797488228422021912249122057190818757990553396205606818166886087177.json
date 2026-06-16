@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x751cf300492287dabb1e0a82618a949c5da7b8aded60d59923cbb7943a4b1944",
+  "event_id": "239243",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:13:58+00:00",
+  "http_status": 200,
+  "market_id": "1475913",
+  "question": "Dota 2: Tundra Esports vs Aurora - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.54,
+        "t": 1772377229
+      },
+      {
+        "p": 0.585,
+        "t": 1772380826
+      },
+      {
+        "p": 0.9995,
+        "t": 1772384423
+      },
+      {
+        "p": 0.9995,
+        "t": 1772388025
+      },
+      {
+        "p": 0.9995,
+        "t": 1772391623
+      },
+      {
+        "p": 0.9995,
+        "t": 1772395224
+      }
+    ]
+  },
+  "requested_end_ts": "1772397003",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1772375651",
+  "slug": "dota2-tundra-aur1-2026-03-01-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "84236603095797488228422021912249122057190818757990553396205606818166886087177"
+}

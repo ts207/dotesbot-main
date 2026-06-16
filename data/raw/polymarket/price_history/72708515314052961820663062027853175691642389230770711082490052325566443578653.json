@@ -1,0 +1,48 @@
+{
+  "condition_id": "0x09a1329f110600281d0aebefef5bedf1572b021309916d3db6657dda445554f4",
+  "event_id": "175543",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:15+00:00",
+  "http_status": 200,
+  "market_id": "1223771",
+  "question": "Dota 2: Heroic vs New Growth - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1768867214
+      },
+      {
+        "p": 0.52,
+        "t": 1768870812
+      },
+      {
+        "p": 0.53,
+        "t": 1768874412
+      },
+      {
+        "p": 0.53,
+        "t": 1768878028
+      },
+      {
+        "p": 0.9955,
+        "t": 1768881618
+      },
+      {
+        "p": 0.996,
+        "t": 1768885227
+      },
+      {
+        "p": 0.9995,
+        "t": 1768888815
+      }
+    ]
+  },
+  "requested_end_ts": "1768889598",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768865473",
+  "slug": "dota2-heroic-newgro-2026-01-20-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "72708515314052961820663062027853175691642389230770711082490052325566443578653"
+}

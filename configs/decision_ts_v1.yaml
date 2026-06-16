@@ -1,0 +1,13 @@
+decision_config_version: decision_ts_v1
+decision_ts_rule: first_valid_early_market_observation
+max_after_game_start_seconds: 60
+allow_before_game_start: true
+allowed_proxy_sources:
+  - book_mid
+  - early_snapshot_mid
+  - price_history_proxy
+disallowed_proxy_sources:
+  - last_trade_proxy
+min_timestamp_confidence: 0.70
+p_market_min: 0.02
+p_market_max: 0.98

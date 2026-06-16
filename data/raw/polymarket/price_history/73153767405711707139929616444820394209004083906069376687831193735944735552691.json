@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x35c0924057e97519634f6ee8fe93ec0fd712a582cd4a141c868cbe14082b7296",
+  "event_id": "378377",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:28+00:00",
+  "http_status": 200,
+  "market_id": "1980318",
+  "question": "Dota 2: Team Liquid vs MOUZ - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.0005,
+        "t": 1776189624
+      }
+    ]
+  },
+  "requested_end_ts": "1776191864",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776171156",
+  "slug": "dota2-liquid-mouz-2026-04-14-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "73153767405711707139929616444820394209004083906069376687831193735944735552691"
+}

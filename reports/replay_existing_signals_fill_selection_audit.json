@@ -1,0 +1,67 @@
+{
+  "by_fill_assumption": {
+    "conservative_trade_through": {
+      "filled": {
+        "book_age_sec": 4.988666648380952,
+        "entry_vs_mid_300s": -0.009705882352941174,
+        "entry_vs_mid_60s": 0.014000000000000002,
+        "initial_staleness": 0.010000000000000009,
+        "latency_book_age_at_signal_ms": 1016.0,
+        "raw_ask_size": 200.25761904761904,
+        "raw_spread": 0.03428571428571428,
+        "signal_strength": 0.08668095238095239,
+        "snapshot_age_sec": 1.1349982533809524,
+        "source_delay_sec": 908.0
+      },
+      "filled_vs_unfilled_count": {
+        "filled": 21,
+        "total": 55,
+        "unfilled": 34
+      },
+      "unfilled": {
+        "book_age_sec": 6.324617630117647,
+        "entry_vs_mid_300s": null,
+        "entry_vs_mid_60s": null,
+        "initial_staleness": 0.009999999999999998,
+        "latency_book_age_at_signal_ms": 1225.5714285714287,
+        "raw_ask_size": 798.4570588235295,
+        "raw_spread": 0.044852941176470595,
+        "signal_strength": 0.12327647058823529,
+        "snapshot_age_sec": 1.4129963707058824,
+        "source_delay_sec": 899.2857142857143
+      }
+    },
+    "optimistic_displayed_liquidity": {
+      "filled": {
+        "book_age_sec": 5.814527255272727,
+        "entry_vs_mid_300s": 0.020888888888888884,
+        "entry_vs_mid_60s": -0.004245283018867936,
+        "initial_staleness": 0.010000000000000004,
+        "latency_book_age_at_signal_ms": 1179.0,
+        "raw_ask_size": 570.0536363636364,
+        "raw_spread": 0.04081818181818182,
+        "signal_strength": 0.10930363636363635,
+        "snapshot_age_sec": 1.306851635,
+        "source_delay_sec": 901.2222222222222
+      },
+      "filled_vs_unfilled_count": {
+        "filled": 55,
+        "total": 55,
+        "unfilled": 0
+      },
+      "unfilled": {
+        "book_age_sec": null,
+        "entry_vs_mid_300s": null,
+        "entry_vs_mid_60s": null,
+        "initial_staleness": null,
+        "latency_book_age_at_signal_ms": null,
+        "raw_ask_size": null,
+        "raw_spread": null,
+        "signal_strength": null,
+        "snapshot_age_sec": null,
+        "source_delay_sec": null
+      }
+    }
+  },
+  "generated_at": "2026-06-07T13:42:03.350685+00:00"
+}

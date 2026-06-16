@@ -1,0 +1,22 @@
+[
+  {
+    "match_id": "8809381476",
+    "error": "HTTPError",
+    "detail": "HTTP Error 404: Not Found"
+  },
+  {
+    "match_id": "8831923774",
+    "error": "HTTPError",
+    "detail": "HTTP Error 404: Not Found"
+  },
+  {
+    "match_id": "8834923359",
+    "error": "HTTPError",
+    "detail": "HTTP Error 404: Not Found"
+  },
+  {
+    "match_id": "8835614713",
+    "error": "HTTPError",
+    "detail": "HTTP Error 404: Not Found"
+  }
+]

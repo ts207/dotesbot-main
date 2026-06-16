@@ -1,0 +1,44 @@
+{
+  "condition_id": "0xff6fa9b7a879e9faecb8568b2a50665c6306b1be99a4f7c24235eaf868c8b05f",
+  "event_id": "177354",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:18+00:00",
+  "http_status": 200,
+  "market_id": "1229882",
+  "question": "Dota 2: Per\u00fa Rejects vs Heroic - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1768939221
+      },
+      {
+        "p": 0.51,
+        "t": 1768942842
+      },
+      {
+        "p": 0.72,
+        "t": 1768946420
+      },
+      {
+        "p": 0.55,
+        "t": 1768950020
+      },
+      {
+        "p": 0.9995,
+        "t": 1768953628
+      },
+      {
+        "p": 0.9995,
+        "t": 1768957219
+      }
+    ]
+  },
+  "requested_end_ts": "1768958036",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768937663",
+  "slug": "dota2-perrej-heroic-2026-01-20-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "20128323786864963990425362509721583362426158201376919672200578545020679792944"
+}

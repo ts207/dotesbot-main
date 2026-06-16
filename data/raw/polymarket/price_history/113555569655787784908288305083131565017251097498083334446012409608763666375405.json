@@ -1,0 +1,52 @@
+{
+  "condition_id": "0x29bb3d75929682df3c46e9e8bd4a1c83a8217aeba32e231e4fe68c93527016c5",
+  "event_id": "566596",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:55+00:00",
+  "http_status": 200,
+  "market_id": "2455908",
+  "question": "Dota 2: VooDooSh Club vs TPaBoMaH Club - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780772405
+      },
+      {
+        "p": 0.5,
+        "t": 1780776005
+      },
+      {
+        "p": 0.5,
+        "t": 1780779606
+      },
+      {
+        "p": 0.5,
+        "t": 1780783206
+      },
+      {
+        "p": 0.495,
+        "t": 1780786805
+      },
+      {
+        "p": 0.49,
+        "t": 1780790416
+      },
+      {
+        "p": 0.495,
+        "t": 1780794011
+      },
+      {
+        "p": 0.505,
+        "t": 1780795324
+      }
+    ]
+  },
+  "requested_end_ts": "1780857000",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780771387",
+  "slug": "dota2-voodoo-tpabom-2026-06-07-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "113555569655787784908288305083131565017251097498083334446012409608763666375405"
+}

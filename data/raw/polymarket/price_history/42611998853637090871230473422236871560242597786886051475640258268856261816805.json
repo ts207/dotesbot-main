@@ -1,0 +1,68 @@
+{
+  "condition_id": "0x94d93574d4b48d9c89b57f02f077a45e01eaff67f8306b5ad9a0e101d2dceab1",
+  "event_id": "445902",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:44+00:00",
+  "http_status": 200,
+  "market_id": "2151002",
+  "question": "Dota 2: Satan666 vs Carstensz - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1777849204
+      },
+      {
+        "p": 0.5,
+        "t": 1777852806
+      },
+      {
+        "p": 0.255,
+        "t": 1777856404
+      },
+      {
+        "p": 0.26,
+        "t": 1777860005
+      },
+      {
+        "p": 0.505,
+        "t": 1777863621
+      },
+      {
+        "p": 0.505,
+        "t": 1777867206
+      },
+      {
+        "p": 0.5,
+        "t": 1777870806
+      },
+      {
+        "p": 0.5,
+        "t": 1777874406
+      },
+      {
+        "p": 0.0045,
+        "t": 1777878005
+      },
+      {
+        "p": 0.0005,
+        "t": 1777881605
+      },
+      {
+        "p": 0.0005,
+        "t": 1777885205
+      },
+      {
+        "p": 0.0005,
+        "t": 1777888806
+      }
+    ]
+  },
+  "requested_end_ts": "1777888950",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777846381",
+  "slug": "dota2-satan-carst-2026-05-04-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "42611998853637090871230473422236871560242597786886051475640258268856261816805"
+}

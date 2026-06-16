@@ -1,0 +1,60 @@
+replay_name: reaction_lag_existing_signals_v1
+direction_mode: existing_signal_tradable
+
+paths:
+  data_root: data_v2
+  quarantine_manifest: data_v2/quarantine_manifest.csv
+  manual_excluded_windows: data/manual/excluded_time_windows.csv
+  fill_model: configs/reaction_lag_fill_model_v1.yaml
+  trades_csv: reports/replay_existing_signals_trades.csv
+  report_json: reports/replay_existing_signals_report.json
+
+inputs:
+  signals: data_v2/signals
+  trade_attempts: data_v2/trade_attempts
+  book_ticks: data_v2/book_ticks
+  markouts: data_v2/markouts
+  snapshots: data_v2/snapshots
+  source_delay: data_v2/source_delay
+  latency: data_v2/latency
+
+event_families:
+  priority:
+    - POLL_DECISIVE_STOMP
+    - POLL_RAPID_STOMP
+    - large_net_worth_lead_jump
+    - lead_flip
+    - building_or_objective_state_change
+  replay_existing_signals_first: true
+
+causality:
+  hard_fail_on_violation: true
+  require_latest_snapshot_ts_lte_decision: true
+  require_latest_book_ts_lte_decision: true
+  require_latest_signal_ts_lte_decision: true
+  require_latest_latency_ts_lte_decision: true
+  require_latest_source_delay_ts_lte_decision: true
+
+markouts:
+  horizons_sec:
+    - 5
+    - 10
+    - 20
+    - 30
+    - 60
+    - 120
+    - 180
+    - 300
+    - 600
+
+filters:
+  exclude_manual_windows: true
+  skip_quarantined_files: true
+  require_token_id: true
+  require_best_ask: true
+  replay_decisions:
+    - paper_buy_yes
+    - paper_buy_no
+    - live_buy_yes
+    - live_buy_no
+    - buy

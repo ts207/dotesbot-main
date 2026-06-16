@@ -1,0 +1,60 @@
+{
+  "condition_id": "0x5a7d1957753920dcbaf35ea02b8b06d47002c8011b09a4b83d2d966a78789098",
+  "event_id": "150129",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:01+00:00",
+  "http_status": 200,
+  "market_id": "1132524",
+  "question": "Dota 2: D2 Hustlers SEA vs Team Nemesis - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1767837609
+      },
+      {
+        "p": 0.505,
+        "t": 1767841209
+      },
+      {
+        "p": 0.505,
+        "t": 1767844809
+      },
+      {
+        "p": 0.505,
+        "t": 1767848409
+      },
+      {
+        "p": 0.505,
+        "t": 1767852009
+      },
+      {
+        "p": 0.505,
+        "t": 1767855609
+      },
+      {
+        "p": 0.505,
+        "t": 1767859219
+      },
+      {
+        "p": 0.51,
+        "t": 1767862809
+      },
+      {
+        "p": 0.0005,
+        "t": 1767866412
+      },
+      {
+        "p": 0.0005,
+        "t": 1767870010
+      }
+    ]
+  },
+  "requested_end_ts": "1767872863",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1767834065",
+  "slug": "dota2-d2hust-nem-2026-01-08-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "77875676392141658339788451809786985776374305966679512349407856212858886580301"
+}

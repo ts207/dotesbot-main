@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x9395aaf4ddcdebb5b09d58d115a1dd9a3aa1fc655872727912096f93ac6095bc",
+  "event_id": "566866",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:56+00:00",
+  "http_status": 200,
+  "market_id": "2457045",
+  "question": "Dota 2: BetBoom Team vs LGD Gaming - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.605,
+        "t": 1780779603
+      },
+      {
+        "p": 0.61,
+        "t": 1780783203
+      },
+      {
+        "p": 0.615,
+        "t": 1780786804
+      },
+      {
+        "p": 0.61,
+        "t": 1780790413
+      },
+      {
+        "p": 0.615,
+        "t": 1780794005
+      },
+      {
+        "p": 0.615,
+        "t": 1780795323
+      }
+    ]
+  },
+  "requested_end_ts": "1780837200",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780776769",
+  "slug": "dota2-bb4-lgd-2026-06-07-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "62268705663383822607373426738855981932556265341702656062546207020429901231927"
+}

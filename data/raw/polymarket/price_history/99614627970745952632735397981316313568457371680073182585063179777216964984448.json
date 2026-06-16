@@ -1,0 +1,52 @@
+{
+  "condition_id": "0x5f4b6e524bf91e0fc61148ffa9ccdf92d6b22786d3d7fc064c28fa612b27cfac",
+  "event_id": "444097",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:44+00:00",
+  "http_status": 200,
+  "market_id": "2146990",
+  "question": "Dota 2: Team Resilience vs Vici Gaming - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.465,
+        "t": 1777802406
+      },
+      {
+        "p": 0.48,
+        "t": 1777806020
+      },
+      {
+        "p": 0.505,
+        "t": 1777809606
+      },
+      {
+        "p": 0.445,
+        "t": 1777813205
+      },
+      {
+        "p": 0.125,
+        "t": 1777816805
+      },
+      {
+        "p": 0.0005,
+        "t": 1777820407
+      },
+      {
+        "p": 0.0005,
+        "t": 1777824006
+      },
+      {
+        "p": 0.0005,
+        "t": 1777827606
+      }
+    ]
+  },
+  "requested_end_ts": "1777830436",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777800795",
+  "slug": "dota2-tr7-vg-2026-05-03-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "99614627970745952632735397981316313568457371680073182585063179777216964984448"
+}

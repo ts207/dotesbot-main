@@ -1,0 +1,56 @@
+{
+  "condition_id": "0xba7f39faf6cd8c59be6b7db8c8786f055ebe8f61a12068dd3203a9122ee99d88",
+  "event_id": "376402",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:31+00:00",
+  "http_status": 200,
+  "market_id": "1974794",
+  "question": "Dota 2: Team Resilience vs Roar Gaming - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1776121252
+      },
+      {
+        "p": 0.515,
+        "t": 1776128437
+      },
+      {
+        "p": 0.515,
+        "t": 1776132038
+      },
+      {
+        "p": 0.515,
+        "t": 1776135638
+      },
+      {
+        "p": 0.5,
+        "t": 1776139239
+      },
+      {
+        "p": 0.5,
+        "t": 1776142838
+      },
+      {
+        "p": 0.19,
+        "t": 1776146451
+      },
+      {
+        "p": 0.0005,
+        "t": 1776150037
+      },
+      {
+        "p": 0.0005,
+        "t": 1776153637
+      }
+    ]
+  },
+  "requested_end_ts": "1776155677",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776120158",
+  "slug": "dota2-tr7-roar-2026-04-14-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "51443499462918768518507820512145901890220573613708583110476360424606667326782"
+}

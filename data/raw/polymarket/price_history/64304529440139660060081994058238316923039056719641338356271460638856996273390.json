@@ -1,0 +1,60 @@
+{
+  "condition_id": "0x149ce45d45b3e671db43d56b61b13da73bf9e00cd6c1377aa26d7cf1433a1b80",
+  "event_id": "416558",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:44+00:00",
+  "http_status": 200,
+  "market_id": "2077211",
+  "question": "Dota 2: Team Liquid vs Team Falcons - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1777122005
+      },
+      {
+        "p": 0.48,
+        "t": 1777125603
+      },
+      {
+        "p": 0.48,
+        "t": 1777129204
+      },
+      {
+        "p": 0.5,
+        "t": 1777132805
+      },
+      {
+        "p": 0.465,
+        "t": 1777136417
+      },
+      {
+        "p": 0.67,
+        "t": 1777140004
+      },
+      {
+        "p": 0.9995,
+        "t": 1777143604
+      },
+      {
+        "p": 0.9995,
+        "t": 1777147204
+      },
+      {
+        "p": 0.9995,
+        "t": 1777150806
+      },
+      {
+        "p": 0.9995,
+        "t": 1777154417
+      }
+    ]
+  },
+  "requested_end_ts": "1777154946",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777118597",
+  "slug": "dota2-liquid-flc-2026-04-25-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "64304529440139660060081994058238316923039056719641338356271460638856996273390"
+}

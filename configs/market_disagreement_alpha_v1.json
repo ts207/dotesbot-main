@@ -1,0 +1,23 @@
+{
+  "deep_discount_high_edge_leader_candidate": {
+    "diagnostic_only": true,
+    "armed": false,
+    "max_ask": 0.55,
+    "min_edge": 0.30,
+    "max_book_age_ms": 15000,
+    "min_game_time_sec": 600,
+    "max_game_time_sec": 2400
+  },
+  "market_lag_candidate": {
+    "diagnostic_only": true,
+    "armed": false,
+    "min_fair": 0.80,
+    "min_edge": 0.03,
+    "max_edge": 0.10,
+    "min_ask": 0.55,
+    "max_ask": 0.90,
+    "max_book_age_ms": 15000,
+    "min_game_time_sec": 600,
+    "max_game_time_sec": 2400
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x391fa07b8d68d58ce61d2c847d1abdf040cfa41668f890dec6fe00c48c448b9f",
+  "event_id": "374655",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:22+00:00",
+  "http_status": 200,
+  "market_id": "1968217",
+  "question": "Dota 2: 1win vs BetBoom Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.34,
+        "t": 1776085249
+      },
+      {
+        "p": 0.0055,
+        "t": 1776088857
+      },
+      {
+        "p": 0.0005,
+        "t": 1776096057
+      }
+    ]
+  },
+  "requested_end_ts": "1776098955",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776080591",
+  "slug": "dota2-1win-bb4-2026-04-13-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "49517373031764908473297409711147815382021004688574828814124708819550659320940"
+}

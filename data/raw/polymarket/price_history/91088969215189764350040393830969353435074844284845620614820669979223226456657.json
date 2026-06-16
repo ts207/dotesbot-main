@@ -1,0 +1,28 @@
+{
+  "condition_id": "0x1463373ef278fa0b86f3ecd5ead71a49d40feec8442231dd319a9ead337a3b14",
+  "event_id": "347674",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:07+00:00",
+  "http_status": 200,
+  "market_id": "1881541",
+  "question": "Dota 2: 1win vs Zero Tenacity - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775422815
+      },
+      {
+        "p": 0.77,
+        "t": 1775466014
+      }
+    ]
+  },
+  "requested_end_ts": "1775485901",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775415886",
+  "slug": "dota2-1win-z10-2026-04-06-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "91088969215189764350040393830969353435074844284845620614820669979223226456657"
+}

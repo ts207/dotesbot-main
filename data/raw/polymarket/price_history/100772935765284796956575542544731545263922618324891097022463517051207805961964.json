@@ -1,0 +1,44 @@
+{
+  "condition_id": "0xd47ae5df6214474546983209d4341b76ac0f92976fbb93f663f80c275440e534",
+  "event_id": "378401",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:11+00:00",
+  "http_status": 200,
+  "market_id": "1980386",
+  "question": "Dota 2: L1ga Team vs BetBoom Team - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.34,
+        "t": 1776175239
+      },
+      {
+        "p": 0.345,
+        "t": 1776178839
+      },
+      {
+        "p": 0.335,
+        "t": 1776182437
+      },
+      {
+        "p": 0.0005,
+        "t": 1776186041
+      },
+      {
+        "p": 0.0005,
+        "t": 1776193255
+      },
+      {
+        "p": 0.0005,
+        "t": 1776196838
+      }
+    ]
+  },
+  "requested_end_ts": "1776199748",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776171808",
+  "slug": "dota2-l1ga-bb4-2026-04-14-game3",
+  "source_universe": "polymarket_event",
+  "token_id": "100772935765284796956575542544731545263922618324891097022463517051207805961964"
+}

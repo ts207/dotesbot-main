@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x8ade3a13096a2ec6cf0792ab7bf757d7fdbbfc5d06f3b5c95f25ee3bdead29c8",
+  "event_id": "370402",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:15+00:00",
+  "http_status": 200,
+  "market_id": "1955193",
+  "question": "Dota 2: OG vs Ivory - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775980846
+      },
+      {
+        "p": 0.52,
+        "t": 1775984457
+      },
+      {
+        "p": 0.52,
+        "t": 1775988048
+      },
+      {
+        "p": 0.46,
+        "t": 1775991645
+      },
+      {
+        "p": 0.005,
+        "t": 1775998849
+      },
+      {
+        "p": 0.0005,
+        "t": 1776002449
+      }
+    ]
+  },
+  "requested_end_ts": "1776006501",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775979207",
+  "slug": "dota2-og-ivo-2026-04-12-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "84729429373257576111820103993839005453915361598556095332873817508450771768947"
+}

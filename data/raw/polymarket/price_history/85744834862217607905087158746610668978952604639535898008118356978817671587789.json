@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x54aa2d31a5848eed3236d78f53ff587db31820487c6dcb9f9f25c5681324d6c6",
+  "event_id": "408988",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:37+00:00",
+  "http_status": 200,
+  "market_id": "2058335",
+  "question": "Dota 2: Carstensz vs Ivory - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1776931223
+      },
+      {
+        "p": 0.45,
+        "t": 1776934808
+      },
+      {
+        "p": 0.0005,
+        "t": 1776938407
+      },
+      {
+        "p": 0.0005,
+        "t": 1776942006
+      },
+      {
+        "p": 0.0005,
+        "t": 1776945613
+      }
+    ]
+  },
+  "requested_end_ts": "1776946958",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776928875",
+  "slug": "dota2-carst-ivo-2026-04-23-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "85744834862217607905087158746610668978952604639535898008118356978817671587789"
+}

@@ -1,0 +1,20 @@
+{
+  "audited_unmapped_network_markets": 109,
+  "dota_universe_max_ts": "2026-06-07T01:38:30+00:00",
+  "dota_universe_min_ts": "2026-01-06T21:03:10+00:00",
+  "market_max_ts": "2026-06-07T00:00:00+00:00",
+  "market_min_ts": "2025-11-21T00:00:00+00:00",
+  "markets_with_pm14d_team_candidates": 2,
+  "markets_with_pm3d_team_candidates": 0,
+  "markets_with_pm7d_team_candidates": 0,
+  "reject_stage_counts": {
+    "date_window_miss": 2,
+    "dota_universe_gap": 13,
+    "team_alias_missing": 92,
+    "team_not_found_in_dota_universe": 2
+  },
+  "source_universe_counts": {
+    "polymarket_event": 20,
+    "polymarket_public_search": 89
+  }
+}

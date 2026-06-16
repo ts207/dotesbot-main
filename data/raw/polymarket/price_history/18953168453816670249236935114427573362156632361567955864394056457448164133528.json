@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x341edfad0fbc1f7c9b5b1a0db7e63a2db560026092838c9f9b91d80f3b2168a7",
+  "event_id": "379591",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:07+00:00",
+  "http_status": 200,
+  "market_id": "1985254",
+  "question": "Dota 2: Heroic vs South America Rejects - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.9995,
+        "t": 1776214849
+      }
+    ]
+  },
+  "requested_end_ts": "1776221864",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776199980",
+  "slug": "dota2-heroic-sar1-2026-04-14-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "18953168453816670249236935114427573362156632361567955864394056457448164133528"
+}

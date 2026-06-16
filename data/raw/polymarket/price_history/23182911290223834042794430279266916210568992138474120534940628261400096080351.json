@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x034bfa62ac1ffa3ac05ef14e780aca8bcf1e27e1dcede87f531eff644bc8b727",
+  "event_id": "400752",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:35+00:00",
+  "http_status": 200,
+  "market_id": "2037422",
+  "question": "Dota 2: Xtreme Gaming vs Vici Gaming - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.55,
+        "t": 1776726008
+      },
+      {
+        "p": 0.555,
+        "t": 1776751228
+      },
+      {
+        "p": 0.555,
+        "t": 1776758434
+      },
+      {
+        "p": 0.555,
+        "t": 1776765647
+      },
+      {
+        "p": 0.9995,
+        "t": 1776780049
+      }
+    ]
+  },
+  "requested_end_ts": "1776785468",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776721672",
+  "slug": "dota2-xtreme-vg-2026-04-21-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "23182911290223834042794430279266916210568992138474120534940628261400096080351"
+}

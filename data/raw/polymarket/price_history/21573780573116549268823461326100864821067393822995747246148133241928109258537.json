@@ -1,0 +1,64 @@
+{
+  "condition_id": "0x0b8bbae21c6d2b739b0079c1b0502258a18975f8e6d4da77dae0e121368a39a3",
+  "event_id": "372483",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:20+00:00",
+  "http_status": 200,
+  "market_id": "1962114",
+  "question": "Dota 2: Vici Gaming vs Team Resilience - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1776034859
+      },
+      {
+        "p": 0.51,
+        "t": 1776042049
+      },
+      {
+        "p": 0.63,
+        "t": 1776045659
+      },
+      {
+        "p": 0.67,
+        "t": 1776049254
+      },
+      {
+        "p": 0.655,
+        "t": 1776052844
+      },
+      {
+        "p": 0.685,
+        "t": 1776056457
+      },
+      {
+        "p": 0.69,
+        "t": 1776063652
+      },
+      {
+        "p": 0.685,
+        "t": 1776067251
+      },
+      {
+        "p": 0.69,
+        "t": 1776074456
+      },
+      {
+        "p": 0.69,
+        "t": 1776078056
+      },
+      {
+        "p": 0.705,
+        "t": 1776085256
+      }
+    ]
+  },
+  "requested_end_ts": "1776099221",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776025961",
+  "slug": "dota2-vg-tr7-2026-04-13-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "21573780573116549268823461326100864821067393822995747246148133241928109258537"
+}

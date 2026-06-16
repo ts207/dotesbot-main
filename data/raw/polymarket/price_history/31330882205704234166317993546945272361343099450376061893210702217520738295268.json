@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x15892f5b449f1efc5210f9504c4762f5097565830ba82913c70b93a9081087fa",
+  "event_id": "551504",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:42:05+00:00",
+  "http_status": 200,
+  "market_id": "2418627",
+  "question": "Dota 2: Nigma Galaxy vs sifr00 - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.9995,
+        "t": 1780408807
+      },
+      {
+        "p": 0.9995,
+        "t": 1780412405
+      },
+      {
+        "p": 0.9995,
+        "t": 1780416003
+      },
+      {
+        "p": 0.9995,
+        "t": 1780419618
+      }
+    ]
+  },
+  "requested_end_ts": "1780420101",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780404815",
+  "slug": "dota2-ngx-sifr-2026-06-02-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "31330882205704234166317993546945272361343099450376061893210702217520738295268"
+}

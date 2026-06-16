@@ -1,0 +1,4 @@
+Building poll-level universe across 142 joined matches...
+Generated 2459 polls.
+Drop reasons: {'game_time_bounds': 1852, 'book_stale': 1743, 'missing_data_or_game_over': 142, 'ask_out_of_bounds': 569, 'missing_ask_or_bid': 251, 'no_entry_book': 249}
+Generated regime alpha reports in /home/tstuv/dota-poly-signal-pnl-asd/reports

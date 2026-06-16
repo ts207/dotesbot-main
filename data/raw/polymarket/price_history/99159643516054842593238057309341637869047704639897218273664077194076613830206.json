@@ -1,0 +1,52 @@
+{
+  "condition_id": "0xc194e330a64ae28799c45a969921809f81d97476e14a415009256cdff4d3efc1",
+  "event_id": "171698",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:12+00:00",
+  "http_status": 200,
+  "market_id": "1212012",
+  "question": "Dota 2: Golden Barys vs 1000 reasons - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1768723236
+      },
+      {
+        "p": 0.465,
+        "t": 1768726815
+      },
+      {
+        "p": 0.515,
+        "t": 1768730414
+      },
+      {
+        "p": 0.51,
+        "t": 1768734017
+      },
+      {
+        "p": 0.505,
+        "t": 1768737633
+      },
+      {
+        "p": 0.505,
+        "t": 1768741228
+      },
+      {
+        "p": 0.0005,
+        "t": 1768744816
+      },
+      {
+        "p": 0.001,
+        "t": 1768748416
+      }
+    ]
+  },
+  "requested_end_ts": "1768751664",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768721469",
+  "slug": "dota2-golden-1000re-2026-01-18-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "99159643516054842593238057309341637869047704639897218273664077194076613830206"
+}

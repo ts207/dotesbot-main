@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x1ab90432ac42204f4056b159d849d6727d2b61ad3186532caa47159456787814",
+  "event_id": "400750",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:34+00:00",
+  "http_status": 200,
+  "market_id": "2037381",
+  "question": "Dota 2: Team Spirit vs Natus Vincere - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.565,
+        "t": 1776726011
+      },
+      {
+        "p": 0.565,
+        "t": 1776736803
+      },
+      {
+        "p": 0.565,
+        "t": 1776751231
+      },
+      {
+        "p": 0.0005,
+        "t": 1776758436
+      },
+      {
+        "p": 0.0005,
+        "t": 1776765649
+      }
+    ]
+  },
+  "requested_end_ts": "1776769018",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776721489",
+  "slug": "dota2-ts8-navi-2026-04-21-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "1624567912539667832857648858139522835537003014190497417476256868562441247228"
+}

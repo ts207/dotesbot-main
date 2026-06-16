@@ -1,0 +1,52 @@
+{
+  "condition_id": "0x68eb91bbfbd9734a87bed296366869c594a296a844cc2dad59e2a6afdcbb072a",
+  "event_id": "464028",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:28+00:00",
+  "http_status": 200,
+  "market_id": "2200977",
+  "question": "Dota 2: Yellow Submarine vs Tundra Esports - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1778310007
+      },
+      {
+        "p": 0.5,
+        "t": 1778313611
+      },
+      {
+        "p": 0.5,
+        "t": 1778317207
+      },
+      {
+        "p": 0.26,
+        "t": 1778320807
+      },
+      {
+        "p": 0.34,
+        "t": 1778324407
+      },
+      {
+        "p": 0.9995,
+        "t": 1778328009
+      },
+      {
+        "p": 0.9995,
+        "t": 1778331610
+      },
+      {
+        "p": 0.9995,
+        "t": 1778335211
+      }
+    ]
+  },
+  "requested_end_ts": "1778338327",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1778306326",
+  "slug": "dota2-yes-tundra-2026-05-09-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "84895167622466894041768605685253180753906469467229820055558211882339398866746"
+}

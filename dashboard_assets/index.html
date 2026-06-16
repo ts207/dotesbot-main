@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis · Dota Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand">Aegis · Dota Bot</div>
+    <span class="status-pill" id="status-pill">
+        <span class="status-dot"></span><span id="status-label">CONNECTING</span>
+    </span>
+    <span id="mode-badge" class="mode-badge">PAPER</span>
+    <span class="clock" id="clock"></span>
+
+    <div class="kpi-row">
+        <div class="kpi">
+            <div class="kpi-label">Session PnL</div>
+            <div class="kpi-value" id="kpi-pnl">$0.00</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Open</div>
+            <div class="kpi-value" id="kpi-open">0</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Win Rate</div>
+            <div class="kpi-value" id="kpi-wr">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Events / hr</div>
+            <div class="kpi-value" id="kpi-rate">—</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Live Games</div>
+            <div class="kpi-value" id="kpi-games">0</div>
+        </div>
+    </div>
+</header>
+
+<nav class="tab-bar">
+    <button class="tab active" data-tab="operator">Operator</button>
+    <button class="tab" data-tab="analytics">Analytics</button>
+</nav>
+
+<!-- ===== OPERATOR TAB ===== -->
+<section class="tab-content active" id="tab-operator">
+<div class="operator-grid">
+
+    <!-- LEFT: Signal stream + Decisions -->
+    <div class="column">
+        <div class="panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">Signal Feed</span>
+                <span class="panel-badge" id="signal-count">0</span>
+            </div>
+            <div class="panel-body">
+                <table class="dt">
+                    <thead>
+                        <tr><th>Time</th><th>Event</th><th class="right">Dir</th></tr>
+                    </thead>
+                    <tbody id="signal-feed"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">Signal Decisions</span>
+                <span class="panel-badge" id="decisions-count">0</span>
+            </div>
+            <div class="panel-body">
+                <table class="dt">
+                    <thead>
+                        <tr><th>Time</th><th>Event</th><th class="right">Outcome</th></tr>
+                    </thead>
+                    <tbody id="decisions-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER: Live games -->
+    <div class="column">
+        <div class="panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">Live Games</span>
+                <span class="panel-badge" id="games-count">0</span>
+            </div>
+            <div class="panel-body" id="games-list">
+                <div class="empty">scanning live matches…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Positions + Manual entry -->
+    <div class="column">
+        <div class="panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">Open Positions</span>
+                <span class="panel-badge" id="open-count">0</span>
+            </div>
+            <div class="panel-body">
+                <table class="dt">
+                    <thead>
+                        <tr><th>Market</th><th>Side</th><th class="right">Entry</th><th></th></tr>
+                    </thead>
+                    <tbody id="open-positions-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Manual Entry</span>
+            </div>
+            <div class="panel-body padded">
+                <form id="trade-form">
+                    <div class="form-row">
+                        <label>
+                            <span class="lbl">Token ID</span>
+                            <input class="form-input" id="f-token" type="text" placeholder="paste or click a row">
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label>
+                            <span class="lbl">Size $</span>
+                            <input class="form-input" id="f-amount" type="number" step="1" value="50">
+                        </label>
+                        <label>
+                            <span class="lbl">Price Cap</span>
+                            <input class="form-input" id="f-cap" type="number" step="0.01" min="0" max="1" value="0.80">
+                        </label>
+                    </div>
+                    <button class="btn primary" id="trade-btn" style="width:100%;" type="submit">
+                        <span id="trade-btn-text">Execute Buy (FAK)</span>
+                    </button>
+                    <div id="trade-msg"></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel flex-1">
+            <div class="panel-header">
+                <span class="panel-title">Closed Today</span>
+                <span class="panel-badge" id="closed-count">0</span>
+            </div>
+            <div class="panel-body">
+                <table class="dt">
+                    <thead><tr><th>Time</th><th>Match</th><th>Side</th><th class="right">PnL</th></tr></thead>
+                    <tbody id="closed-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- ===== ANALYTICS TAB ===== -->
+<section class="tab-content" id="tab-analytics">
+<div class="analytics-grid">
+
+    <!-- TOP-LEFT: Today's KPI cards -->
+    <div class="panel" style="grid-column: span 2;">
+        <div class="panel-header">
+            <span class="panel-title">Today</span>
+            <span class="panel-badge" id="today-ts">—</span>
+        </div>
+        <div class="panel-body">
+            <div class="metric-row">
+                <div class="metric-card">
+                    <div class="metric-label">Events fired</div>
+                    <div class="metric-value" id="a-events">0</div>
+                    <div class="metric-sub" id="a-events-sub">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Signals</div>
+                    <div class="metric-value" id="a-signals">0</div>
+                    <div class="metric-sub" id="a-signals-sub">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Entries</div>
+                    <div class="metric-value" id="a-entries">0</div>
+                    <div class="metric-sub" id="a-entries-sub">paper</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Closed PnL</div>
+                    <div class="metric-value" id="a-pnl">$0.00</div>
+                    <div class="metric-sub" id="a-pnl-sub">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Win Rate</div>
+                    <div class="metric-value" id="a-wr">—</div>
+                    <div class="metric-sub" id="a-wr-sub">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Daily DD remaining</div>
+                    <div class="metric-value" id="a-dd">$200</div>
+                    <div class="metric-sub" id="a-dd-sub">cap</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM-LEFT: Per-event funnel -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Per-Event Funnel · Today</span>
+            <span class="panel-badge">submit ↔ skip</span>
+        </div>
+        <div class="panel-body">
+            <div class="funnel-list" id="per-event-funnel">
+                <div class="empty">no events fired today</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM-RIGHT: Skip reasons -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Skip Reasons · Today</span>
+        </div>
+        <div class="panel-body">
+            <div class="funnel-list" id="skip-reasons">
+                <div class="empty">no rejections yet</div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

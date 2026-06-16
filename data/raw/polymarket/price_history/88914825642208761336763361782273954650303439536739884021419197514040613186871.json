@@ -1,0 +1,56 @@
+{
+  "condition_id": "0x9440a9d77cdef134ab35055f8d55ddebdff8a5f12bac8c45b00accbce98dadde",
+  "event_id": "416772",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:15+00:00",
+  "http_status": 200,
+  "market_id": "2077583",
+  "question": "Dota 2: Nemiga Gaming vs L1ga Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1777125604
+      },
+      {
+        "p": 0.44,
+        "t": 1777129209
+      },
+      {
+        "p": 0.44,
+        "t": 1777132806
+      },
+      {
+        "p": 0.45,
+        "t": 1777136426
+      },
+      {
+        "p": 0.97,
+        "t": 1777140008
+      },
+      {
+        "p": 0.9995,
+        "t": 1777143605
+      },
+      {
+        "p": 0.9995,
+        "t": 1777147207
+      },
+      {
+        "p": 0.9995,
+        "t": 1777150810
+      },
+      {
+        "p": 0.9995,
+        "t": 1777154419
+      }
+    ]
+  },
+  "requested_end_ts": "1777154610",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1777124072",
+  "slug": "dota2-nemiga-l1ga-2026-04-25-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "88914825642208761336763361782273954650303439536739884021419197514040613186871"
+}

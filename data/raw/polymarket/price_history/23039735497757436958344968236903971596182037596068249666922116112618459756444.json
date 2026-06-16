@@ -1,0 +1,68 @@
+{
+  "condition_id": "0x07f28f5c9062cc3feee3dbb6e9acea353d1c135fbac328b4c65649bf8a411472",
+  "event_id": "277729",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:44+00:00",
+  "http_status": 200,
+  "market_id": "1613406",
+  "question": "Dota 2:  Pipsqueak+4 vs AVULUS - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.705,
+        "t": 1773712840
+      },
+      {
+        "p": 0.53,
+        "t": 1773716443
+      },
+      {
+        "p": 0.545,
+        "t": 1773720044
+      },
+      {
+        "p": 0.54,
+        "t": 1773723654
+      },
+      {
+        "p": 0.545,
+        "t": 1773727244
+      },
+      {
+        "p": 0.545,
+        "t": 1773730851
+      },
+      {
+        "p": 0.555,
+        "t": 1773734444
+      },
+      {
+        "p": 0.565,
+        "t": 1773738048
+      },
+      {
+        "p": 0.54,
+        "t": 1773741651
+      },
+      {
+        "p": 0.265,
+        "t": 1773745239
+      },
+      {
+        "p": 0.0005,
+        "t": 1773748850
+      },
+      {
+        "p": 0.0005,
+        "t": 1773752441
+      }
+    ]
+  },
+  "requested_end_ts": "1773755069",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1773711337",
+  "slug": "dota2-pi-avl-2026-03-17-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "23039735497757436958344968236903971596182037596068249666922116112618459756444"
+}

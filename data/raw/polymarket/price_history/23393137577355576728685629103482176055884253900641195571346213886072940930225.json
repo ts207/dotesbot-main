@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x8addb9ad43c03c311446c41b40b04974369b499f4ebe9d8765e36b1f3de70cbf",
+  "event_id": "368878",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:09+00:00",
+  "http_status": 200,
+  "market_id": "1950386",
+  "question": "Dota 2: MOUZ vs Team Lynx - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775944811
+      },
+      {
+        "p": 0.515,
+        "t": 1775952020
+      },
+      {
+        "p": 0.98,
+        "t": 1776009614
+      }
+    ]
+  },
+  "requested_end_ts": "1776022063",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775941966",
+  "slug": "dota2-mouz-lynx-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "23393137577355576728685629103482176055884253900641195571346213886072940930225"
+}

@@ -1,0 +1,41 @@
+[Unit]
+Description=Dota 2 Polymarket signal bot
+Documentation=https://github.com/anthropics/claude-code
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tstuv
+Group=tstuv
+WorkingDirectory=/home/tstuv/dota-poly-signal-pnl-asd
+
+# .env is loaded by python-dotenv at startup; no EnvironmentFile needed.
+# If you split secrets to a separate file, uncomment:
+# EnvironmentFile=/home/tstuv/dota-poly-signal-pnl-asd/.env
+
+ExecStart=/usr/bin/python3 /home/tstuv/dota-poly-signal-pnl-asd/main.py
+
+# Restart policy: come back up after crashes, but don't loop forever on
+# a deterministic startup failure (5 restarts in 5 minutes -> give up).
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# A4 (startup reconciliation) is what makes restart-on-failure safe — every
+# fresh run reconciles local state against CLOB token balances before trading.
+
+# Logging: journald captures stdout/stderr. Python writes to logs/bot.log via
+# RotatingFileHandler in addition (D1 _setup_logging). Don't shell-redirect.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dota-poly-bot
+
+# Shutdown: give A4-style reconciliation a chance on next start. Don't SIGKILL
+# in flight unless we're truly stuck.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

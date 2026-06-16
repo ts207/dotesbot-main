@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x147889b7a3c3a97d8f3e26aae294a5fbc1bd7c708b5552f55c81ab4d2617df29",
+  "event_id": "168777",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:08+00:00",
+  "http_status": 200,
+  "market_id": "1200492",
+  "question": "Dota 2: Rottweilas Latam vs Ttgame - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1768597219
+      },
+      {
+        "p": 0.7,
+        "t": 1768600824
+      },
+      {
+        "p": 0.9955,
+        "t": 1768604415
+      },
+      {
+        "p": 0.9955,
+        "t": 1768608018
+      }
+    ]
+  },
+  "requested_end_ts": "1768611504",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1768595494",
+  "slug": "dota2-rl-ttg-2026-01-16-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "15135119463401933508928855356381736224316662888028405522757835207199301752793"
+}

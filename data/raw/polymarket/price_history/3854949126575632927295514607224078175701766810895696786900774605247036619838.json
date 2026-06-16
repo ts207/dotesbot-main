@@ -1,0 +1,28 @@
+{
+  "condition_id": "0xb332a7ee35b7669d537f52cfa8536130c1522d84ac9540fd787cf69d5c0f7c47",
+  "event_id": "371038",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:07+00:00",
+  "http_status": 200,
+  "market_id": "1957256",
+  "question": "Dota 2: REKONIX vs Execration - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1776009618
+      },
+      {
+        "p": 0.5,
+        "t": 1776052857
+      }
+    ]
+  },
+  "requested_end_ts": "1776068293",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775993069",
+  "slug": "dota2-rnx-xctn-2026-04-13-game1",
+  "source_universe": "polymarket_event",
+  "token_id": "3854949126575632927295514607224078175701766810895696786900774605247036619838"
+}

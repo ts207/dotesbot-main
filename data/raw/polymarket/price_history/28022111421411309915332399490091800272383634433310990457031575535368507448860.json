@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x1892c845108340fe235f577ee5ea59d95b06c508733a29690a3611440cd21eab",
+  "event_id": "376187",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:04+00:00",
+  "http_status": 200,
+  "market_id": "1974163",
+  "question": "Dota 2: Nemiga Gaming vs BetBoom Team - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.155,
+        "t": 1776160857
+      }
+    ]
+  },
+  "requested_end_ts": "1776175221",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776114747",
+  "slug": "dota2-nemiga-bb4-2026-04-14-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "28022111421411309915332399490091800272383634433310990457031575535368507448860"
+}

@@ -1,0 +1,68 @@
+{
+  "condition_id": "0xebcdb633a7475a865676ad9542bed36e5989bb13303c1880169bcc3120b4e5c6",
+  "event_id": "379722",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:08+00:00",
+  "http_status": 200,
+  "market_id": "1985642",
+  "question": "Dota 2: Nemiga Gaming vs Inner Circle - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.47,
+        "t": 1776214845
+      },
+      {
+        "p": 0.47,
+        "t": 1776218453
+      },
+      {
+        "p": 0.495,
+        "t": 1776222053
+      },
+      {
+        "p": 0.495,
+        "t": 1776225649
+      },
+      {
+        "p": 0.495,
+        "t": 1776236450
+      },
+      {
+        "p": 0.48,
+        "t": 1776240054
+      },
+      {
+        "p": 0.48,
+        "t": 1776243654
+      },
+      {
+        "p": 0.48,
+        "t": 1776247259
+      },
+      {
+        "p": 0.48,
+        "t": 1776250848
+      },
+      {
+        "p": 0.495,
+        "t": 1776261648
+      },
+      {
+        "p": 0.485,
+        "t": 1776268853
+      },
+      {
+        "p": 0.0005,
+        "t": 1776272456
+      }
+    ]
+  },
+  "requested_end_ts": "1776280906",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776203546",
+  "slug": "dota2-nemiga-ic-2026-04-15-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "112407106257419449768645100928397877033228605718213123397644445868719979615592"
+}

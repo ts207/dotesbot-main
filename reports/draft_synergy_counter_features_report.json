@@ -1,0 +1,14 @@
+{
+  "feature_group": "draft_synergy_counter",
+  "output": "data/features/draft_synergy_counter_features.csv",
+  "reason": "requires_larger_rolling_draft_outcome_history_with_pair_and_counter_sample_counts",
+  "required_to_unblock": [
+    "rolling draft/outcome corpus",
+    "same-team hero pair sample counts",
+    "opposing hero counter sample counts",
+    "feature_snapshot_ts before game start",
+    "minimum sample thresholds and confidence columns"
+  ],
+  "rows": 881,
+  "status": "planned_not_ready"
+}

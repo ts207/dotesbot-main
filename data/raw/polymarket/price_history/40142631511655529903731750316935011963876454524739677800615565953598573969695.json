@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xc5cf799ba02ea4622a77ec4e8669754d440f3216077934be08feb2d279b13825",
+  "event_id": "377575",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:26+00:00",
+  "http_status": 200,
+  "market_id": "1978254",
+  "question": "Dota 2: Vici Gaming vs Roar Gaming - Game 3 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776153645
+      },
+      {
+        "p": 0.855,
+        "t": 1776157258
+      },
+      {
+        "p": 0.855,
+        "t": 1776160844
+      },
+      {
+        "p": 0.9995,
+        "t": 1776164449
+      },
+      {
+        "p": 0.9995,
+        "t": 1776171651
+      }
+    ]
+  },
+  "requested_end_ts": "1776174731",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776150761",
+  "slug": "dota2-vg-roar-2026-04-14-game3",
+  "source_universe": "polymarket_public_search",
+  "token_id": "40142631511655529903731750316935011963876454524739677800615565953598573969695"
+}

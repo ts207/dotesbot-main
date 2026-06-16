@@ -1,0 +1,468 @@
+from __future__ import annotations
+
+import csv
+import time
+from dataclasses import dataclass, asdict
+from datetime import datetime, timezone
+from typing import Any
+
+from config import (
+    PAPER_SLIPPAGE_CENTS, PAPER_TRADE_SIZE_USD, MAX_OPEN_USD_PER_MATCH,
+    EXIT_TAKE_PROFIT, EXIT_STOP_LOSS_ABS, EXIT_STOP_LOSS_REL,
+    EXIT_LATENCY_EDGE_SEC, EXIT_HORIZON_SEC, EXIT_HORIZON_BY_EVENT, MAX_HOLD_HOURS,
+    PAPER_REENTRY_COOLDOWN_SEC,
+    UNDERDOG_REVERSAL_TAKE_PROFIT, UNDERDOG_REVERSAL_STOP_ABS,
+    EXIT_TRAILING_STOP_CENTS, EXIT_TRAILING_STOP_GRACE_SEC,
+)
+
+
+@dataclass
+class Position:
+    token_id: str
+    match_id: str
+    market_name: str | None
+    side: str                     # "YES" or "NO"
+    entry_price: float
+    shares: float
+    cost_usd: float
+    entry_time_ns: int
+    entry_game_time_sec: int | None
+    event_type: str
+    lag: float
+    expected_move: float          # expected repricing at entry; drives TP and stop
+    fair_price: float = 0.0       # model fair at entry; caps TP target
+    is_underdog_reversal: bool = False  # underdog comeback hold — wide stop, TP=0.75, no horizon
+    peak_bid: float = 0.0         # highest bid seen since entry; drives trailing stop
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ClosedPosition:
+    token_id: str
+    match_id: str
+    market_name: str | None
+    side: str
+    entry_price: float
+    exit_price: float
+    shares: float
+    cost_usd: float
+    proceeds_usd: float
+    pnl_usd: float
+    roi: float
+    hold_sec: float
+    entry_game_time_sec: int | None
+    exit_game_time_sec: int | None
+    event_type: str
+    lag: float
+    expected_move: float
+    exit_reason: str
+    entry_time_ns: int
+    exit_time_ns: int
+    fair_price: float = 0.0
+    is_underdog_reversal: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+class PaperTrader:
+    """Paper trader with real position tracking and exit logic.
+
+    Entry: fills immediately at current best ask, one position per token.
+    Opposing-side guard: refuses entry if the binary market's other token is already open.
+
+    Exit priority (checked in order each cycle):
+      1. take_profit/model_value — bid reaches current model fair / target
+      2. stop_loss               — bid violates the risk floor
+      3. latency_edge_timeout    — average stale-edge window elapsed
+      4. horizon                 — event-specific safety timeout
+      5. game_over/max_hold      — terminal safety exits
+
+    Adverse event exit: when an event fires against an open position, main.py calls
+    force_exit() before attempting to enter the opposing side.
+
+    check_exits() is called from two paths:
+      - Steam poll loop  (every ~0.5s): passes real game_over_match_ids
+      - Book WS callback (every book tick): passes empty game_over set,
+        so only conditions 1–3 and 5 can fire there
+    """
+
+    def __init__(self):
+        # token_id → open Position
+        self.positions: dict[str, Position] = {}
+        self.closed: list[ClosedPosition] = []
+        # match_id → total USD currently open for that match
+        self._match_open_usd: dict[str, float] = {}
+        # token_id → earliest next entry time after a close
+        self._token_cooldown_until_ns: dict[str, int] = {}
+
+    def load_open_positions(self, filename: str) -> int:
+        """Restore open paper positions by replaying the trade CSV."""
+        try:
+            with open(filename, newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+        except FileNotFoundError:
+            return 0
+
+        self.positions.clear()
+        self._match_open_usd.clear()
+
+        for row in rows:
+            token_id = str(row.get("token_id") or "")
+            if not token_id:
+                continue
+
+            action = str(row.get("action") or "").lower()
+            if action == "exit":
+                self.positions.pop(token_id, None)
+                self._rebuild_match_open_usd()
+                continue
+            if action != "entry":
+                continue
+
+            pos = self._position_from_trade_row(row)
+            if pos is None:
+                continue
+            self.positions[token_id] = pos
+            self._rebuild_match_open_usd()
+
+        return len(self.positions)
+
+    def _rebuild_match_open_usd(self) -> None:
+        self._match_open_usd = {}
+        for pos in self.positions.values():
+            self._match_open_usd[pos.match_id] = self._match_open_usd.get(pos.match_id, 0.0) + pos.cost_usd
+
+    def _position_from_trade_row(self, row: dict[str, str]) -> Position | None:
+        try:
+            entry_price = float(row.get("entry_price") or 0)
+            expected_move = float(row.get("expected_move") or 0)
+            return Position(
+                token_id=str(row.get("token_id") or ""),
+                match_id=str(row.get("match_id") or ""),
+                market_name=row.get("market_name") or None,
+                side=str(row.get("side") or ""),
+                entry_price=entry_price,
+                shares=float(row.get("shares") or 0),
+                cost_usd=float(row.get("cost_usd") or 0),
+                entry_time_ns=self._parse_trade_time_ns(row.get("timestamp_utc")),
+                entry_game_time_sec=self._optional_int(row.get("entry_game_time_sec")),
+                event_type=str(row.get("event_type") or ""),
+                lag=float(row.get("lag") or 0),
+                expected_move=expected_move,
+                fair_price=entry_price + expected_move if expected_move > 0 else entry_price,
+                is_underdog_reversal=str(row.get("is_underdog_reversal", "")).lower() in {"true", "1"},
+            )
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _optional_int(value: Any) -> int | None:
+        if value in (None, ""):
+            return None
+        return int(float(value))
+
+    @staticmethod
+    def _parse_trade_time_ns(value: str | None) -> int:
+        if not value:
+            return time.time_ns()
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return int(parsed.timestamp() * 1_000_000_000)
+
+    def enter(
+        self,
+        signal: dict,
+        token_id: str,
+        side: str,           # "YES" or "NO"
+        book_store,
+        match_id: str,
+        market_name: str | None,
+        opposing_token_id: str = "",
+    ) -> tuple[Position | None, str]:
+        """Attempt to enter a position. Returns (position, reason)."""
+        if token_id in self.positions:
+            return None, "already_in_position"
+
+        # Guard: refuse if the other side of the same binary market is already open.
+        if opposing_token_id and opposing_token_id in self.positions:
+            return None, "opposing_position_open"
+
+        now_ns = time.time_ns()
+        cooldown_until = self._token_cooldown_until_ns.get(token_id, 0)
+        if now_ns < cooldown_until:
+            remaining = (cooldown_until - now_ns) / 1e9
+            return None, f"reentry_cooldown ({remaining:.0f}s)"
+
+        match_open = self._match_open_usd.get(match_id, 0.0)
+        if match_open >= MAX_OPEN_USD_PER_MATCH:
+            return None, f"match_exposure_cap ({match_open:.0f}>={MAX_OPEN_USD_PER_MATCH:.0f})"
+
+        book = book_store.get(token_id) or {}
+        ask = book.get("best_ask")
+        bid = book.get("best_bid")
+        ask_size = book.get("ask_size")
+
+        if ask is None or bid is None:
+            return None, "no_ask_or_bid"
+
+        ask = float(ask)
+        bid = float(bid)
+
+        # Realistic taker simulation: a BUY fills at the displayed ask, not mid.
+        # The limit cap allows a small move from the signal-time ask, but it still
+        # rejects entries where the current ask has outrun estimated fair value.
+        signal_ask = float(signal.get("ask", ask))
+        fair_price = float(signal.get("fair_price", 0.99))
+        max_price = min(signal_ask + PAPER_SLIPPAGE_CENTS, fair_price - 0.005, 0.99)
+
+        if ask > max_price:
+            return None, f"ask_moved_above_limit ({ask:.4f} > {max_price:.4f})"
+
+        fill_price = ask
+        size_usd = float(signal.get("target_size_usd") or PAPER_TRADE_SIZE_USD)
+
+        if ask_size is not None:
+            available = ask * float(ask_size)
+            size_usd = min(size_usd, available)
+
+        # Trim to remaining match headroom
+        remaining_cap = MAX_OPEN_USD_PER_MATCH - self._match_open_usd.get(match_id, 0.0)
+        size_usd = min(size_usd, remaining_cap)
+
+        if size_usd <= 0:
+            return None, "no_available_size"
+
+        shares = size_usd / fill_price
+        expected_move = float(signal.get("expected_move") or 0.0)
+
+        pos = Position(
+            token_id=token_id,
+            match_id=match_id,
+            market_name=market_name,
+            side=side,
+            entry_price=fill_price,
+            shares=shares,
+            cost_usd=size_usd,
+            entry_time_ns=time.time_ns(),
+            entry_game_time_sec=signal.get("game_time_sec"),
+            event_type=signal.get("event_type", ""),
+            lag=float(signal.get("lag", 0)),
+            expected_move=expected_move,
+            fair_price=fair_price,
+            is_underdog_reversal=bool(signal.get("is_underdog_reversal", False)),
+            peak_bid=bid,  # initialize to current bid so trailing stop has a starting point
+        )
+        self.positions[token_id] = pos
+        self._match_open_usd[match_id] = self._match_open_usd.get(match_id, 0.0) + size_usd
+        return pos, "filled"
+
+    def force_exit(self, token_id: str, book_store, reason: str) -> ClosedPosition | None:
+        """Immediately close a position regardless of TP/SL/horizon (e.g. adverse event)."""
+        pos = self.positions.get(token_id)
+        if pos is None:
+            return None
+        book = book_store.get(token_id) or {}
+        bid = book.get("best_bid")
+        ask = book.get("best_ask")
+        # Realistic taker exit for a long token position: SELL at bid, not mid.
+        exit_px = float(bid) if bid is not None else (float(ask) if ask is not None else pos.entry_price)
+        if bid is None and ask is None:
+            print(
+                f"WARNING: force_exit({token_id}, {reason}) — book empty, "
+                f"recording exit at entry_price={pos.entry_price:.4f}; P&L will show 0"
+            )
+        return self._close_position(pos, exit_px, reason, exit_game_time=None)
+
+    def update_fair_value(self, token_id: str, fair_price: float | None) -> None:
+        """Refresh an open position's model fair so exits track current ML value."""
+        pos = self.positions.get(token_id)
+        if pos is None or fair_price is None:
+            return
+        try:
+            pos.fair_price = float(fair_price)
+        except (TypeError, ValueError):
+            return
+
+    def check_exits(
+        self,
+        book_store,
+        game_over_match_ids: set[str],
+        current_game_times: dict[str, int | None] | None = None,
+        adverse_token_ids: set[str] | None = None,
+    ) -> list[ClosedPosition]:
+        """Check all open positions for exit conditions. Returns newly closed positions."""
+        closed_now: list[ClosedPosition] = []
+        to_close: list[tuple[str, float, str]] = []  # (token_id, exit_price, reason)
+
+        max_hold_sec = MAX_HOLD_HOURS * 3600
+        _adverse = adverse_token_ids or set()
+
+        for token_id, pos in self.positions.items():
+            book = book_store.get(token_id) or {}
+            raw_bid = book.get("best_bid")
+            raw_ask = book.get("best_ask")
+            bid = float(raw_bid) if raw_bid is not None else None
+            ask = float(raw_ask) if raw_ask is not None else None
+
+            # Realistic taker exit for a long token position: SELL at bid, not mid.
+            exit_px = bid if bid is not None else None
+            if exit_px is None:
+                exit_px = ask
+
+            age_sec = (time.time_ns() - pos.entry_time_ns) / 1e9
+
+            # Update peak bid for trailing stop tracking
+            if bid is not None and bid > pos.peak_bid:
+                pos.peak_bid = bid
+
+            # Adverse event exit (applies to all positions)
+            if token_id in _adverse:
+                px = exit_px if exit_px is not None else pos.entry_price
+                to_close.append((token_id, px, "adverse_event"))
+                continue
+
+            if pos.is_underdog_reversal:
+                # Underdog reversal: wide stop, TP=0.75, no horizon.
+                # Only exits: take_profit, absolute stop, game_over, max_hold_timeout.
+                if exit_px is not None:
+                    if exit_px >= UNDERDOG_REVERSAL_TAKE_PROFIT:
+                        to_close.append((token_id, exit_px, "take_profit"))
+                    elif exit_px <= UNDERDOG_REVERSAL_STOP_ABS:
+                        to_close.append((token_id, exit_px, "stop_loss"))
+                    elif pos.match_id in game_over_match_ids:
+                        to_close.append((token_id, exit_px, "game_over"))
+                    elif age_sec >= max_hold_sec:
+                        to_close.append((token_id, exit_px, "max_hold_timeout"))
+                else:
+                    if pos.match_id in game_over_match_ids:
+                        to_close.append((token_id, pos.entry_price, "game_over"))
+                    elif age_sec >= max_hold_sec:
+                        to_close.append((token_id, pos.entry_price, "max_hold_timeout"))
+                continue
+
+            # 2026-05-30 — Manual UI trades: bot does not second-guess the
+            # operator. Only close on game_over or adverse_event (already
+            # handled above). No take_profit, no model_value_exit, no horizon,
+            # no stop_loss. Use the EXIT button in the dashboard to close.
+            if pos.event_type == "MANUAL":
+                if pos.match_id in game_over_match_ids:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "game_over"))
+                continue
+
+            # Standard exit logic
+            # TP: target the model fair price when available. expected_move is
+            # measured from the signal anchor, so entry + expected_move can
+            # overshoot fair if the ask has already repriced before fill.
+            model_target = pos.fair_price if pos.fair_price > pos.entry_price else None
+            if model_target is None and pos.expected_move > 0:
+                model_target = pos.entry_price + pos.expected_move
+            take_profit_price = min(model_target or EXIT_TAKE_PROFIT, EXIT_TAKE_PROFIT)
+            # Stop: tighten to expected_move if it's less than the configured relative stop
+            stop_offset = min(EXIT_STOP_LOSS_REL, pos.expected_move) if pos.expected_move > 0 else EXIT_STOP_LOSS_REL
+            stop_price = max(EXIT_STOP_LOSS_ABS, pos.entry_price - stop_offset)
+            # Horizon: per-event calibrated, fallback to EXIT_HORIZON_SEC
+            event_horizon = EXIT_HORIZON_BY_EVENT.get(pos.event_type, EXIT_HORIZON_SEC)
+
+            if exit_px is not None:
+                if exit_px >= take_profit_price:
+                    to_close.append((token_id, exit_px, "take_profit"))
+                elif pos.fair_price > 0 and exit_px >= pos.fair_price:
+                    to_close.append((token_id, exit_px, "model_value_exit"))
+                elif exit_px <= stop_price:
+                    # Flash-crash guard: hold through momentary dips in the first 30s
+                    # that haven't been confirmed by game_over.
+                    flash_drop = pos.entry_price - exit_px
+                    is_flash = flash_drop < 0.25 and age_sec < 30 and pos.match_id not in game_over_match_ids
+                    if not is_flash:
+                        to_close.append((token_id, exit_px, "stop_loss"))
+                elif (EXIT_TRAILING_STOP_CENTS > 0
+                      and age_sec >= EXIT_TRAILING_STOP_GRACE_SEC
+                      and pos.peak_bid > pos.entry_price
+                      and exit_px <= pos.peak_bid - EXIT_TRAILING_STOP_CENTS):
+                    # Trailing stop: locked-in gain reversed. Only fires after grace period
+                    # and only when peak was above entry (we actually had a gain to protect).
+                    to_close.append((token_id, exit_px, "trailing_stop"))
+                elif EXIT_LATENCY_EDGE_SEC > 0 and age_sec >= EXIT_LATENCY_EDGE_SEC:
+                    to_close.append((token_id, exit_px, "latency_edge_timeout"))
+                elif event_horizon > 0 and age_sec >= event_horizon:
+                    to_close.append((token_id, exit_px, "horizon"))
+                elif pos.match_id in game_over_match_ids:
+                    to_close.append((token_id, exit_px, "game_over"))
+                elif age_sec >= max_hold_sec:
+                    to_close.append((token_id, exit_px, "max_hold_timeout"))
+            else:
+                # No book data — force-close only when we must
+                if pos.match_id in game_over_match_ids:
+                    to_close.append((token_id, pos.entry_price, "game_over"))
+                elif age_sec >= max_hold_sec:
+                    to_close.append((token_id, pos.entry_price, "max_hold_timeout"))
+
+        game_times = current_game_times or {}
+        for token_id, exit_price, reason in to_close:
+            pos = self.positions[token_id]
+            exit_game_time = game_times.get(pos.match_id)
+            cp = self._close_position(pos, exit_price, reason, exit_game_time)
+            closed_now.append(cp)
+
+        return closed_now
+
+    def _close_position(
+        self,
+        pos: Position,
+        exit_price: float,
+        reason: str,
+        exit_game_time: int | None,
+    ) -> ClosedPosition:
+        self.positions.pop(pos.token_id)
+        self._match_open_usd[pos.match_id] = max(
+            0.0, self._match_open_usd.get(pos.match_id, 0.0) - pos.cost_usd
+        )
+        proceeds = exit_price * pos.shares
+        pnl = proceeds - pos.cost_usd
+        hold_sec = (time.time_ns() - pos.entry_time_ns) / 1e9
+        cp = ClosedPosition(
+            token_id=pos.token_id,
+            match_id=pos.match_id,
+            market_name=pos.market_name,
+            side=pos.side,
+            entry_price=pos.entry_price,
+            exit_price=exit_price,
+            shares=pos.shares,
+            cost_usd=pos.cost_usd,
+            proceeds_usd=proceeds,
+            pnl_usd=pnl,
+            roi=pnl / pos.cost_usd if pos.cost_usd > 0 else 0,
+            hold_sec=hold_sec,
+            entry_game_time_sec=pos.entry_game_time_sec,
+            exit_game_time_sec=exit_game_time,
+            event_type=pos.event_type,
+            lag=pos.lag,
+            expected_move=pos.expected_move,
+            exit_reason=reason,
+            entry_time_ns=pos.entry_time_ns,
+            exit_time_ns=time.time_ns(),
+            fair_price=pos.fair_price,
+            is_underdog_reversal=pos.is_underdog_reversal,
+        )
+        self.closed.append(cp)
+        cooldown_ns = int(PAPER_REENTRY_COOLDOWN_SEC * 1_000_000_000)
+        if cooldown_ns > 0:
+            self._token_cooldown_until_ns[pos.token_id] = cp.exit_time_ns + cooldown_ns
+        return cp
+
+    def summary(self) -> dict:
+        if not self.closed:
+            return {"trades": 0, "pnl_usd": 0.0, "win_rate": 0.0}
+        wins = sum(1 for c in self.closed if c.pnl_usd > 0)
+        return {
+            "trades": len(self.closed),
+            "open": len(self.positions),
+            "pnl_usd": round(sum(c.pnl_usd for c in self.closed), 4),
+            "win_rate": round(wins / len(self.closed), 3),
+            "avg_hold_sec": round(sum(c.hold_sec for c in self.closed) / len(self.closed), 1),
+        }

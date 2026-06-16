@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x23ee1395da4b34d59e1de61337562c4aa6a6cbf0ec915af8958966465161a730",
+  "event_id": "558415",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:42:06+00:00",
+  "http_status": 200,
+  "market_id": "2435252",
+  "question": "Dota 2: Carstensz vs REKONIX - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.005,
+        "t": 1780578004
+      },
+      {
+        "p": 0.0005,
+        "t": 1780581607
+      },
+      {
+        "p": 0.0005,
+        "t": 1780585206
+      }
+    ]
+  },
+  "requested_end_ts": "1780585249",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780573964",
+  "slug": "dota2-carst-rnx-2026-06-04-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "113330516613995269046190053241326907956594927490492655403885931337552046218865"
+}

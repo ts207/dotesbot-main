@@ -1,0 +1,28 @@
+{
+  "condition_id": "0xf70ba0cadb4522e2040ff8b9845c29da5cfe98ccd57ac89407eaa0052a18bc8d",
+  "event_id": "348203",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:50+00:00",
+  "http_status": 200,
+  "market_id": "1883759",
+  "question": "Dota 2: MODUS vs Inner Circle - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.465,
+        "t": 1775466005
+      },
+      {
+        "p": 0.0005,
+        "t": 1775491204
+      }
+    ]
+  },
+  "requested_end_ts": "1775491649",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775428355",
+  "slug": "dota2-modus-ic-2026-04-06-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "43929875339442137324591296286756673722271476236536621398146810617845211479017"
+}

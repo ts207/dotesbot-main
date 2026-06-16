@@ -1,0 +1,36 @@
+{
+  "condition_id": "0xdf27c7a2add4b551bca1a4f4872e68445769f5793a0197545a87720510dd7108",
+  "event_id": "550862",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:42:03+00:00",
+  "http_status": 200,
+  "market_id": "2417376",
+  "question": "Dota 2: Nigma Galaxy vs KO - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780390809
+      },
+      {
+        "p": 0.9995,
+        "t": 1780394404
+      },
+      {
+        "p": 0.9995,
+        "t": 1780398006
+      },
+      {
+        "p": 0.9995,
+        "t": 1780401612
+      }
+    ]
+  },
+  "requested_end_ts": "1780401912",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780389816",
+  "slug": "dota2-ngx-ko-2026-06-02-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "47288958995586697420487333831770694408181079261147635512945761929354284985174"
+}

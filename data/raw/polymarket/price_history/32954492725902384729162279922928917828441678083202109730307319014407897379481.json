@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x1b98203300394f92d10e3bc63a51e13fca970aed20cf6240c408ec47e75fdb49",
+  "event_id": "379722",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:08+00:00",
+  "http_status": 200,
+  "market_id": "1985641",
+  "question": "Dota 2: Nemiga Gaming vs Inner Circle - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.49,
+        "t": 1776258013
+      }
+    ]
+  },
+  "requested_end_ts": "1776275974",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776203548",
+  "slug": "dota2-nemiga-ic-2026-04-15-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "32954492725902384729162279922928917828441678083202109730307319014407897379481"
+}

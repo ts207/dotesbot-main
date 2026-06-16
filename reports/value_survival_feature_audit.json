@@ -1,0 +1,158 @@
+{
+  "baseline": {
+    "losses": 4,
+    "pnl_usd": 83.58,
+    "roi_pct": 23.2,
+    "trades": 18,
+    "win_pct": 77.8,
+    "wins": 14
+  },
+  "bucket_summary": {
+    "enemy_towers_down:<3": {
+      "losses": 1,
+      "pnl_usd": 23.03,
+      "roi_pct": 28.8,
+      "trades": 4,
+      "win_pct": 75.0,
+      "wins": 3
+    },
+    "enemy_towers_down:>=3": {
+      "losses": 1,
+      "pnl_usd": 84.19,
+      "roi_pct": 38.3,
+      "trades": 11,
+      "win_pct": 90.9,
+      "wins": 10
+    },
+    "join:missing": {
+      "losses": 2,
+      "pnl_usd": -23.64,
+      "roi_pct": -39.4,
+      "trades": 3,
+      "win_pct": 33.3,
+      "wins": 1
+    },
+    "leader_kills:ahead_or_tied": {
+      "losses": 2,
+      "pnl_usd": 94.96,
+      "roi_pct": 33.9,
+      "trades": 14,
+      "win_pct": 85.7,
+      "wins": 12
+    },
+    "leader_kills:behind": {
+      "losses": 0,
+      "pnl_usd": 12.26,
+      "roi_pct": 61.3,
+      "trades": 1,
+      "win_pct": 100.0,
+      "wins": 1
+    },
+    "leader_towers:ahead_or_tied": {
+      "losses": 2,
+      "pnl_usd": 107.22,
+      "roi_pct": 35.7,
+      "trades": 15,
+      "win_pct": 86.7,
+      "wins": 13
+    },
+    "own_towers_down:<3": {
+      "losses": 2,
+      "pnl_usd": 94.96,
+      "roi_pct": 33.9,
+      "trades": 14,
+      "win_pct": 85.7,
+      "wins": 12
+    },
+    "own_towers_down:>=3": {
+      "losses": 0,
+      "pnl_usd": 12.26,
+      "roi_pct": 61.3,
+      "trades": 1,
+      "win_pct": 100.0,
+      "wins": 1
+    },
+    "score_and_tower:aligned": {
+      "losses": 2,
+      "pnl_usd": 94.96,
+      "roi_pct": 33.9,
+      "trades": 14,
+      "win_pct": 85.7,
+      "wins": 12
+    },
+    "score_and_tower:not_aligned": {
+      "losses": 0,
+      "pnl_usd": 12.26,
+      "roi_pct": 61.3,
+      "trades": 1,
+      "win_pct": 100.0,
+      "wins": 1
+    }
+  },
+  "generated_at": "2026-06-07T20:34:58+00:00",
+  "join_coverage_pct": 83.3,
+  "joined_summary": {
+    "losses": 2,
+    "pnl_usd": 107.22,
+    "roi_pct": 35.7,
+    "trades": 15,
+    "win_pct": 86.7,
+    "wins": 13
+  },
+  "raw_paths": [
+    "\\\\wsl.localhost\\Ubuntu\\home\\tstuv\\dota-poly-signal-pnl-asd\\logs\\raw_snapshots.csv",
+    "\\\\wsl.localhost\\Ubuntu\\home\\tstuv\\dota-poly-signal-pnl-asd\\logs\\raw_snapshots.csv.20260602_225219_578400.gz"
+  ],
+  "recommendation": {
+    "candidate_observations": [
+      {
+        "bucket": "enemy_towers_down:>=3",
+        "losses": 1,
+        "pnl_usd": 84.19,
+        "roi_pct": 38.3,
+        "trades": 11,
+        "win_pct": 90.9,
+        "wins": 10
+      },
+      {
+        "bucket": "leader_kills:ahead_or_tied",
+        "losses": 2,
+        "pnl_usd": 94.96,
+        "roi_pct": 33.9,
+        "trades": 14,
+        "win_pct": 85.7,
+        "wins": 12
+      },
+      {
+        "bucket": "leader_towers:ahead_or_tied",
+        "losses": 2,
+        "pnl_usd": 107.22,
+        "roi_pct": 35.7,
+        "trades": 15,
+        "win_pct": 86.7,
+        "wins": 13
+      },
+      {
+        "bucket": "own_towers_down:<3",
+        "losses": 2,
+        "pnl_usd": 94.96,
+        "roi_pct": 33.9,
+        "trades": 14,
+        "win_pct": 85.7,
+        "wins": 12
+      },
+      {
+        "bucket": "score_and_tower:aligned",
+        "losses": 2,
+        "pnl_usd": 94.96,
+        "roi_pct": 33.9,
+        "trades": 14,
+        "win_pct": 85.7,
+        "wins": 12
+      }
+    ],
+    "live_gate_change": "none",
+    "reason": "Sample is small and no score/structure subgroup is promoted automatically. Use as research evidence only unless a fresh replay expands support."
+  },
+  "trades_path": "\\\\wsl.localhost\\Ubuntu\\home\\tstuv\\dota-poly-signal-pnl-asd\\reports\\value_bot_raw_replay_trades.csv"
+}

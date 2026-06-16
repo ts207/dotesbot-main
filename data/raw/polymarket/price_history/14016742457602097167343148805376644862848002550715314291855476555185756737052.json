@@ -1,0 +1,36 @@
+{
+  "condition_id": "0xd8bef83a3fe6f5d835eef0736a1f4f300b4a1440d9fc1eb9ab581f9d2e76ff6e",
+  "event_id": "393331",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:32+00:00",
+  "http_status": 200,
+  "market_id": "2016763",
+  "question": "Dota 2: Xtreme Gaming vs Aurora - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.485,
+        "t": 1776560456
+      },
+      {
+        "p": 0.485,
+        "t": 1776564059
+      },
+      {
+        "p": 0.485,
+        "t": 1776574853
+      },
+      {
+        "p": 0.465,
+        "t": 1776582048
+      }
+    ]
+  },
+  "requested_end_ts": "1776597670",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776548712",
+  "slug": "dota2-xtreme-aur1-2026-04-19-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "14016742457602097167343148805376644862848002550715314291855476555185756737052"
+}

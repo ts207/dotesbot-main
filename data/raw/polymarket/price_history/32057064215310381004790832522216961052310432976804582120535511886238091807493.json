@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x5181cc3f546e50ee0f4b8b8a881ac972542be1127ce2e0fe2c7860b62206af2e",
+  "event_id": "151377",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:02+00:00",
+  "http_status": 200,
+  "market_id": "1136783",
+  "question": "Dota 2: Cheeki_Breeki vs Spirit Academy - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.9945,
+        "t": 1767891618
+      },
+      {
+        "p": 0.9995,
+        "t": 1767895214
+      },
+      {
+        "p": 0.9995,
+        "t": 1767898814
+      },
+      {
+        "p": 0.9995,
+        "t": 1767902414
+      }
+    ]
+  },
+  "requested_end_ts": "1767903358",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1767888066",
+  "slug": "dota2-cb3-spirit1-2026-01-08-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "32057064215310381004790832522216961052310432976804582120535511886238091807493"
+}

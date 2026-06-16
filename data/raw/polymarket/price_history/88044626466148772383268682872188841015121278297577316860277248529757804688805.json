@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x26c032b93d4834111f3440e037b7abf716920c96ff6e71b7d38da37df6f7ea63",
+  "event_id": "351114",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:51+00:00",
+  "http_status": 200,
+  "market_id": "1894179",
+  "question": "Dota 2: VP.Prodigy vs Zero Tenacity - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775505657
+      },
+      {
+        "p": 0.345,
+        "t": 1775512858
+      },
+      {
+        "p": 0.31,
+        "t": 1775527256
+      },
+      {
+        "p": 0.31,
+        "t": 1775534452
+      },
+      {
+        "p": 0.5,
+        "t": 1775545259
+      },
+      {
+        "p": 0.0005,
+        "t": 1775559659
+      }
+    ]
+  },
+  "requested_end_ts": "1775563699",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775499759",
+  "slug": "dota2-vpp-z10-2026-04-07-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "88044626466148772383268682872188841015121278297577316860277248529757804688805"
+}

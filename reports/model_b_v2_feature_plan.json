@@ -1,0 +1,82 @@
+{
+  "advancement_constraints": {
+    "do_not_run_until": {
+      "non_locked_probability_ready_min": 500,
+      "validation_rows_min": 125
+    },
+    "forbidden_until_next_pass": [
+      "GBM",
+      "CatBoost",
+      "hero_categorical_model",
+      "calibration",
+      "threshold_tuning",
+      "execution_replay",
+      "locked_execution_audit",
+      "execution_simulation",
+      "trading_logic",
+      "live_logic"
+    ],
+    "next_allowed_models": [
+      "B0_market_only",
+      "B1a_intercept_only",
+      "B1b_ultra_small",
+      "B1c_compact_v2"
+    ]
+  },
+  "feature_groups": {
+    "draft_synergy_counter": {
+      "priority": 4,
+      "status": "planned",
+      "required_properties": [
+        "rolling_asof_only",
+        "hero_pair_synergy_history",
+        "hero_counter_history",
+        "minimum_sample_counts",
+        "confidence_columns"
+      ]
+    },
+    "recent_form": {
+      "priority": 2,
+      "status": "implemented_from_team_strength_v0",
+      "features": [
+        "team_a_rolling_winrate_30d",
+        "team_b_rolling_winrate_30d",
+        "team_recent_form_diff"
+      ]
+    },
+    "roster_continuity": {
+      "priority": 3,
+      "status": "blocked_current_processed_rows_missing_player_account_ids",
+      "required_properties": [
+        "player_account_ids",
+        "team_lineup_snapshots",
+        "rolling_asof_only",
+        "stand_in_detection"
+      ]
+    },
+    "team_strength": {
+      "priority": 1,
+      "status": "implemented_v0",
+      "features": [
+        "team_a_rolling_winrate_30d",
+        "team_b_rolling_winrate_30d",
+        "team_a_rolling_winrate_90d",
+        "team_b_rolling_winrate_90d",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_match_count_90d_diff",
+        "team_strength_feature_confidence"
+      ],
+      "required_properties": [
+        "feature_snapshot_ts < game_start_ts",
+        "history_only_uses_games_with_start_ts_before_candidate_start_ts",
+        "sample_counts_exposed",
+        "confidence_columns_exposed"
+      ]
+    }
+  },
+  "model_b_v1_status": "stopped_no_trade",
+  "model_target": "p_fair = sigmoid(logit(p_market_early_mid) + residual_adjustment)",
+  "next_phase": "feature_and_data_improvement",
+  "v2_first_priority": "team_strength_priors"
+}

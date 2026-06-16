@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x56b12be34af67efb62bd45fa09e819ac27c82e6e26a4ec1f4464c85c184955ab",
+  "event_id": "551601",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:52:05+00:00",
+  "http_status": 200,
+  "market_id": "2418847",
+  "question": "Dota 2:  Pipsqueak+4 vs Natus Vincere - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780408812
+      },
+      {
+        "p": 0.335,
+        "t": 1780412409
+      },
+      {
+        "p": 0.435,
+        "t": 1780416004
+      },
+      {
+        "p": 0.0005,
+        "t": 1780419645
+      },
+      {
+        "p": 0.0005,
+        "t": 1780423220
+      }
+    ]
+  },
+  "requested_end_ts": "1780425666",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780407225",
+  "slug": "dota2-pi-navi-2026-06-02-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "35900902559024922471917386811313956595281501007053991408074292289455753462480"
+}

@@ -1,0 +1,44 @@
+{
+  "condition_id": "0xb02e7281a407dda333940f0aa427d942e2e2a5bbd6043dec3b5a1cdf69af6299",
+  "event_id": "190350",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:51:20+00:00",
+  "http_status": 200,
+  "market_id": "1277276",
+  "question": "Dota 2: Amaru Gaming vs Flame Team - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.505,
+        "t": 1769526014
+      },
+      {
+        "p": 0.5,
+        "t": 1769529613
+      },
+      {
+        "p": 0.505,
+        "t": 1769533213
+      },
+      {
+        "p": 0.55,
+        "t": 1769536814
+      },
+      {
+        "p": 0.9995,
+        "t": 1769540414
+      },
+      {
+        "p": 0.9995,
+        "t": 1769544013
+      }
+    ]
+  },
+  "requested_end_ts": "1769546959",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1769522573",
+  "slug": "dota2-amaru-fla-2026-01-27-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "30022666202582405956546093702243340370979847958146175312856085119678867389285"
+}

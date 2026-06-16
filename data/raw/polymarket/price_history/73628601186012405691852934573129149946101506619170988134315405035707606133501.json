@@ -1,0 +1,44 @@
+{
+  "condition_id": "0x961e39bda6c8ee6396a0167f0d67ccfe111dbe13d4f660e1ea832ee8ec58ba04",
+  "event_id": "547300",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:44+00:00",
+  "http_status": 200,
+  "market_id": "2408471",
+  "question": "Dota 2: Rune Eaters vs MODUS - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780304405
+      },
+      {
+        "p": 0.76,
+        "t": 1780308004
+      },
+      {
+        "p": 0.0005,
+        "t": 1780311605
+      },
+      {
+        "p": 0.0005,
+        "t": 1780315207
+      },
+      {
+        "p": 0.0005,
+        "t": 1780318805
+      },
+      {
+        "p": 0.0005,
+        "t": 1780322406
+      }
+    ]
+  },
+  "requested_end_ts": "1780325801",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780300052",
+  "slug": "dota2-re-modus-2026-06-01-game1",
+  "source_universe": "polymarket_event",
+  "token_id": "73628601186012405691852934573129149946101506619170988134315405035707606133501"
+}

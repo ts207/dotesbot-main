@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xcf189ec941bf6d05e781444c9ac6e26083591c863017152d552b2fb482b3e700",
+  "event_id": "378401",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T01:22:11+00:00",
+  "http_status": 200,
+  "market_id": "1980385",
+  "question": "Dota 2: L1ga Team vs BetBoom Team - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.34,
+        "t": 1776175240
+      },
+      {
+        "p": 0.215,
+        "t": 1776178841
+      },
+      {
+        "p": 0.0005,
+        "t": 1776182438
+      },
+      {
+        "p": 0.0005,
+        "t": 1776186042
+      },
+      {
+        "p": 0.0005,
+        "t": 1776193256
+      }
+    ]
+  },
+  "requested_end_ts": "1776193606",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776171836",
+  "slug": "dota2-l1ga-bb4-2026-04-14-game2",
+  "source_universe": "polymarket_event",
+  "token_id": "101219671429639584675668932952456994303207024802104189638452214378278646760265"
+}

@@ -1,0 +1,2259 @@
+{
+  "alpha_sweep": [
+    {
+      "alpha": 1.0,
+      "by_market_discovery_source": {
+        "gamma_events_closed_False_active_True": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.04157627765663549,
+          "log_loss_improvement": 0.08542796919575835,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.4069608945885257,
+          "model_brier": 0.18252372234336453,
+          "model_log_loss": 0.5461764210056939,
+          "rows": 9
+        },
+        "gamma_public_search:Aurora Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.20702500000000001,
+          "b0_log_loss": 0.6069694843188931,
+          "brier_improvement": 0.09105171878802326,
+          "log_loss_improvement": 0.19062263342794977,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.3405485005281579,
+          "model_brier": 0.11597328121197675,
+          "model_log_loss": 0.4163468508909433,
+          "rows": 1
+        },
+        "gamma_public_search:DreamLeague Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25937916666666666,
+          "b0_log_loss": 0.7161953569102684,
+          "brier_improvement": -0.009945534217016327,
+          "log_loss_improvement": -0.02247650352168351,
+          "mean_market_probability": 0.6124999999999999,
+          "mean_model_probability": 0.5902170250346613,
+          "model_brier": 0.269324700883683,
+          "model_log_loss": 0.7386718604319519,
+          "rows": 6
+        },
+        "gamma_public_search:EPL Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.125225,
+          "b0_log_loss": 0.42645264595233384,
+          "brier_improvement": -0.03797058558134858,
+          "log_loss_improvement": -0.06803659823930724,
+          "mean_market_probability": 0.34833333333333333,
+          "mean_model_probability": 0.275067381653399,
+          "model_brier": 0.16319558558134858,
+          "model_log_loss": 0.4944892441916411,
+          "rows": 3
+        },
+        "gamma_public_search:Esports World Cup South America Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.13945000000000002,
+          "b0_log_loss": 0.4397383793757194,
+          "brier_improvement": 0.05902183783635577,
+          "log_loss_improvement": 0.11825989963510314,
+          "mean_market_probability": 0.665,
+          "mean_model_probability": 0.5879846752588072,
+          "model_brier": 0.08042816216364425,
+          "model_log_loss": 0.3214784797406163,
+          "rows": 2
+        },
+        "gamma_public_search:Esports World Cup Southeast Asia Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.06760000000000001,
+          "b0_log_loss": 0.3011050927839216,
+          "brier_improvement": 0.03738063108819964,
+          "log_loss_improvement": 0.1101416734461644,
+          "mean_market_probability": 0.26,
+          "mean_model_probability": 0.17383719081888194,
+          "model_brier": 0.03021936891180037,
+          "model_log_loss": 0.1909634193377572,
+          "rows": 1
+        },
+        "gamma_public_search:European Pro League Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.017700312429205056,
+          "log_loss_improvement": -0.035415055285946684,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4826024397707197,
+          "model_brier": 0.26770031242920506,
+          "model_log_loss": 0.728562235845892,
+          "rows": 2
+        },
+        "gamma_public_search:Execration Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.270625,
+          "b0_log_loss": 0.7344576949041137,
+          "brier_improvement": 0.10937624780957178,
+          "log_loss_improvement": 0.22115660664992887,
+          "mean_market_probability": 0.52,
+          "mean_model_probability": 0.40133181213739016,
+          "model_brier": 0.16124875219042822,
+          "model_log_loss": 0.5133010882541849,
+          "rows": 2
+        },
+        "gamma_public_search:Falcons Dota": {
+          "actual_win_rate": 0.6666666666666666,
+          "b0_brier": 0.24975000000000003,
+          "b0_log_loss": 0.6926146987438587,
+          "brier_improvement": -0.019432905635064335,
+          "log_loss_improvement": -0.041468037683564773,
+          "mean_market_probability": 0.47833333333333333,
+          "mean_model_probability": 0.47631102885160015,
+          "model_brier": 0.26918290563506436,
+          "model_log_loss": 0.7340827364274235,
+          "rows": 6
+        },
+        "gamma_public_search:GamerLegion Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.04682349235680355,
+          "log_loss_improvement": 0.09527629108841229,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.44682103016763597,
+          "model_brier": 0.20317650764319645,
+          "model_log_loss": 0.597870889471533,
+          "rows": 2
+        },
+        "gamma_public_search:L1GA Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2509,
+          "b0_log_loss": 0.6949504283570012,
+          "brier_improvement": -0.0493055959735228,
+          "log_loss_improvement": -0.1044048546390215,
+          "mean_market_probability": 0.47,
+          "mean_model_probability": 0.37894570998465815,
+          "model_brier": 0.3002055959735228,
+          "model_log_loss": 0.7993552829960227,
+          "rows": 2
+        },
+        "gamma_public_search:LGD Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.354025,
+          "b0_log_loss": 0.9038682118755978,
+          "brier_improvement": -0.15000049753363015,
+          "log_loss_improvement": -0.33382523475213266,
+          "mean_market_probability": 0.405,
+          "mean_model_probability": 0.29005246846430255,
+          "model_brier": 0.5040254975336301,
+          "model_log_loss": 1.2376934466277305,
+          "rows": 1
+        },
+        "gamma_public_search:MODUS Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25202499999999994,
+          "b0_log_loss": 0.6972136721750398,
+          "brier_improvement": 0.0011633754895549187,
+          "log_loss_improvement": 0.0023410606594136407,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.4638568149944612,
+          "model_brier": 0.250861624510445,
+          "model_log_loss": 0.6948726115156262,
+          "rows": 2
+        },
+        "gamma_public_search:Natus Vincere Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2636125,
+          "b0_log_loss": 0.7205227842662356,
+          "brier_improvement": 0.0521870025568216,
+          "log_loss_improvement": 0.10645478338767367,
+          "mean_market_probability": 0.48250000000000004,
+          "mean_model_probability": 0.42650676381531577,
+          "model_brier": 0.21142549744317843,
+          "model_log_loss": 0.614068000878562,
+          "rows": 4
+        },
+        "gamma_public_search:Nigma Galaxy Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.017060689304028626,
+          "log_loss_improvement": 0.034360749216031494,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.5250598542937267,
+          "model_brier": 0.23293931069597137,
+          "model_log_loss": 0.6587864313439138,
+          "rows": 4
+        },
+        "gamma_public_search:North America DPC Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.05377459002192436,
+          "log_loss_improvement": -0.1119045280186467,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4573295573192758,
+          "model_brier": 0.30377459002192436,
+          "model_log_loss": 0.805051708578592,
+          "rows": 2
+        },
+        "gamma_public_search:PARIVISION Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.263925,
+          "b0_log_loss": 0.7210924514251326,
+          "brier_improvement": -0.0248275854452083,
+          "log_loss_improvement": -0.051956734411066074,
+          "mean_market_probability": 0.5325,
+          "mean_model_probability": 0.4894228070219316,
+          "model_brier": 0.2887525854452083,
+          "model_log_loss": 0.7730491858361986,
+          "rows": 4
+        },
+        "gamma_public_search:PlayTime Dota": {
+          "actual_win_rate": 0.4,
+          "b0_brier": 0.19576500000000002,
+          "b0_log_loss": 0.5828507348379197,
+          "brier_improvement": -0.005658919247688687,
+          "log_loss_improvement": -0.011672130672900849,
+          "mean_market_probability": 0.43899999999999995,
+          "mean_model_probability": 0.41876564331132454,
+          "model_brier": 0.2014239192476887,
+          "model_log_loss": 0.5945228655108206,
+          "rows": 5
+        },
+        "gamma_public_search:REKONIX Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.13216666666666668,
+          "b0_log_loss": 0.438177331631,
+          "brier_improvement": -0.001316419709515959,
+          "log_loss_improvement": 0.008728364309866898,
+          "mean_market_probability": 0.3433333333333333,
+          "mean_model_probability": 0.295197659535817,
+          "model_brier": 0.13348308637618264,
+          "model_log_loss": 0.4294489673211331,
+          "rows": 6
+        },
+        "gamma_public_search:Summer Bear Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.08788962975953313,
+          "log_loss_improvement": 0.18351392920958554,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.39283213435139697,
+          "model_brier": 0.16211037024046687,
+          "model_log_loss": 0.5096332513503598,
+          "rows": 2
+        },
+        "gamma_public_search:Team Liquid Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.06602984479795382,
+          "log_loss_improvement": -0.13521415425871897,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4340161545322232,
+          "model_brier": 0.3160298447979538,
+          "model_log_loss": 0.8283613348186643,
+          "rows": 2
+        },
+        "gamma_public_search:Team Spirit Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.27307499999999996,
+          "b0_log_loss": 0.7395678696711144,
+          "brier_improvement": -0.0035613318910727165,
+          "log_loss_improvement": -0.00848209080183171,
+          "mean_market_probability": 0.5216666666666666,
+          "mean_model_probability": 0.442645586862942,
+          "model_brier": 0.2766363318910727,
+          "model_log_loss": 0.7480499604729461,
+          "rows": 3
+        },
+        "gamma_public_search:Tundra Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.27890000000000004,
+          "b0_log_loss": 0.7545700955593682,
+          "brier_improvement": -0.0341455325805079,
+          "log_loss_improvement": -0.06862457234359187,
+          "mean_market_probability": 0.67,
+          "mean_model_probability": 0.5796536185241941,
+          "model_brier": 0.31304553258050793,
+          "model_log_loss": 0.82319466790296,
+          "rows": 2
+        },
+        "gamma_public_search:Vici Gaming Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.027864989620301595,
+          "log_loss_improvement": -0.05785852606952535,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.46133854556675785,
+          "model_brier": 0.2778649896203016,
+          "model_log_loss": 0.7510057066294706,
+          "rows": 4
+        },
+        "gamma_public_search:Virtus.pro Dota": {
+          "actual_win_rate": 0.16666666666666666,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.0041285548030234875,
+          "log_loss_improvement": -0.008634842474307458,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.46117674421973914,
+          "model_brier": 0.2541285548030235,
+          "model_log_loss": 0.7017820230342527,
+          "rows": 6
+        },
+        "gamma_public_search:Yellow Submarine Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.21911250000000002,
+          "b0_log_loss": 0.6166284598365392,
+          "brier_improvement": 0.005310916771326585,
+          "log_loss_improvement": 0.015229136861701575,
+          "mean_market_probability": 0.6025,
+          "mean_model_probability": 0.5466721038940695,
+          "model_brier": 0.21380158322867343,
+          "model_log_loss": 0.6013993229748377,
+          "rows": 4
+        },
+        "gamma_public_search:dota 2": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.312325,
+          "b0_log_loss": 0.8196919341760188,
+          "brier_improvement": -0.06600865303743253,
+          "log_loss_improvement": -0.15915107853519705,
+          "mean_market_probability": 0.48000000000000004,
+          "mean_model_probability": 0.3991731926986637,
+          "model_brier": 0.37833365303743255,
+          "model_log_loss": 0.9788430127112159,
+          "rows": 6
+        },
+        "gamma_public_search:esports dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.07058197154021723,
+          "log_loss_improvement": -0.14701530023536802,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4082547755042071,
+          "model_brier": 0.3205819715402172,
+          "model_log_loss": 0.8401624807953133,
+          "rows": 2
+        },
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.011070263450126322,
+          "log_loss_improvement": -0.017699548161003498,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.4652215272764245,
+          "model_brier": 0.2593101283149912,
+          "model_log_loss": 0.7297683039362699,
+          "rows": 37
+        }
+      },
+      "by_market_probability_source": {
+        "early_snapshot_mid": {
+          "actual_win_rate": 0.6,
+          "b0_brier": 0.24493749999999997,
+          "b0_log_loss": 0.7245364616277082,
+          "brier_improvement": 0.022064557422830283,
+          "log_loss_improvement": 0.056145523961822486,
+          "mean_market_probability": 0.5755,
+          "mean_model_probability": 0.5236835096738429,
+          "model_brier": 0.2228729425771697,
+          "model_log_loss": 0.6683909376658858,
+          "rows": 20
+        },
+        "price_history_proxy": {
+          "actual_win_rate": 0.45535714285714285,
+          "b0_brier": 0.23837075892857143,
+          "b0_log_loss": 0.666618305349658,
+          "brier_improvement": -0.01020730082002988,
+          "log_loss_improvement": -0.021848892797905584,
+          "mean_market_probability": 0.4918303571428571,
+          "mean_model_probability": 0.4343686722720054,
+          "model_brier": 0.2485780597486013,
+          "model_log_loss": 0.6884671981475636,
+          "rows": 112
+        }
+      },
+      "by_source_universe": {
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.011070263450126322,
+          "log_loss_improvement": -0.017699548161003498,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.4652215272764245,
+          "model_brier": 0.2593101283149912,
+          "model_log_loss": 0.7297683039362699,
+          "rows": 37
+        },
+        "polymarket_event": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.04157627765663549,
+          "log_loss_improvement": 0.08542796919575835,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.4069608945885257,
+          "model_brier": 0.18252372234336453,
+          "model_log_loss": 0.5461764210056939,
+          "rows": 9
+        },
+        "polymarket_public_search": {
+          "actual_win_rate": 0.4418604651162791,
+          "b0_brier": 0.2371453488372093,
+          "b0_log_loss": 0.6641976273978828,
+          "brier_improvement": -0.0077501545888579715,
+          "log_loss_improvement": -0.016722487848066292,
+          "mean_market_probability": 0.4934883720930234,
+          "mean_model_probability": 0.444733917760663,
+          "model_brier": 0.24489550342606728,
+          "model_log_loss": 0.6809201152459491,
+          "rows": 86
+        }
+      },
+      "by_team_a_is_radiant": {
+        "0.0": {
+          "actual_win_rate": 0.4057971014492754,
+          "b0_brier": 0.23705652173913042,
+          "b0_log_loss": 0.6712830118336603,
+          "brier_improvement": -0.004837516498051947,
+          "log_loss_improvement": -0.00655799157588266,
+          "mean_market_probability": 0.4878260869565218,
+          "mean_model_probability": 0.37285407038504215,
+          "model_brier": 0.24189403823718236,
+          "model_log_loss": 0.677841003409543,
+          "rows": 69
+        },
+        "1.0": {
+          "actual_win_rate": 0.5555555555555556,
+          "b0_brier": 0.2418948412698413,
+          "b0_log_loss": 0.6798960573840208,
+          "brier_improvement": -0.00584345880985962,
+          "log_loss_improvement": -0.01383593802211236,
+          "mean_market_probability": 0.5227777777777778,
+          "mean_model_probability": 0.5300957243075166,
+          "model_brier": 0.2477383000797009,
+          "model_log_loss": 0.6937319954061332,
+          "rows": 63
+        }
+      },
+      "by_team_strength_confidence_bucket": {
+        "0_5_to_0_8": {
+          "actual_win_rate": 0.5384615384615384,
+          "b0_brier": 0.23550000000000001,
+          "b0_log_loss": 0.6639489984105345,
+          "brier_improvement": 0.003899308045605121,
+          "log_loss_improvement": 0.007332766284262604,
+          "mean_market_probability": 0.47538461538461535,
+          "mean_model_probability": 0.40810722941084726,
+          "model_brier": 0.2316006919543949,
+          "model_log_loss": 0.6566162321262718,
+          "rows": 13
+        },
+        "gte_0_8": {
+          "actual_win_rate": 0.44329896907216493,
+          "b0_brier": 0.24137577319587628,
+          "b0_log_loss": 0.6789304503932134,
+          "brier_improvement": 0.00017645154150069953,
+          "log_loss_improvement": 0.00385966720951203,
+          "mean_market_probability": 0.4977319587628866,
+          "mean_model_probability": 0.4512362604820307,
+          "model_brier": 0.24119932165437558,
+          "model_log_loss": 0.6750707831837014,
+          "rows": 97
+        },
+        "lt_0_5": {
+          "actual_win_rate": 0.5909090909090909,
+          "b0_brier": 0.23278749999999998,
+          "b0_log_loss": 0.6665631256471456,
+          "brier_improvement": -0.03498787943205345,
+          "log_loss_improvement": -0.08153996341577674,
+          "mean_market_probability": 0.5515909090909091,
+          "mean_model_probability": 0.45671137449288524,
+          "model_brier": 0.26777537943205343,
+          "model_log_loss": 0.7481030890629223,
+          "rows": 22
+        }
+      },
+      "coefficients": {
+        "fallback_share": 0.22025021380857143,
+        "intercept": -0.12469753337215848,
+        "team_a_is_radiant": 0.23996354395820285,
+        "team_recent_form_diff": 0.006952524077009979,
+        "team_strength_diff": -0.05508887883502826,
+        "team_strength_feature_confidence": 0.07084376127735575
+      },
+      "excluded_features": [],
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "model_name": "b1b_ultra_small",
+      "passes_gate": false,
+      "requested_features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "train": {
+        "actual_win_rate": 0.4740932642487047,
+        "brier": 0.23773216134554156,
+        "calibration": {
+          "intercept": -0.0026016127604321917,
+          "slope": 0.9750146215922483
+        },
+        "log_loss": 0.6666431494971832,
+        "mean_predicted_probability": 0.47409326561897647,
+        "rows": 386
+      },
+      "train_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.9229721461778756,
+        "p_pred_min": 0.06453477384115328,
+        "residual_adjustment_max": 0.9382065855003187,
+        "residual_adjustment_mean": -0.12469753337215843,
+        "residual_adjustment_min": -0.8257117863414418,
+        "residual_adjustment_p01": -0.667684436473009,
+        "residual_adjustment_p99": 0.6691791706081655,
+        "residual_adjustment_std": 0.32363278766087783
+      },
+      "validation": {
+        "actual_win_rate": 0.4772727272727273,
+        "brier": 0.2446833450256571,
+        "calibration": {
+          "intercept": 0.032975432407750936,
+          "slope": 0.5742123061826482
+        },
+        "log_loss": 0.6854253404988246,
+        "mean_predicted_probability": 0.4479012233934959,
+        "rows": 132
+      },
+      "validation_delta_vs_b0": {
+        "brier_improvement": -0.005317625328687403,
+        "log_loss_improvement": -0.01003155692521962
+      },
+      "validation_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.8976320207090988,
+        "p_pred_min": 0.11839638038437177,
+        "residual_adjustment_max": 0.5841067609450281,
+        "residual_adjustment_mean": -0.24301735654883924,
+        "residual_adjustment_min": -0.964835818434586,
+        "residual_adjustment_p01": -0.8493597666444602,
+        "residual_adjustment_p99": 0.38641207286859997,
+        "residual_adjustment_std": 0.3096879576375095
+      }
+    },
+    {
+      "alpha": 10.0,
+      "by_market_discovery_source": {
+        "gamma_events_closed_False_active_True": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.03901121186234924,
+          "log_loss_improvement": 0.08006536098113404,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.40967956490993784,
+          "model_brier": 0.18508878813765078,
+          "model_log_loss": 0.5515390292203182,
+          "rows": 9
+        },
+        "gamma_public_search:Aurora Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.20702500000000001,
+          "b0_log_loss": 0.6069694843188931,
+          "brier_improvement": 0.08496852646389925,
+          "log_loss_improvement": 0.17716175994157685,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.34936581621003043,
+          "model_brier": 0.12205647353610076,
+          "model_log_loss": 0.42980772437731624,
+          "rows": 1
+        },
+        "gamma_public_search:DreamLeague Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25937916666666666,
+          "b0_log_loss": 0.7161953569102684,
+          "brier_improvement": -0.008092821125914196,
+          "log_loss_improvement": -0.01838430910960609,
+          "mean_market_probability": 0.6124999999999999,
+          "mean_model_probability": 0.5891804937544586,
+          "model_brier": 0.26747198779258086,
+          "model_log_loss": 0.7345796660198745,
+          "rows": 6
+        },
+        "gamma_public_search:EPL Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.125225,
+          "b0_log_loss": 0.42645264595233384,
+          "brier_improvement": -0.03363772105063348,
+          "log_loss_improvement": -0.0593090240555717,
+          "mean_market_probability": 0.34833333333333333,
+          "mean_model_probability": 0.27991052389124066,
+          "model_brier": 0.15886272105063348,
+          "model_log_loss": 0.48576167000790554,
+          "rows": 3
+        },
+        "gamma_public_search:Esports World Cup South America Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.13945000000000002,
+          "b0_log_loss": 0.4397383793757194,
+          "brier_improvement": 0.05573239297031547,
+          "log_loss_improvement": 0.11072774366466537,
+          "mean_market_probability": 0.665,
+          "mean_model_probability": 0.5911136121419674,
+          "model_brier": 0.08371760702968455,
+          "model_log_loss": 0.32901063571105404,
+          "rows": 2
+        },
+        "gamma_public_search:Esports World Cup Southeast Asia Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.06760000000000001,
+          "b0_log_loss": 0.3011050927839216,
+          "brier_improvement": 0.03552494571448998,
+          "log_loss_improvement": 0.10375708409594159,
+          "mean_market_probability": 0.26,
+          "mean_model_probability": 0.1790950984407726,
+          "model_brier": 0.032075054285510024,
+          "model_log_loss": 0.19734800868798003,
+          "rows": 1
+        },
+        "gamma_public_search:European Pro League Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.019799466545953992,
+          "log_loss_improvement": -0.039619096642475427,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.48057798692534737,
+          "model_brier": 0.269799466545954,
+          "model_log_loss": 0.7327662772024207,
+          "rows": 2
+        },
+        "gamma_public_search:Execration Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.270625,
+          "b0_log_loss": 0.7344576949041137,
+          "brier_improvement": 0.10412939761871393,
+          "log_loss_improvement": 0.21025776572254662,
+          "mean_market_probability": 0.52,
+          "mean_model_probability": 0.407821505507575,
+          "model_brier": 0.16649560238128608,
+          "model_log_loss": 0.5241999291815671,
+          "rows": 2
+        },
+        "gamma_public_search:Falcons Dota": {
+          "actual_win_rate": 0.6666666666666666,
+          "b0_brier": 0.24975000000000003,
+          "b0_log_loss": 0.6926146987438587,
+          "brier_improvement": -0.018413408588483893,
+          "log_loss_improvement": -0.03906764068509572,
+          "mean_market_probability": 0.47833333333333333,
+          "mean_model_probability": 0.4725456061730009,
+          "model_brier": 0.2681634085884839,
+          "model_log_loss": 0.7316823394289544,
+          "rows": 6
+        },
+        "gamma_public_search:GamerLegion Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.044181937013093475,
+          "log_loss_improvement": 0.08963912379099326,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4504699178543178,
+          "model_brier": 0.20581806298690652,
+          "model_log_loss": 0.603508056768952,
+          "rows": 2
+        },
+        "gamma_public_search:L1GA Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2509,
+          "b0_log_loss": 0.6949504283570012,
+          "brier_improvement": -0.04445957372510806,
+          "log_loss_improvement": -0.09358143202687619,
+          "mean_market_probability": 0.47,
+          "mean_model_probability": 0.38492753823471654,
+          "model_brier": 0.29535957372510807,
+          "model_log_loss": 0.7885318603838773,
+          "rows": 2
+        },
+        "gamma_public_search:LGD Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.354025,
+          "b0_log_loss": 0.9038682118755978,
+          "brier_improvement": -0.137841362554315,
+          "log_loss_improvement": -0.30455397326241207,
+          "mean_market_probability": 0.405,
+          "mean_model_probability": 0.2986681509054968,
+          "model_brier": 0.491866362554315,
+          "model_log_loss": 1.20842218513801,
+          "rows": 1
+        },
+        "gamma_public_search:MODUS Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25202499999999994,
+          "b0_log_loss": 0.6972136721750398,
+          "brier_improvement": 0.0009055865985290734,
+          "log_loss_improvement": 0.0018234549072594364,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.460373461670254,
+          "model_brier": 0.25111941340147087,
+          "model_log_loss": 0.6953902172677804,
+          "rows": 2
+        },
+        "gamma_public_search:Natus Vincere Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2636125,
+          "b0_log_loss": 0.7205227842662356,
+          "brier_improvement": 0.047160721348928125,
+          "log_loss_improvement": 0.09607727158073398,
+          "mean_market_probability": 0.48250000000000004,
+          "mean_model_probability": 0.42748387938770993,
+          "model_brier": 0.2164517786510719,
+          "model_log_loss": 0.6244455126855016,
+          "rows": 4
+        },
+        "gamma_public_search:Nigma Galaxy Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.01566524406556702,
+          "log_loss_improvement": 0.03152259033043181,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.5201393741901181,
+          "model_brier": 0.23433475593443298,
+          "model_log_loss": 0.6616245902295135,
+          "rows": 4
+        },
+        "gamma_public_search:North America DPC Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.04932386635422098,
+          "log_loss_improvement": -0.10191884928094352,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.45985931294078886,
+          "model_brier": 0.299323866354221,
+          "model_log_loss": 0.7950660298408888,
+          "rows": 2
+        },
+        "gamma_public_search:PARIVISION Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.263925,
+          "b0_log_loss": 0.7210924514251326,
+          "brier_improvement": -0.021763581936367127,
+          "log_loss_improvement": -0.04531353829641205,
+          "mean_market_probability": 0.5325,
+          "mean_model_probability": 0.49076033048118295,
+          "model_brier": 0.28568858193636715,
+          "model_log_loss": 0.7664059897215446,
+          "rows": 4
+        },
+        "gamma_public_search:PlayTime Dota": {
+          "actual_win_rate": 0.4,
+          "b0_brier": 0.19576500000000002,
+          "b0_log_loss": 0.5828507348379197,
+          "brier_improvement": -0.0048825075586769184,
+          "log_loss_improvement": -0.009883323977455394,
+          "mean_market_probability": 0.43899999999999995,
+          "mean_model_probability": 0.4175527204425461,
+          "model_brier": 0.20064750755867694,
+          "model_log_loss": 0.5927340588153751,
+          "rows": 5
+        },
+        "gamma_public_search:REKONIX Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.13216666666666668,
+          "b0_log_loss": 0.438177331631,
+          "brier_improvement": -0.0017827412391007436,
+          "log_loss_improvement": 0.00702724811362776,
+          "mean_market_probability": 0.3433333333333333,
+          "mean_model_probability": 0.2968737371934645,
+          "model_brier": 0.13394940790576743,
+          "model_log_loss": 0.4311500835173722,
+          "rows": 6
+        },
+        "gamma_public_search:Summer Bear Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.0823775301043157,
+          "log_loss_improvement": 0.17087819285688355,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.40131662478714747,
+          "model_brier": 0.1676224698956843,
+          "model_log_loss": 0.5222689877030617,
+          "rows": 2
+        },
+        "gamma_public_search:Team Liquid Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.05934866483705037,
+          "log_loss_improvement": -0.12121265279112525,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4367203562256779,
+          "model_brier": 0.30934866483705037,
+          "model_log_loss": 0.8143598333510705,
+          "rows": 2
+        },
+        "gamma_public_search:Team Spirit Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.27307499999999996,
+          "b0_log_loss": 0.7395678696711144,
+          "brier_improvement": -0.0013812967883088945,
+          "log_loss_improvement": -0.003850426820820596,
+          "mean_market_probability": 0.5216666666666666,
+          "mean_model_probability": 0.4459296925457867,
+          "model_brier": 0.27445629678830885,
+          "model_log_loss": 0.743418296491935,
+          "rows": 3
+        },
+        "gamma_public_search:Tundra Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.27890000000000004,
+          "b0_log_loss": 0.7545700955593682,
+          "brier_improvement": -0.029255807938180833,
+          "log_loss_improvement": -0.05900004401632819,
+          "mean_market_probability": 0.67,
+          "mean_model_probability": 0.5873643128674079,
+          "model_brier": 0.30815580793818087,
+          "model_log_loss": 0.8135701395756963,
+          "rows": 2
+        },
+        "gamma_public_search:Vici Gaming Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.025160407474683733,
+          "log_loss_improvement": -0.05194360504780671,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4627664367641953,
+          "model_brier": 0.27516040747468373,
+          "model_log_loss": 0.745090785607752,
+          "rows": 4
+        },
+        "gamma_public_search:Virtus.pro Dota": {
+          "actual_win_rate": 0.16666666666666666,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.0017758869697794277,
+          "log_loss_improvement": -0.003859902394724668,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4616445751255897,
+          "model_brier": 0.2517758869697794,
+          "model_log_loss": 0.69700708295467,
+          "rows": 6
+        },
+        "gamma_public_search:Yellow Submarine Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.21911250000000002,
+          "b0_log_loss": 0.6166284598365392,
+          "brier_improvement": 0.004611373490626375,
+          "log_loss_improvement": 0.012991253230969613,
+          "mean_market_probability": 0.6025,
+          "mean_model_probability": 0.5490603338341685,
+          "model_brier": 0.21450112650937364,
+          "model_log_loss": 0.6036372066055696,
+          "rows": 4
+        },
+        "gamma_public_search:dota 2": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.312325,
+          "b0_log_loss": 0.8196919341760188,
+          "brier_improvement": -0.059940647189779206,
+          "log_loss_improvement": -0.14248641657154648,
+          "mean_market_probability": 0.48000000000000004,
+          "mean_model_probability": 0.4044649841042271,
+          "model_brier": 0.3722656471897792,
+          "model_log_loss": 0.9621783507475653,
+          "rows": 6
+        },
+        "gamma_public_search:esports dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.0632586056488822,
+          "log_loss_improvement": -0.131036207696676,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.41382289465794475,
+          "model_brier": 0.3132586056488822,
+          "model_log_loss": 0.8241833882566213,
+          "rows": 2
+        },
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.009761965265111278,
+          "log_loss_improvement": -0.01501660510494851,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.4703609613449219,
+          "model_brier": 0.25800183012997613,
+          "model_log_loss": 0.7270853608802149,
+          "rows": 37
+        }
+      },
+      "by_market_probability_source": {
+        "early_snapshot_mid": {
+          "actual_win_rate": 0.6,
+          "b0_brier": 0.24493749999999997,
+          "b0_log_loss": 0.7245364616277082,
+          "brier_improvement": 0.020072250260806196,
+          "log_loss_improvement": 0.05130377276706466,
+          "mean_market_probability": 0.5755,
+          "mean_model_probability": 0.5267441410697545,
+          "model_brier": 0.22486524973919378,
+          "model_log_loss": 0.6732326888606436,
+          "rows": 20
+        },
+        "price_history_proxy": {
+          "actual_win_rate": 0.45535714285714285,
+          "b0_brier": 0.23837075892857143,
+          "b0_log_loss": 0.666618305349658,
+          "brier_improvement": -0.008683680438760305,
+          "log_loss_improvement": -0.018366124436179132,
+          "mean_market_probability": 0.4918303571428571,
+          "mean_model_probability": 0.43701638387497155,
+          "model_brier": 0.24705443936733174,
+          "model_log_loss": 0.6849844297858372,
+          "rows": 112
+        }
+      },
+      "by_source_universe": {
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.009761965265111278,
+          "log_loss_improvement": -0.01501660510494851,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.4703609613449219,
+          "model_brier": 0.25800183012997613,
+          "model_log_loss": 0.7270853608802149,
+          "rows": 37
+        },
+        "polymarket_event": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.03901121186234924,
+          "log_loss_improvement": 0.08006536098113404,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.40967956490993784,
+          "model_brier": 0.18508878813765078,
+          "model_log_loss": 0.5515390292203182,
+          "rows": 9
+        },
+        "polymarket_public_search": {
+          "actual_win_rate": 0.4418604651162791,
+          "b0_brier": 0.2371453488372093,
+          "b0_log_loss": 0.6641976273978828,
+          "brier_improvement": -0.006523667393919269,
+          "log_loss_improvement": -0.01390586443555708,
+          "mean_market_probability": 0.4934883720930234,
+          "mean_model_probability": 0.4463982111795388,
+          "model_brier": 0.24366901623112858,
+          "model_log_loss": 0.6781034918334399,
+          "rows": 86
+        }
+      },
+      "by_team_a_is_radiant": {
+        "0.0": {
+          "actual_win_rate": 0.4057971014492754,
+          "b0_brier": 0.23705652173913042,
+          "b0_log_loss": 0.6712830118336603,
+          "brier_improvement": -0.003295430870831201,
+          "log_loss_improvement": -0.0032796496980446177,
+          "mean_market_probability": 0.4878260869565218,
+          "mean_model_probability": 0.3810673514953515,
+          "model_brier": 0.24035195260996162,
+          "model_log_loss": 0.674562661531705,
+          "rows": 69
+        },
+        "1.0": {
+          "actual_win_rate": 0.5555555555555556,
+          "b0_brier": 0.2418948412698413,
+          "b0_log_loss": 0.6798960573840208,
+          "brier_improvement": -0.005456229743455193,
+          "log_loss_improvement": -0.012771978608661527,
+          "mean_market_probability": 0.5227777777777778,
+          "mean_model_probability": 0.526778897812899,
+          "model_brier": 0.24735107101329648,
+          "model_log_loss": 0.6926680359926823,
+          "rows": 63
+        }
+      },
+      "by_team_strength_confidence_bucket": {
+        "0_5_to_0_8": {
+          "actual_win_rate": 0.5384615384615384,
+          "b0_brier": 0.23550000000000001,
+          "b0_log_loss": 0.6639489984105345,
+          "brier_improvement": 0.0038372720872046073,
+          "log_loss_improvement": 0.007162545923570129,
+          "mean_market_probability": 0.47538461538461535,
+          "mean_model_probability": 0.41240243898942686,
+          "model_brier": 0.2316627279127954,
+          "model_log_loss": 0.6567864524869643,
+          "rows": 13
+        },
+        "gte_0_8": {
+          "actual_win_rate": 0.44329896907216493,
+          "b0_brier": 0.24137577319587628,
+          "b0_log_loss": 0.6789304503932134,
+          "brier_improvement": 0.0006173352795664777,
+          "log_loss_improvement": 0.004613250880612152,
+          "mean_market_probability": 0.4977319587628866,
+          "mean_model_probability": 0.4527951410110903,
+          "model_brier": 0.2407584379163098,
+          "model_log_loss": 0.6743171995126013,
+          "rows": 97
+        },
+        "lt_0_5": {
+          "actual_win_rate": 0.5909090909090909,
+          "b0_brier": 0.23278749999999998,
+          "b0_log_loss": 0.6665631256471456,
+          "brier_improvement": -0.030949693780756182,
+          "log_loss_improvement": -0.07143313245166338,
+          "mean_market_probability": 0.5515909090909091,
+          "mean_model_probability": 0.46356170138425407,
+          "model_brier": 0.26373719378075616,
+          "model_log_loss": 0.737996258098809,
+          "rows": 22
+        }
+      },
+      "coefficients": {
+        "fallback_share": 0.19896898990060047,
+        "intercept": -0.12456714167741187,
+        "team_a_is_radiant": 0.21641835889895758,
+        "team_recent_form_diff": -0.0004690919288315718,
+        "team_strength_diff": -0.04489099744829611,
+        "team_strength_feature_confidence": 0.06292463482592733
+      },
+      "excluded_features": [],
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "model_name": "b1b_ultra_small",
+      "passes_gate": false,
+      "requested_features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "train": {
+        "actual_win_rate": 0.4740932642487047,
+        "brier": 0.2377962978163706,
+        "calibration": {
+          "intercept": 0.0019240022789833017,
+          "slope": 1.0184786632105778
+        },
+        "log_loss": 0.6667910597419586,
+        "mean_predicted_probability": 0.47409326605853946,
+        "rows": 386
+      },
+      "train_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.9198114676480431,
+        "p_pred_min": 0.06647315870775912,
+        "residual_adjustment_max": 0.8383841841470782,
+        "residual_adjustment_mean": -0.12456714167741186,
+        "residual_adjustment_min": -0.7524995630878186,
+        "residual_adjustment_p01": -0.6169395043667597,
+        "residual_adjustment_p99": 0.5967184919333649,
+        "residual_adjustment_std": 0.2919835802400399
+      },
+      "validation": {
+        "actual_win_rate": 0.4772727272727273,
+        "brier": 0.24369244093882597,
+        "calibration": {
+          "intercept": 0.03147845907155332,
+          "slope": 0.6013744232691318
+        },
+        "log_loss": 0.6832038629789897,
+        "mean_predicted_probability": 0.4506114986014538,
+        "rows": 132
+      },
+      "validation_delta_vs_b0": {
+        "brier_improvement": -0.004326721241856263,
+        "log_loss_improvement": -0.007810079405384696
+      },
+      "validation_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.8946628154430009,
+        "p_pred_min": 0.11776019130812686,
+        "residual_adjustment_max": 0.5117658042626765,
+        "residual_adjustment_mean": -0.23052702171487313,
+        "residual_adjustment_min": -0.8792608666335062,
+        "residual_adjustment_p01": -0.7755812271202751,
+        "residual_adjustment_p99": 0.34095049862487065,
+        "residual_adjustment_std": 0.27904652594287177
+      }
+    },
+    {
+      "alpha": 100.0,
+      "by_market_discovery_source": {
+        "gamma_events_closed_False_active_True": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.02698264938733591,
+          "log_loss_improvement": 0.05524860457529801,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.4200577448351376,
+          "model_brier": 0.1971173506126641,
+          "model_log_loss": 0.5763557856261542,
+          "rows": 9
+        },
+        "gamma_public_search:Aurora Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.20702500000000001,
+          "b0_log_loss": 0.6069694843188931,
+          "brier_improvement": 0.05751596517743435,
+          "log_loss_improvement": 0.11812714475970354,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.3866639818014676,
+          "model_brier": 0.14950903482256567,
+          "model_log_loss": 0.48884233955918954,
+          "rows": 1
+        },
+        "gamma_public_search:DreamLeague Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25937916666666666,
+          "b0_log_loss": 0.7161953569102684,
+          "brier_improvement": -0.0007540525426639189,
+          "log_loss_improvement": -0.0018768481118049962,
+          "mean_market_probability": 0.6124999999999999,
+          "mean_model_probability": 0.5855016477748806,
+          "model_brier": 0.2601332192093306,
+          "model_log_loss": 0.7180722050220734,
+          "rows": 6
+        },
+        "gamma_public_search:EPL Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.125225,
+          "b0_log_loss": 0.42645264595233384,
+          "brier_improvement": -0.01777238570689943,
+          "log_loss_improvement": -0.028840993140571314,
+          "mean_market_probability": 0.34833333333333333,
+          "mean_model_probability": 0.301198664389039,
+          "model_brier": 0.14299738570689943,
+          "model_log_loss": 0.45529363909290516,
+          "rows": 3
+        },
+        "gamma_public_search:Esports World Cup South America Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.13945000000000002,
+          "b0_log_loss": 0.4397383793757194,
+          "brier_improvement": 0.036668076457571336,
+          "log_loss_improvement": 0.07004230595862965,
+          "mean_market_probability": 0.665,
+          "mean_model_probability": 0.6136716563778006,
+          "model_brier": 0.10278192354242868,
+          "model_log_loss": 0.36969607341708977,
+          "rows": 2
+        },
+        "gamma_public_search:Esports World Cup Southeast Asia Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.06760000000000001,
+          "b0_log_loss": 0.3011050927839216,
+          "brier_improvement": 0.02556390530773306,
+          "log_loss_improvement": 0.07165789210419787,
+          "mean_market_probability": 0.26,
+          "mean_model_probability": 0.20502705843928734,
+          "model_brier": 0.04203609469226695,
+          "model_log_loss": 0.22944720067972374,
+          "rows": 1
+        },
+        "gamma_public_search:European Pro League Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.028143949940500623,
+          "log_loss_improvement": -0.05634515477142599,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.47260679156045193,
+          "model_brier": 0.2781439499405006,
+          "model_log_loss": 0.7494923353313713,
+          "rows": 2
+        },
+        "gamma_public_search:Execration Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.270625,
+          "b0_log_loss": 0.7344576949041137,
+          "brier_improvement": 0.07294294266067858,
+          "log_loss_improvement": 0.1464407136573178,
+          "mean_market_probability": 0.52,
+          "mean_model_probability": 0.4444037105374314,
+          "model_brier": 0.19768205733932143,
+          "model_log_loss": 0.5880169812467959,
+          "rows": 2
+        },
+        "gamma_public_search:Falcons Dota": {
+          "actual_win_rate": 0.6666666666666666,
+          "b0_brier": 0.24975000000000003,
+          "b0_log_loss": 0.6926146987438587,
+          "brier_improvement": -0.014405865440146659,
+          "log_loss_improvement": -0.02993692262065517,
+          "mean_market_probability": 0.47833333333333333,
+          "mean_model_probability": 0.45870214430333056,
+          "model_brier": 0.2641558654401467,
+          "model_log_loss": 0.7225516213645139,
+          "rows": 6
+        },
+        "gamma_public_search:GamerLegion Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.0360104485404979,
+          "log_loss_improvement": 0.07237153205065117,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.46175606878955866,
+          "model_brier": 0.2139895514595021,
+          "model_log_loss": 0.6207756485092941,
+          "rows": 2
+        },
+        "gamma_public_search:L1GA Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2509,
+          "b0_log_loss": 0.6949504283570012,
+          "brier_improvement": -0.02359218426283377,
+          "log_loss_improvement": -0.04857766389273266,
+          "mean_market_probability": 0.47,
+          "mean_model_probability": 0.41078173608913604,
+          "model_brier": 0.2744921842628338,
+          "model_log_loss": 0.7435280922497338,
+          "rows": 2
+        },
+        "gamma_public_search:LGD Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.354025,
+          "b0_log_loss": 0.9038682118755978,
+          "brier_improvement": -0.08719875527910548,
+          "log_loss_improvement": -0.18751057523024994,
+          "mean_market_probability": 0.405,
+          "mean_model_probability": 0.3357532421764443,
+          "model_brier": 0.44122375527910546,
+          "model_log_loss": 1.0913787871058478,
+          "rows": 1
+        },
+        "gamma_public_search:MODUS Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25202499999999994,
+          "b0_log_loss": 0.6972136721750398,
+          "brier_improvement": -0.0008293436658585174,
+          "log_loss_improvement": -0.0016746049795138829,
+          "mean_market_probability": 0.455,
+          "mean_model_probability": 0.44360629520205336,
+          "model_brier": 0.25285434366585846,
+          "model_log_loss": 0.6988882771545537,
+          "rows": 2
+        },
+        "gamma_public_search:Natus Vincere Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.2636125,
+          "b0_log_loss": 0.7205227842662356,
+          "brier_improvement": 0.023998503831231394,
+          "log_loss_improvement": 0.04845650952066549,
+          "mean_market_probability": 0.48250000000000004,
+          "mean_model_probability": 0.43719074274231456,
+          "model_brier": 0.23961399616876863,
+          "model_log_loss": 0.6720662747455701,
+          "rows": 4
+        },
+        "gamma_public_search:Nigma Galaxy Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.00868563392570093,
+          "log_loss_improvement": 0.017428020417885604,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.49630383771862796,
+          "model_brier": 0.24131436607429907,
+          "model_log_loss": 0.6757191601420597,
+          "rows": 4
+        },
+        "gamma_public_search:North America DPC Dota": {
+          "actual_win_rate": 1.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.03673904587172716,
+          "log_loss_improvement": -0.07419500083097497,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4663640548654995,
+          "model_brier": 0.28673904587172716,
+          "model_log_loss": 0.7673421813909203,
+          "rows": 2
+        },
+        "gamma_public_search:PARIVISION Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.263925,
+          "b0_log_loss": 0.7210924514251326,
+          "brier_improvement": -0.009399563546196699,
+          "log_loss_improvement": -0.019164904199797328,
+          "mean_market_probability": 0.5325,
+          "mean_model_probability": 0.49601266773981917,
+          "model_brier": 0.2733245635461967,
+          "model_log_loss": 0.7402573556249299,
+          "rows": 4
+        },
+        "gamma_public_search:PlayTime Dota": {
+          "actual_win_rate": 0.4,
+          "b0_brier": 0.19576500000000002,
+          "b0_log_loss": 0.5828507348379197,
+          "brier_improvement": -0.0015210243482990105,
+          "log_loss_improvement": -0.0021765136363440796,
+          "mean_market_probability": 0.43899999999999995,
+          "mean_model_probability": 0.41269797933269714,
+          "model_brier": 0.19728602434829903,
+          "model_log_loss": 0.5850272484742638,
+          "rows": 5
+        },
+        "gamma_public_search:REKONIX Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.13216666666666668,
+          "b0_log_loss": 0.438177331631,
+          "brier_improvement": -0.0025040535546062004,
+          "log_loss_improvement": 0.0023174844793591443,
+          "mean_market_probability": 0.3433333333333333,
+          "mean_model_probability": 0.30712018852816975,
+          "model_brier": 0.13467072022127288,
+          "model_log_loss": 0.43585984715164083,
+          "rows": 6
+        },
+        "gamma_public_search:Summer Bear Dota": {
+          "actual_win_rate": 0.0,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.05591560625332215,
+          "log_loss_improvement": 0.11325303326139913,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4382061962123016,
+          "model_brier": 0.19408439374667785,
+          "model_log_loss": 0.5798941472985462,
+          "rows": 2
+        },
+        "gamma_public_search:Team Liquid Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.029995337641600894,
+          "log_loss_improvement": -0.060639047596298346,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4508005828809283,
+          "model_brier": 0.2799953376416009,
+          "model_log_loss": 0.7537862281562436,
+          "rows": 2
+        },
+        "gamma_public_search:Team Spirit Dota": {
+          "actual_win_rate": 0.3333333333333333,
+          "b0_brier": 0.27307499999999996,
+          "b0_log_loss": 0.7395678696711144,
+          "brier_improvement": 0.006124216977945129,
+          "log_loss_improvement": 0.012122694038587345,
+          "mean_market_probability": 0.5216666666666666,
+          "mean_model_probability": 0.46570395928377734,
+          "model_brier": 0.2669507830220548,
+          "model_log_loss": 0.7274451756325271,
+          "rows": 3
+        },
+        "gamma_public_search:Tundra Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.27890000000000004,
+          "b0_log_loss": 0.7545700955593682,
+          "brier_improvement": -0.009617338077918036,
+          "log_loss_improvement": -0.019557832117469864,
+          "mean_market_probability": 0.67,
+          "mean_model_probability": 0.6188212892031897,
+          "model_brier": 0.2885173380779181,
+          "model_log_loss": 0.774127927676838,
+          "rows": 2
+        },
+        "gamma_public_search:Vici Gaming Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.013235544087887074,
+          "log_loss_improvement": -0.026794788382622503,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4659856511386978,
+          "model_brier": 0.2632355440878871,
+          "model_log_loss": 0.7199419689425678,
+          "rows": 4
+        },
+        "gamma_public_search:Virtus.pro Dota": {
+          "actual_win_rate": 0.16666666666666666,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": 0.00865597888830602,
+          "log_loss_improvement": 0.01724604863600132,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4651783233111295,
+          "model_brier": 0.24134402111169398,
+          "model_log_loss": 0.675901131923944,
+          "rows": 6
+        },
+        "gamma_public_search:Yellow Submarine Dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.21911250000000002,
+          "b0_log_loss": 0.6166284598365392,
+          "brier_improvement": 0.005368164784143592,
+          "log_loss_improvement": 0.011491574644593161,
+          "mean_market_probability": 0.6025,
+          "mean_model_probability": 0.5605529511624563,
+          "model_brier": 0.21374433521585642,
+          "model_log_loss": 0.6051368851919461,
+          "rows": 4
+        },
+        "gamma_public_search:dota 2": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.312325,
+          "b0_log_loss": 0.8196919341760188,
+          "brier_improvement": -0.03176981107096599,
+          "log_loss_improvement": -0.07208626784798944,
+          "mean_market_probability": 0.48000000000000004,
+          "mean_model_probability": 0.4267231754958223,
+          "model_brier": 0.344094811070966,
+          "model_log_loss": 0.8917782020240083,
+          "rows": 6
+        },
+        "gamma_public_search:esports dota": {
+          "actual_win_rate": 0.5,
+          "b0_brier": 0.25,
+          "b0_log_loss": 0.6931471805599453,
+          "brier_improvement": -0.031221018673624867,
+          "log_loss_improvement": -0.06338366076596591,
+          "mean_market_probability": 0.5,
+          "mean_model_probability": 0.4407149240087618,
+          "model_brier": 0.28122101867362487,
+          "model_log_loss": 0.7565308413259112,
+          "rows": 2
+        },
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.006444103895976244,
+          "log_loss_improvement": -0.009044542296213542,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.49173158418282215,
+          "model_brier": 0.2546839687608411,
+          "model_log_loss": 0.72111329807148,
+          "rows": 37
+        }
+      },
+      "by_market_probability_source": {
+        "early_snapshot_mid": {
+          "actual_win_rate": 0.6,
+          "b0_brier": 0.24493749999999997,
+          "b0_log_loss": 0.7245364616277082,
+          "brier_improvement": 0.009231064317218374,
+          "log_loss_improvement": 0.026084166000663322,
+          "mean_market_probability": 0.5755,
+          "mean_model_probability": 0.5381243511454499,
+          "model_brier": 0.2357064356827816,
+          "model_log_loss": 0.6984522956270449,
+          "rows": 20
+        },
+        "price_history_proxy": {
+          "actual_win_rate": 0.45535714285714285,
+          "b0_brier": 0.23837075892857143,
+          "b0_log_loss": 0.666618305349658,
+          "brier_improvement": -0.002920340445252162,
+          "log_loss_improvement": -0.005738759754374101,
+          "mean_market_probability": 0.4918303571428571,
+          "mean_model_probability": 0.4492030913876132,
+          "model_brier": 0.2412910993738236,
+          "model_log_loss": 0.6723570651040321,
+          "rows": 112
+        }
+      },
+      "by_source_universe": {
+        "local_clean_v2": {
+          "actual_win_rate": 0.6216216216216216,
+          "b0_brier": 0.24823986486486485,
+          "b0_log_loss": 0.7120687557752664,
+          "brier_improvement": -0.006444103895976244,
+          "log_loss_improvement": -0.009044542296213542,
+          "mean_market_probability": 0.5412162162162161,
+          "mean_model_probability": 0.49173158418282215,
+          "model_brier": 0.2546839687608411,
+          "model_log_loss": 0.72111329807148,
+          "rows": 37
+        },
+        "polymarket_event": {
+          "actual_win_rate": 0.2222222222222222,
+          "b0_brier": 0.22410000000000002,
+          "b0_log_loss": 0.6316043902014522,
+          "brier_improvement": 0.02698264938733591,
+          "log_loss_improvement": 0.05524860457529801,
+          "mean_market_probability": 0.4588888888888889,
+          "mean_model_probability": 0.4200577448351376,
+          "model_brier": 0.1971173506126641,
+          "model_log_loss": 0.5763557856261542,
+          "rows": 9
+        },
+        "polymarket_public_search": {
+          "actual_win_rate": 0.4418604651162791,
+          "b0_brier": 0.2371453488372093,
+          "b0_log_loss": 0.6641976273978828,
+          "brier_improvement": -0.0017077772541718161,
+          "log_loss_improvement": -0.0032982226592375152,
+          "mean_market_probability": 0.4934883720930234,
+          "mean_model_probability": 0.45463540627954674,
+          "model_brier": 0.23885312609138112,
+          "model_log_loss": 0.6674958500571203,
+          "rows": 86
+        }
+      },
+      "by_team_a_is_radiant": {
+        "0.0": {
+          "actual_win_rate": 0.4057971014492754,
+          "b0_brier": 0.23705652173913042,
+          "b0_log_loss": 0.6712830118336603,
+          "brier_improvement": 0.0017438839177958687,
+          "log_loss_improvement": 0.006507984993883831,
+          "mean_market_probability": 0.4878260869565218,
+          "mean_model_probability": 0.418636418639301,
+          "model_brier": 0.23531263782133455,
+          "model_log_loss": 0.6647750268397765,
+          "rows": 69
+        },
+        "1.0": {
+          "actual_win_rate": 0.5555555555555556,
+          "b0_brier": 0.2418948412698413,
+          "b0_log_loss": 0.6798960573840208,
+          "brier_improvement": -0.004171187838917317,
+          "log_loss_improvement": -0.009049345032612788,
+          "mean_market_probability": 0.5227777777777778,
+          "mean_model_probability": 0.5109098471779351,
+          "model_brier": 0.2460660291087586,
+          "model_log_loss": 0.6889454024166336,
+          "rows": 63
+        }
+      },
+      "by_team_strength_confidence_bucket": {
+        "0_5_to_0_8": {
+          "actual_win_rate": 0.5384615384615384,
+          "b0_brier": 0.23550000000000001,
+          "b0_log_loss": 0.6639489984105345,
+          "brier_improvement": 0.0014641924071227552,
+          "log_loss_improvement": 0.0020028589524139218,
+          "mean_market_probability": 0.47538461538461535,
+          "mean_model_probability": 0.42932886202944454,
+          "model_brier": 0.23403580759287726,
+          "model_log_loss": 0.6619461394581205,
+          "rows": 13
+        },
+        "gte_0_8": {
+          "actual_win_rate": 0.44329896907216493,
+          "b0_brier": 0.24137577319587628,
+          "b0_log_loss": 0.6789304503932134,
+          "brier_improvement": 0.0018726772376846668,
+          "log_loss_improvement": 0.006278555217574477,
+          "mean_market_probability": 0.4977319587628866,
+          "mean_model_probability": 0.45990135032275,
+          "model_brier": 0.2395030959581916,
+          "model_log_loss": 0.672651895175639,
+          "rows": 97
+        },
+        "lt_0_5": {
+          "actual_win_rate": 0.5909090909090909,
+          "b0_brier": 0.23278749999999998,
+          "b0_log_loss": 0.6665631256471456,
+          "brier_improvement": -0.01559731985781282,
+          "log_loss_improvement": -0.034368854316488506,
+          "mean_market_probability": 0.5515909090909091,
+          "mean_model_probability": 0.49461486684691564,
+          "model_brier": 0.2483848198578128,
+          "model_log_loss": 0.7009319799636341,
+          "rows": 22
+        }
+      },
+      "coefficients": {
+        "fallback_share": 0.10241055033387951,
+        "intercept": -0.12394141727515437,
+        "team_a_is_radiant": 0.11021682557165598,
+        "team_recent_form_diff": -0.009064456586056313,
+        "team_strength_diff": -0.019885250876533835,
+        "team_strength_feature_confidence": 0.030122671210981233
+      },
+      "excluded_features": [],
+      "fail_reasons": [
+        "validation_log_loss_not_improved",
+        "validation_brier_not_improved",
+        "dominant_by_market_probability_source_bucket_not_improved",
+        "dominant_by_market_discovery_source_bucket_not_improved",
+        "dominant_by_source_universe_bucket_not_improved"
+      ],
+      "features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "model_name": "b1b_ultra_small",
+      "passes_gate": false,
+      "requested_features": [
+        "team_a_is_radiant",
+        "team_strength_diff",
+        "team_recent_form_diff",
+        "team_strength_feature_confidence",
+        "fallback_share"
+      ],
+      "train": {
+        "actual_win_rate": 0.4740932642487047,
+        "brier": 0.23941203343412057,
+        "calibration": {
+          "intercept": 0.01438466532730782,
+          "slope": 1.1377921805707507
+        },
+        "log_loss": 0.6703466722869084,
+        "mean_predicted_probability": 0.47409326424881215,
+        "rows": 386
+      },
+      "train_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.9050621953646064,
+        "p_pred_min": 0.07649711057218068,
+        "residual_adjustment_max": 0.3777653428301518,
+        "residual_adjustment_mean": -0.12394141727515434,
+        "residual_adjustment_min": -0.4442804238378019,
+        "residual_adjustment_p01": -0.3783136704636819,
+        "residual_adjustment_p99": 0.25596342969864866,
+        "residual_adjustment_std": 0.14982419751685597
+      },
+      "validation": {
+        "actual_win_rate": 0.4772727272727273,
+        "brier": 0.24044493820851418,
+        "calibration": {
+          "intercept": 0.01733684575456832,
+          "slope": 0.7174131014473094
+        },
+        "log_loss": 0.6763108879105492,
+        "mean_predicted_probability": 0.46267600953274,
+        "rows": 132
+      },
+      "validation_delta_vs_b0": {
+        "brier_improvement": -0.0010792185115444664,
+        "log_loss_improvement": -0.0009171043369441412
+      },
+      "validation_residual_stats": {
+        "count_p_pred_above_0_95": 0,
+        "count_p_pred_below_0_05": 0,
+        "p_pred_max": 0.8858334230667283,
+        "p_pred_min": 0.11711292324720932,
+        "residual_adjustment_max": 0.19655684348652397,
+        "residual_adjustment_mean": -0.17685266926769894,
+        "residual_adjustment_min": -0.5135675096585836,
+        "residual_adjustment_p01": -0.45480430432731767,
+        "residual_adjustment_p99": 0.12521863668294933,
+        "residual_adjustment_std": 0.14255308786846024
+      }
+    }
+  ],
+  "diagnostic_only": true,
+  "not_for_trading": true,
+  "selected": {
+    "alpha": 100.0,
+    "by_market_discovery_source": {
+      "gamma_events_closed_False_active_True": {
+        "actual_win_rate": 0.2222222222222222,
+        "b0_brier": 0.22410000000000002,
+        "b0_log_loss": 0.6316043902014522,
+        "brier_improvement": 0.02698264938733591,
+        "log_loss_improvement": 0.05524860457529801,
+        "mean_market_probability": 0.4588888888888889,
+        "mean_model_probability": 0.4200577448351376,
+        "model_brier": 0.1971173506126641,
+        "model_log_loss": 0.5763557856261542,
+        "rows": 9
+      },
+      "gamma_public_search:Aurora Dota": {
+        "actual_win_rate": 0.0,
+        "b0_brier": 0.20702500000000001,
+        "b0_log_loss": 0.6069694843188931,
+        "brier_improvement": 0.05751596517743435,
+        "log_loss_improvement": 0.11812714475970354,
+        "mean_market_probability": 0.455,
+        "mean_model_probability": 0.3866639818014676,
+        "model_brier": 0.14950903482256567,
+        "model_log_loss": 0.48884233955918954,
+        "rows": 1
+      },
+      "gamma_public_search:DreamLeague Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25937916666666666,
+        "b0_log_loss": 0.7161953569102684,
+        "brier_improvement": -0.0007540525426639189,
+        "log_loss_improvement": -0.0018768481118049962,
+        "mean_market_probability": 0.6124999999999999,
+        "mean_model_probability": 0.5855016477748806,
+        "model_brier": 0.2601332192093306,
+        "model_log_loss": 0.7180722050220734,
+        "rows": 6
+      },
+      "gamma_public_search:EPL Dota": {
+        "actual_win_rate": 0.3333333333333333,
+        "b0_brier": 0.125225,
+        "b0_log_loss": 0.42645264595233384,
+        "brier_improvement": -0.01777238570689943,
+        "log_loss_improvement": -0.028840993140571314,
+        "mean_market_probability": 0.34833333333333333,
+        "mean_model_probability": 0.301198664389039,
+        "model_brier": 0.14299738570689943,
+        "model_log_loss": 0.45529363909290516,
+        "rows": 3
+      },
+      "gamma_public_search:Esports World Cup South America Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.13945000000000002,
+        "b0_log_loss": 0.4397383793757194,
+        "brier_improvement": 0.036668076457571336,
+        "log_loss_improvement": 0.07004230595862965,
+        "mean_market_probability": 0.665,
+        "mean_model_probability": 0.6136716563778006,
+        "model_brier": 0.10278192354242868,
+        "model_log_loss": 0.36969607341708977,
+        "rows": 2
+      },
+      "gamma_public_search:Esports World Cup Southeast Asia Dota": {
+        "actual_win_rate": 0.0,
+        "b0_brier": 0.06760000000000001,
+        "b0_log_loss": 0.3011050927839216,
+        "brier_improvement": 0.02556390530773306,
+        "log_loss_improvement": 0.07165789210419787,
+        "mean_market_probability": 0.26,
+        "mean_model_probability": 0.20502705843928734,
+        "model_brier": 0.04203609469226695,
+        "model_log_loss": 0.22944720067972374,
+        "rows": 1
+      },
+      "gamma_public_search:European Pro League Dota": {
+        "actual_win_rate": 1.0,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": -0.028143949940500623,
+        "log_loss_improvement": -0.05634515477142599,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.47260679156045193,
+        "model_brier": 0.2781439499405006,
+        "model_log_loss": 0.7494923353313713,
+        "rows": 2
+      },
+      "gamma_public_search:Execration Dota": {
+        "actual_win_rate": 0.0,
+        "b0_brier": 0.270625,
+        "b0_log_loss": 0.7344576949041137,
+        "brier_improvement": 0.07294294266067858,
+        "log_loss_improvement": 0.1464407136573178,
+        "mean_market_probability": 0.52,
+        "mean_model_probability": 0.4444037105374314,
+        "model_brier": 0.19768205733932143,
+        "model_log_loss": 0.5880169812467959,
+        "rows": 2
+      },
+      "gamma_public_search:Falcons Dota": {
+        "actual_win_rate": 0.6666666666666666,
+        "b0_brier": 0.24975000000000003,
+        "b0_log_loss": 0.6926146987438587,
+        "brier_improvement": -0.014405865440146659,
+        "log_loss_improvement": -0.02993692262065517,
+        "mean_market_probability": 0.47833333333333333,
+        "mean_model_probability": 0.45870214430333056,
+        "model_brier": 0.2641558654401467,
+        "model_log_loss": 0.7225516213645139,
+        "rows": 6
+      },
+      "gamma_public_search:GamerLegion Dota": {
+        "actual_win_rate": 0.0,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": 0.0360104485404979,
+        "log_loss_improvement": 0.07237153205065117,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.46175606878955866,
+        "model_brier": 0.2139895514595021,
+        "model_log_loss": 0.6207756485092941,
+        "rows": 2
+      },
+      "gamma_public_search:L1GA Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.2509,
+        "b0_log_loss": 0.6949504283570012,
+        "brier_improvement": -0.02359218426283377,
+        "log_loss_improvement": -0.04857766389273266,
+        "mean_market_probability": 0.47,
+        "mean_model_probability": 0.41078173608913604,
+        "model_brier": 0.2744921842628338,
+        "model_log_loss": 0.7435280922497338,
+        "rows": 2
+      },
+      "gamma_public_search:LGD Dota": {
+        "actual_win_rate": 1.0,
+        "b0_brier": 0.354025,
+        "b0_log_loss": 0.9038682118755978,
+        "brier_improvement": -0.08719875527910548,
+        "log_loss_improvement": -0.18751057523024994,
+        "mean_market_probability": 0.405,
+        "mean_model_probability": 0.3357532421764443,
+        "model_brier": 0.44122375527910546,
+        "model_log_loss": 1.0913787871058478,
+        "rows": 1
+      },
+      "gamma_public_search:MODUS Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25202499999999994,
+        "b0_log_loss": 0.6972136721750398,
+        "brier_improvement": -0.0008293436658585174,
+        "log_loss_improvement": -0.0016746049795138829,
+        "mean_market_probability": 0.455,
+        "mean_model_probability": 0.44360629520205336,
+        "model_brier": 0.25285434366585846,
+        "model_log_loss": 0.6988882771545537,
+        "rows": 2
+      },
+      "gamma_public_search:Natus Vincere Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.2636125,
+        "b0_log_loss": 0.7205227842662356,
+        "brier_improvement": 0.023998503831231394,
+        "log_loss_improvement": 0.04845650952066549,
+        "mean_market_probability": 0.48250000000000004,
+        "mean_model_probability": 0.43719074274231456,
+        "model_brier": 0.23961399616876863,
+        "model_log_loss": 0.6720662747455701,
+        "rows": 4
+      },
+      "gamma_public_search:Nigma Galaxy Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": 0.00868563392570093,
+        "log_loss_improvement": 0.017428020417885604,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.49630383771862796,
+        "model_brier": 0.24131436607429907,
+        "model_log_loss": 0.6757191601420597,
+        "rows": 4
+      },
+      "gamma_public_search:North America DPC Dota": {
+        "actual_win_rate": 1.0,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": -0.03673904587172716,
+        "log_loss_improvement": -0.07419500083097497,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4663640548654995,
+        "model_brier": 0.28673904587172716,
+        "model_log_loss": 0.7673421813909203,
+        "rows": 2
+      },
+      "gamma_public_search:PARIVISION Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.263925,
+        "b0_log_loss": 0.7210924514251326,
+        "brier_improvement": -0.009399563546196699,
+        "log_loss_improvement": -0.019164904199797328,
+        "mean_market_probability": 0.5325,
+        "mean_model_probability": 0.49601266773981917,
+        "model_brier": 0.2733245635461967,
+        "model_log_loss": 0.7402573556249299,
+        "rows": 4
+      },
+      "gamma_public_search:PlayTime Dota": {
+        "actual_win_rate": 0.4,
+        "b0_brier": 0.19576500000000002,
+        "b0_log_loss": 0.5828507348379197,
+        "brier_improvement": -0.0015210243482990105,
+        "log_loss_improvement": -0.0021765136363440796,
+        "mean_market_probability": 0.43899999999999995,
+        "mean_model_probability": 0.41269797933269714,
+        "model_brier": 0.19728602434829903,
+        "model_log_loss": 0.5850272484742638,
+        "rows": 5
+      },
+      "gamma_public_search:REKONIX Dota": {
+        "actual_win_rate": 0.3333333333333333,
+        "b0_brier": 0.13216666666666668,
+        "b0_log_loss": 0.438177331631,
+        "brier_improvement": -0.0025040535546062004,
+        "log_loss_improvement": 0.0023174844793591443,
+        "mean_market_probability": 0.3433333333333333,
+        "mean_model_probability": 0.30712018852816975,
+        "model_brier": 0.13467072022127288,
+        "model_log_loss": 0.43585984715164083,
+        "rows": 6
+      },
+      "gamma_public_search:Summer Bear Dota": {
+        "actual_win_rate": 0.0,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": 0.05591560625332215,
+        "log_loss_improvement": 0.11325303326139913,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4382061962123016,
+        "model_brier": 0.19408439374667785,
+        "model_log_loss": 0.5798941472985462,
+        "rows": 2
+      },
+      "gamma_public_search:Team Liquid Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": -0.029995337641600894,
+        "log_loss_improvement": -0.060639047596298346,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4508005828809283,
+        "model_brier": 0.2799953376416009,
+        "model_log_loss": 0.7537862281562436,
+        "rows": 2
+      },
+      "gamma_public_search:Team Spirit Dota": {
+        "actual_win_rate": 0.3333333333333333,
+        "b0_brier": 0.27307499999999996,
+        "b0_log_loss": 0.7395678696711144,
+        "brier_improvement": 0.006124216977945129,
+        "log_loss_improvement": 0.012122694038587345,
+        "mean_market_probability": 0.5216666666666666,
+        "mean_model_probability": 0.46570395928377734,
+        "model_brier": 0.2669507830220548,
+        "model_log_loss": 0.7274451756325271,
+        "rows": 3
+      },
+      "gamma_public_search:Tundra Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.27890000000000004,
+        "b0_log_loss": 0.7545700955593682,
+        "brier_improvement": -0.009617338077918036,
+        "log_loss_improvement": -0.019557832117469864,
+        "mean_market_probability": 0.67,
+        "mean_model_probability": 0.6188212892031897,
+        "model_brier": 0.2885173380779181,
+        "model_log_loss": 0.774127927676838,
+        "rows": 2
+      },
+      "gamma_public_search:Vici Gaming Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": -0.013235544087887074,
+        "log_loss_improvement": -0.026794788382622503,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4659856511386978,
+        "model_brier": 0.2632355440878871,
+        "model_log_loss": 0.7199419689425678,
+        "rows": 4
+      },
+      "gamma_public_search:Virtus.pro Dota": {
+        "actual_win_rate": 0.16666666666666666,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": 0.00865597888830602,
+        "log_loss_improvement": 0.01724604863600132,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4651783233111295,
+        "model_brier": 0.24134402111169398,
+        "model_log_loss": 0.675901131923944,
+        "rows": 6
+      },
+      "gamma_public_search:Yellow Submarine Dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.21911250000000002,
+        "b0_log_loss": 0.6166284598365392,
+        "brier_improvement": 0.005368164784143592,
+        "log_loss_improvement": 0.011491574644593161,
+        "mean_market_probability": 0.6025,
+        "mean_model_probability": 0.5605529511624563,
+        "model_brier": 0.21374433521585642,
+        "model_log_loss": 0.6051368851919461,
+        "rows": 4
+      },
+      "gamma_public_search:dota 2": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.312325,
+        "b0_log_loss": 0.8196919341760188,
+        "brier_improvement": -0.03176981107096599,
+        "log_loss_improvement": -0.07208626784798944,
+        "mean_market_probability": 0.48000000000000004,
+        "mean_model_probability": 0.4267231754958223,
+        "model_brier": 0.344094811070966,
+        "model_log_loss": 0.8917782020240083,
+        "rows": 6
+      },
+      "gamma_public_search:esports dota": {
+        "actual_win_rate": 0.5,
+        "b0_brier": 0.25,
+        "b0_log_loss": 0.6931471805599453,
+        "brier_improvement": -0.031221018673624867,
+        "log_loss_improvement": -0.06338366076596591,
+        "mean_market_probability": 0.5,
+        "mean_model_probability": 0.4407149240087618,
+        "model_brier": 0.28122101867362487,
+        "model_log_loss": 0.7565308413259112,
+        "rows": 2
+      },
+      "local_clean_v2": {
+        "actual_win_rate": 0.6216216216216216,
+        "b0_brier": 0.24823986486486485,
+        "b0_log_loss": 0.7120687557752664,
+        "brier_improvement": -0.006444103895976244,
+        "log_loss_improvement": -0.009044542296213542,
+        "mean_market_probability": 0.5412162162162161,
+        "mean_model_probability": 0.49173158418282215,
+        "model_brier": 0.2546839687608411,
+        "model_log_loss": 0.72111329807148,
+        "rows": 37
+      }
+    },
+    "by_market_probability_source": {
+      "early_snapshot_mid": {
+        "actual_win_rate": 0.6,
+        "b0_brier": 0.24493749999999997,
+        "b0_log_loss": 0.7245364616277082,
+        "brier_improvement": 0.009231064317218374,
+        "log_loss_improvement": 0.026084166000663322,
+        "mean_market_probability": 0.5755,
+        "mean_model_probability": 0.5381243511454499,
+        "model_brier": 0.2357064356827816,
+        "model_log_loss": 0.6984522956270449,
+        "rows": 20
+      },
+      "price_history_proxy": {
+        "actual_win_rate": 0.45535714285714285,
+        "b0_brier": 0.23837075892857143,
+        "b0_log_loss": 0.666618305349658,
+        "brier_improvement": -0.002920340445252162,
+        "log_loss_improvement": -0.005738759754374101,
+        "mean_market_probability": 0.4918303571428571,
+        "mean_model_probability": 0.4492030913876132,
+        "model_brier": 0.2412910993738236,
+        "model_log_loss": 0.6723570651040321,
+        "rows": 112
+      }
+    },
+    "by_source_universe": {
+      "local_clean_v2": {
+        "actual_win_rate": 0.6216216216216216,
+        "b0_brier": 0.24823986486486485,
+        "b0_log_loss": 0.7120687557752664,
+        "brier_improvement": -0.006444103895976244,
+        "log_loss_improvement": -0.009044542296213542,
+        "mean_market_probability": 0.5412162162162161,
+        "mean_model_probability": 0.49173158418282215,
+        "model_brier": 0.2546839687608411,
+        "model_log_loss": 0.72111329807148,
+        "rows": 37
+      },
+      "polymarket_event": {
+        "actual_win_rate": 0.2222222222222222,
+        "b0_brier": 0.22410000000000002,
+        "b0_log_loss": 0.6316043902014522,
+        "brier_improvement": 0.02698264938733591,
+        "log_loss_improvement": 0.05524860457529801,
+        "mean_market_probability": 0.4588888888888889,
+        "mean_model_probability": 0.4200577448351376,
+        "model_brier": 0.1971173506126641,
+        "model_log_loss": 0.5763557856261542,
+        "rows": 9
+      },
+      "polymarket_public_search": {
+        "actual_win_rate": 0.4418604651162791,
+        "b0_brier": 0.2371453488372093,
+        "b0_log_loss": 0.6641976273978828,
+        "brier_improvement": -0.0017077772541718161,
+        "log_loss_improvement": -0.0032982226592375152,
+        "mean_market_probability": 0.4934883720930234,
+        "mean_model_probability": 0.45463540627954674,
+        "model_brier": 0.23885312609138112,
+        "model_log_loss": 0.6674958500571203,
+        "rows": 86
+      }
+    },
+    "by_team_a_is_radiant": {
+      "0.0": {
+        "actual_win_rate": 0.4057971014492754,
+        "b0_brier": 0.23705652173913042,
+        "b0_log_loss": 0.6712830118336603,
+        "brier_improvement": 0.0017438839177958687,
+        "log_loss_improvement": 0.006507984993883831,
+        "mean_market_probability": 0.4878260869565218,
+        "mean_model_probability": 0.418636418639301,
+        "model_brier": 0.23531263782133455,
+        "model_log_loss": 0.6647750268397765,
+        "rows": 69
+      },
+      "1.0": {
+        "actual_win_rate": 0.5555555555555556,
+        "b0_brier": 0.2418948412698413,
+        "b0_log_loss": 0.6798960573840208,
+        "brier_improvement": -0.004171187838917317,
+        "log_loss_improvement": -0.009049345032612788,
+        "mean_market_probability": 0.5227777777777778,
+        "mean_model_probability": 0.5109098471779351,
+        "model_brier": 0.2460660291087586,
+        "model_log_loss": 0.6889454024166336,
+        "rows": 63
+      }
+    },
+    "by_team_strength_confidence_bucket": {
+      "0_5_to_0_8": {
+        "actual_win_rate": 0.5384615384615384,
+        "b0_brier": 0.23550000000000001,
+        "b0_log_loss": 0.6639489984105345,
+        "brier_improvement": 0.0014641924071227552,
+        "log_loss_improvement": 0.0020028589524139218,
+        "mean_market_probability": 0.47538461538461535,
+        "mean_model_probability": 0.42932886202944454,
+        "model_brier": 0.23403580759287726,
+        "model_log_loss": 0.6619461394581205,
+        "rows": 13
+      },
+      "gte_0_8": {
+        "actual_win_rate": 0.44329896907216493,
+        "b0_brier": 0.24137577319587628,
+        "b0_log_loss": 0.6789304503932134,
+        "brier_improvement": 0.0018726772376846668,
+        "log_loss_improvement": 0.006278555217574477,
+        "mean_market_probability": 0.4977319587628866,
+        "mean_model_probability": 0.45990135032275,
+        "model_brier": 0.2395030959581916,
+        "model_log_loss": 0.672651895175639,
+        "rows": 97
+      },
+      "lt_0_5": {
+        "actual_win_rate": 0.5909090909090909,
+        "b0_brier": 0.23278749999999998,
+        "b0_log_loss": 0.6665631256471456,
+        "brier_improvement": -0.01559731985781282,
+        "log_loss_improvement": -0.034368854316488506,
+        "mean_market_probability": 0.5515909090909091,
+        "mean_model_probability": 0.49461486684691564,
+        "model_brier": 0.2483848198578128,
+        "model_log_loss": 0.7009319799636341,
+        "rows": 22
+      }
+    },
+    "coefficients": {
+      "fallback_share": 0.10241055033387951,
+      "intercept": -0.12394141727515437,
+      "team_a_is_radiant": 0.11021682557165598,
+      "team_recent_form_diff": -0.009064456586056313,
+      "team_strength_diff": -0.019885250876533835,
+      "team_strength_feature_confidence": 0.030122671210981233
+    },
+    "excluded_features": [],
+    "fail_reasons": [
+      "validation_log_loss_not_improved",
+      "validation_brier_not_improved",
+      "dominant_by_market_probability_source_bucket_not_improved",
+      "dominant_by_market_discovery_source_bucket_not_improved",
+      "dominant_by_source_universe_bucket_not_improved"
+    ],
+    "features": [
+      "team_a_is_radiant",
+      "team_strength_diff",
+      "team_recent_form_diff",
+      "team_strength_feature_confidence",
+      "fallback_share"
+    ],
+    "model_name": "b1b_ultra_small",
+    "passes_gate": false,
+    "requested_features": [
+      "team_a_is_radiant",
+      "team_strength_diff",
+      "team_recent_form_diff",
+      "team_strength_feature_confidence",
+      "fallback_share"
+    ],
+    "train": {
+      "actual_win_rate": 0.4740932642487047,
+      "brier": 0.23941203343412057,
+      "calibration": {
+        "intercept": 0.01438466532730782,
+        "slope": 1.1377921805707507
+      },
+      "log_loss": 0.6703466722869084,
+      "mean_predicted_probability": 0.47409326424881215,
+      "rows": 386
+    },
+    "train_residual_stats": {
+      "count_p_pred_above_0_95": 0,
+      "count_p_pred_below_0_05": 0,
+      "p_pred_max": 0.9050621953646064,
+      "p_pred_min": 0.07649711057218068,
+      "residual_adjustment_max": 0.3777653428301518,
+      "residual_adjustment_mean": -0.12394141727515434,
+      "residual_adjustment_min": -0.4442804238378019,
+      "residual_adjustment_p01": -0.3783136704636819,
+      "residual_adjustment_p99": 0.25596342969864866,
+      "residual_adjustment_std": 0.14982419751685597
+    },
+    "validation": {
+      "actual_win_rate": 0.4772727272727273,
+      "brier": 0.24044493820851418,
+      "calibration": {
+        "intercept": 0.01733684575456832,
+        "slope": 0.7174131014473094
+      },
+      "log_loss": 0.6763108879105492,
+      "mean_predicted_probability": 0.46267600953274,
+      "rows": 132
+    },
+    "validation_delta_vs_b0": {
+      "brier_improvement": -0.0010792185115444664,
+      "log_loss_improvement": -0.0009171043369441412
+    },
+    "validation_residual_stats": {
+      "count_p_pred_above_0_95": 0,
+      "count_p_pred_below_0_05": 0,
+      "p_pred_max": 0.8858334230667283,
+      "p_pred_min": 0.11711292324720932,
+      "residual_adjustment_max": 0.19655684348652397,
+      "residual_adjustment_mean": -0.17685266926769894,
+      "residual_adjustment_min": -0.5135675096585836,
+      "residual_adjustment_p01": -0.45480430432731767,
+      "residual_adjustment_p99": 0.12521863668294933,
+      "residual_adjustment_std": 0.14255308786846024
+    }
+  },
+  "selected_by": "validation_log_loss"
+}

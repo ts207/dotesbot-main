@@ -1,0 +1,36 @@
+{
+  "condition_id": "0x1006d35905aab4bfd1e23730472f1abb743cab5598df5ca153f9211896f6d337",
+  "event_id": "364769",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:44:57+00:00",
+  "http_status": 200,
+  "market_id": "1938373",
+  "question": "Dota 2: GamerLegion vs Nigma Galaxy - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1775844045
+      },
+      {
+        "p": 0.265,
+        "t": 1775847643
+      },
+      {
+        "p": 0.9995,
+        "t": 1775854848
+      },
+      {
+        "p": 0.9995,
+        "t": 1775858451
+      }
+    ]
+  },
+  "requested_end_ts": "1775864431",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775837611",
+  "slug": "dota2-gl-ngx-2026-04-10-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "99612397216717777037121743907023454823424142378744977149187265432258493571674"
+}

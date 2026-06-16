@@ -1,0 +1,72 @@
+{
+  "condition_id": "0x5331f19ccaf54aa9a3c54a3d5a54ba0aaffb8348c6f697900afc141fda4ae7c2",
+  "event_id": "190844",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:13:54+00:00",
+  "http_status": 200,
+  "market_id": "1280666",
+  "question": "Dota 2:  Pipsqueak+4 vs NoLogoJustMMR - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1769572835
+      },
+      {
+        "p": 0.5,
+        "t": 1769576417
+      },
+      {
+        "p": 0.5,
+        "t": 1769580018
+      },
+      {
+        "p": 0.5,
+        "t": 1769583618
+      },
+      {
+        "p": 0.5,
+        "t": 1769587218
+      },
+      {
+        "p": 0.5,
+        "t": 1769590823
+      },
+      {
+        "p": 0.5,
+        "t": 1769594440
+      },
+      {
+        "p": 0.5,
+        "t": 1769598018
+      },
+      {
+        "p": 0.88,
+        "t": 1769601625
+      },
+      {
+        "p": 0.985,
+        "t": 1769605234
+      },
+      {
+        "p": 0.9995,
+        "t": 1769608818
+      },
+      {
+        "p": 0.9995,
+        "t": 1769612419
+      },
+      {
+        "p": 0.9995,
+        "t": 1769616018
+      }
+    ]
+  },
+  "requested_end_ts": "1769617434",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1769571162",
+  "slug": "dota2-pi-nologo-2026-01-28-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "89470828718112164132179492289675969823928451846282726833874803003473954310357"
+}

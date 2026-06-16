@@ -1,0 +1,130 @@
+{
+  "by_fill_assumption": {
+    "conservative_trade_through": {
+      "fill_rate": 0.38181818181818183,
+      "filled_count": 21,
+      "markout_horizons": {
+        "10s": {
+          "observations": 21,
+          "pnl": 25.41800906518776,
+          "positive_count": 13
+        },
+        "120s": {
+          "observations": 19,
+          "pnl": -3.0213627994428753,
+          "positive_count": 13
+        },
+        "180s": {
+          "observations": 18,
+          "pnl": -8.569791957970496,
+          "positive_count": 11
+        },
+        "20s": {
+          "observations": 21,
+          "pnl": 18.913633781074157,
+          "positive_count": 12
+        },
+        "300s": {
+          "observations": 17,
+          "pnl": -12.829605888544462,
+          "positive_count": 11
+        },
+        "30s": {
+          "observations": 20,
+          "pnl": 26.98359892444436,
+          "positive_count": 13
+        },
+        "5s": {
+          "observations": 21,
+          "pnl": 19.051291966959027,
+          "positive_count": 13
+        },
+        "600s": {
+          "observations": 13,
+          "pnl": -2.0919017743846613,
+          "positive_count": 8
+        },
+        "60s": {
+          "observations": 20,
+          "pnl": 10.399926118794582,
+          "positive_count": 11
+        }
+      },
+      "pnl_to_300s_markout": -12.829605888544462,
+      "pnl_to_60s_markout": 10.399926118794582,
+      "positive_300s_markout_count": 11,
+      "positive_60s_markout_count": 11,
+      "signals_replayed": 55,
+      "top_match_abs_pnl_share_300s": 0.23538357409129437
+    },
+    "optimistic_displayed_liquidity": {
+      "fill_rate": 1.0,
+      "filled_count": 55,
+      "markout_horizons": {
+        "10s": {
+          "observations": 55,
+          "pnl": -3.125364583434882,
+          "positive_count": 23
+        },
+        "120s": {
+          "observations": 51,
+          "pnl": -41.52023205009413,
+          "positive_count": 29
+        },
+        "180s": {
+          "observations": 49,
+          "pnl": -1.171786515705604,
+          "positive_count": 26
+        },
+        "20s": {
+          "observations": 54,
+          "pnl": 13.398680999470725,
+          "positive_count": 26
+        },
+        "300s": {
+          "observations": 45,
+          "pnl": 25.227502394064008,
+          "positive_count": 25
+        },
+        "30s": {
+          "observations": 54,
+          "pnl": 13.58540656594744,
+          "positive_count": 30
+        },
+        "5s": {
+          "observations": 55,
+          "pnl": -12.79167246701625,
+          "positive_count": 17
+        },
+        "600s": {
+          "observations": 34,
+          "pnl": 19.449632940888836,
+          "positive_count": 18
+        },
+        "60s": {
+          "observations": 53,
+          "pnl": -29.766098697302432,
+          "positive_count": 26
+        }
+      },
+      "pnl_to_300s_markout": 25.227502394064008,
+      "pnl_to_60s_markout": -29.766098697302432,
+      "positive_300s_markout_count": 25,
+      "positive_60s_markout_count": 26,
+      "signals_replayed": 55,
+      "top_match_abs_pnl_share_300s": 0.19717256657824744
+    }
+  },
+  "causality_violation_examples": [],
+  "causality_violations": 0,
+  "decision_counts": {
+    "paper_buy_yes": 55,
+    "skip": 2619
+  },
+  "direction_mode": "existing_signal_tradable",
+  "excluded_events_count": 0,
+  "excluded_trade_attempts_count": 0,
+  "generated_at": "2026-06-07T13:41:47.763691+00:00",
+  "manual_windows_excluded": true,
+  "signal_rows_total": 2674
+}

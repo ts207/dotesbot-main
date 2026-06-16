@@ -1,0 +1,40 @@
+{
+  "condition_id": "0xac49ee6657c913e06d52195f98fd501e5e707e90ec3078208e71bf9b3b409570",
+  "event_id": "559621",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:58+00:00",
+  "http_status": 200,
+  "market_id": "2438236",
+  "question": "Dota 2: GamerLegion vs Ignite - Game 4 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780603205
+      },
+      {
+        "p": 0.5,
+        "t": 1780606807
+      },
+      {
+        "p": 0.355,
+        "t": 1780610404
+      },
+      {
+        "p": 0.5,
+        "t": 1780614004
+      },
+      {
+        "p": 0.5,
+        "t": 1780617619
+      }
+    ]
+  },
+  "requested_end_ts": "1780618069",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780602193",
+  "slug": "dota2-gl-ign-2026-06-04-game4",
+  "source_universe": "polymarket_public_search",
+  "token_id": "70765022758170607006940214868454071835998617607162227968319402886852322233691"
+}

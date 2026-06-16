@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x4914eb77fdd40fb1c0e6565955fa4a91bb841e4c07c38a1f253c2a27eeb09714",
+  "event_id": "371611",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:16+00:00",
+  "http_status": 200,
+  "market_id": "1959197",
+  "question": "Dota 2: GamerLegion vs not - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776009617
+      }
+    ]
+  },
+  "requested_end_ts": "1776032189",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776006798",
+  "slug": "dota2-gl-not2-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "62446285954713822658835272157159796509065953277494037483404950243151502027258"
+}

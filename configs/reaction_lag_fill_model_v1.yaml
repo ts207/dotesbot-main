@@ -1,0 +1,18 @@
+fill_model: conservative_market_take_v1
+order_timeout_seconds: 5
+max_order_size_usd: 25
+use_best_ask_only: true
+queue_position: behind_displayed_liquidity
+allow_partial_fills: true
+require_trade_through_for_full_fill: true
+assume_fill_if_ask_persists_ms: null
+slippage_bps: 0
+fees_bps: 0
+
+fill_assumptions:
+  optimistic_displayed_liquidity:
+    require_trade_through_for_full_fill: false
+    allow_partial_fills: true
+  conservative_trade_through:
+    require_trade_through_for_full_fill: true
+    allow_partial_fills: true

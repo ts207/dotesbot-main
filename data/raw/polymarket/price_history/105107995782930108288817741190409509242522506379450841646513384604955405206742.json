@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x7d584d026032fce7b552a936c3fd7658ad6e2c2f313c3080c2ea0cc6e2022424",
+  "event_id": "376187",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:04+00:00",
+  "http_status": 200,
+  "market_id": "1974162",
+  "question": "Dota 2: Nemiga Gaming vs BetBoom Team - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.595,
+        "t": 1776128458
+      },
+      {
+        "p": 0.325,
+        "t": 1776153657
+      },
+      {
+        "p": 0.17,
+        "t": 1776160855
+      }
+    ]
+  },
+  "requested_end_ts": "1776175159",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776114743",
+  "slug": "dota2-nemiga-bb4-2026-04-14-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "105107995782930108288817741190409509242522506379450841646513384604955405206742"
+}

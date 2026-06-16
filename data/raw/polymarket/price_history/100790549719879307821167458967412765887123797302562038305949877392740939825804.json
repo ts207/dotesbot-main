@@ -1,0 +1,60 @@
+{
+  "condition_id": "0x1a87d6c1d3600d33cd774ec8f88628e22f9a8b63069b7674e0fa1f1461c96ad6",
+  "event_id": "564001",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:52:07+00:00",
+  "http_status": 200,
+  "market_id": "2449171",
+  "question": "Dota 2: G-Time vs summer bear - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1780711217
+      },
+      {
+        "p": 0.5,
+        "t": 1780714804
+      },
+      {
+        "p": 0.55,
+        "t": 1780718404
+      },
+      {
+        "p": 0.68,
+        "t": 1780722005
+      },
+      {
+        "p": 0.685,
+        "t": 1780725604
+      },
+      {
+        "p": 0.68,
+        "t": 1780729203
+      },
+      {
+        "p": 0.56,
+        "t": 1780732803
+      },
+      {
+        "p": 0.5,
+        "t": 1780736403
+      },
+      {
+        "p": 0.0005,
+        "t": 1780740014
+      },
+      {
+        "p": 0.0005,
+        "t": 1780743603
+      }
+    ]
+  },
+  "requested_end_ts": "1780747021",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1780709590",
+  "slug": "dota2-gtime-sb5-2026-06-06-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "100790549719879307821167458967412765887123797302562038305949877392740939825804"
+}

@@ -1,0 +1,56 @@
+{
+  "condition_id": "0x392bed40e46459ae5c4d0aa9fdeb5c095c4c441cb4fee3247f9050ac4d232415",
+  "event_id": "372309",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:03+00:00",
+  "http_status": 200,
+  "market_id": "1961644",
+  "question": "Dota 2: Zero Tenacity vs Team Lynx - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.44,
+        "t": 1776042052
+      },
+      {
+        "p": 0.44,
+        "t": 1776049256
+      },
+      {
+        "p": 0.44,
+        "t": 1776052846
+      },
+      {
+        "p": 0.44,
+        "t": 1776056459
+      },
+      {
+        "p": 0.45,
+        "t": 1776063655
+      },
+      {
+        "p": 0.45,
+        "t": 1776067254
+      },
+      {
+        "p": 0.45,
+        "t": 1776074459
+      },
+      {
+        "p": 0.45,
+        "t": 1776078059
+      },
+      {
+        "p": 0.45,
+        "t": 1776085259
+      }
+    ]
+  },
+  "requested_end_ts": "1776102207",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776021811",
+  "slug": "dota2-z10-lynx-2026-04-13-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "43764336172707913843520464763656596140507346376432874579320441137904612562810"
+}

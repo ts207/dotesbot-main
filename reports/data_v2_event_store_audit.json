@@ -1,0 +1,196 @@
+{
+  "data_root": "data_v2",
+  "generated_at": "2026-06-07T13:14:53.864913+00:00",
+  "hard_failures": [],
+  "quarantine_manifest": "data_v2/quarantine_manifest.csv",
+  "status": "pass",
+  "tables": [
+    {
+      "actual_column_count": 20,
+      "exists": true,
+      "expected_column_count": 21,
+      "file_count": 1069,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 415878,
+      "table": "arb_attempts",
+      "unexpected_columns": [],
+      "usable_file_count": 1069,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 13,
+      "exists": true,
+      "expected_column_count": 14,
+      "file_count": 4187,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 389327,
+      "table": "book_ticks",
+      "unexpected_columns": [],
+      "usable_file_count": 4187,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 29,
+      "exists": true,
+      "expected_column_count": 30,
+      "file_count": 835,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 8928,
+      "table": "continuous_attempts",
+      "unexpected_columns": [],
+      "usable_file_count": 835,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 50,
+      "exists": true,
+      "expected_column_count": 51,
+      "file_count": 170,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 3164,
+      "table": "dota_events",
+      "unexpected_columns": [],
+      "usable_file_count": 170,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 18,
+      "exists": true,
+      "expected_column_count": 19,
+      "file_count": 2934,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 1,
+      "read_error": null,
+      "row_count": 315840,
+      "table": "exits",
+      "unexpected_columns": [],
+      "usable_file_count": 2933,
+      "zero_byte_file_count": 1
+    },
+    {
+      "actual_column_count": 63,
+      "exists": true,
+      "expected_column_count": 64,
+      "file_count": 118,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 287,
+      "table": "latency",
+      "unexpected_columns": [],
+      "usable_file_count": 118,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 17,
+      "exists": true,
+      "expected_column_count": 18,
+      "file_count": 12,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 3081,
+      "table": "markouts",
+      "unexpected_columns": [],
+      "usable_file_count": 12,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 89,
+      "exists": true,
+      "expected_column_count": 90,
+      "file_count": 134,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 2674,
+      "table": "signals",
+      "unexpected_columns": [],
+      "usable_file_count": 134,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 29,
+      "exists": true,
+      "expected_column_count": 30,
+      "file_count": 16650,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 1,
+      "read_error": null,
+      "row_count": 603141,
+      "table": "snapshots",
+      "unexpected_columns": [],
+      "usable_file_count": 16649,
+      "zero_byte_file_count": 1
+    },
+    {
+      "actual_column_count": 12,
+      "exists": true,
+      "expected_column_count": 13,
+      "file_count": 7252,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 94568,
+      "table": "source_delay",
+      "unexpected_columns": [],
+      "usable_file_count": 7252,
+      "zero_byte_file_count": 0
+    },
+    {
+      "actual_column_count": 36,
+      "exists": true,
+      "expected_column_count": 37,
+      "file_count": 119,
+      "missing_expected_columns": [
+        "date"
+      ],
+      "non_quarantined_zero_byte_files": [],
+      "quarantined_file_count": 0,
+      "read_error": null,
+      "row_count": 1868,
+      "table": "trade_attempts",
+      "unexpected_columns": [],
+      "usable_file_count": 119,
+      "zero_byte_file_count": 0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "condition_id": "0x67b8982e46b8723c14fa02be022f69a5b6eb4f6a808005fa6407699e068557e2",
+  "event_id": "512482",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T08:41:55+00:00",
+  "http_status": 200,
+  "market_id": "2330039",
+  "question": "Dota 2: Miposhka Team vs Nix Team - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.555,
+        "t": 1779433209
+      },
+      {
+        "p": 0.555,
+        "t": 1779436805
+      },
+      {
+        "p": 0.545,
+        "t": 1779440409
+      },
+      {
+        "p": 0.54,
+        "t": 1779444007
+      },
+      {
+        "p": 0.545,
+        "t": 1779447607
+      },
+      {
+        "p": 0.085,
+        "t": 1779451209
+      },
+      {
+        "p": 0.645,
+        "t": 1779454805
+      },
+      {
+        "p": 0.9995,
+        "t": 1779458409
+      },
+      {
+        "p": 0.9995,
+        "t": 1779462008
+      }
+    ]
+  },
+  "requested_end_ts": "1779463258",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1779429164",
+  "slug": "dota2-miposh-nix-2026-05-22-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "102703266055246723984087857000344729124117569699760708471902753344757981645689"
+}

@@ -1,0 +1,66 @@
+{
+  "allowed_next_phase_work": [
+    "collect_more_non_locked_rows",
+    "improve_team_strength_priors",
+    "improve_recent_form_features",
+    "improve_roster_continuity_features",
+    "improve_tournament_tier_features",
+    "improve_patch_age_and_trait_age_features",
+    "improve_hero_pair_synergy_features",
+    "improve_hero_counter_features",
+    "improve_draft_archetype_features",
+    "improve_radiant_dire_patch_bias_features",
+    "rebuild_fresh_temporal_series_split",
+    "rerun_constrained_residual_models_only"
+  ],
+  "best_residual_diagnostic": {
+    "alpha": 100.0,
+    "brier_improvement": 0.00174341,
+    "log_loss_improvement": 0.00206878,
+    "name": "ultra_small",
+    "status": "diagnostic_only_not_source_robust"
+  },
+  "current_best_model": "B0_market_only",
+  "forbidden_until_next_pass": [
+    "GBM",
+    "CatBoost",
+    "hero_categorical_model",
+    "calibration",
+    "threshold_tuning",
+    "execution_replay",
+    "locked_execution_audit",
+    "execution_simulation",
+    "trading_logic",
+    "live_logic"
+  ],
+  "latest_dataset": {
+    "non_locked_probability_ready": 306,
+    "train_rows": null,
+    "validation_rows": null
+  },
+  "locked_execution_audit_status": "not_run",
+  "minimum_next_data_target": 500,
+  "minimum_next_validation_rows": 125,
+  "model_b_v1": "stopped",
+  "next_modeling_gate": {
+    "required_models": [
+      "B0_market_only",
+      "B1a_intercept_only",
+      "B1b_ultra_small",
+      "B1c_compact"
+    ],
+    "required_non_locked_probability_ready": 500,
+    "required_pass_conditions": [
+      "beats_B0_global_log_loss",
+      "beats_B0_global_brier",
+      "beats_B0_in_dominant_price_history_proxy_bucket",
+      "beats_B0_in_dominant_polymarket_public_search_bucket",
+      "source_specific_refits_not_negative"
+    ],
+    "required_validation_rows": 125
+  },
+  "next_phase": "feature_and_data_improvement",
+  "source_of_truth": "reports/model_b_v1_research_stop.json",
+  "stop_reason": "residual_not_source_robust",
+  "trading_status": "do_not_trade"
+}

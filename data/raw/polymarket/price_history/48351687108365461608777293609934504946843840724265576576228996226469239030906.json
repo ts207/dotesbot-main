@@ -1,0 +1,40 @@
+{
+  "condition_id": "0x7a84e6e72cf613b1a674fcacce0f084fe867e12890c95442d09e7c6fbc34c8bb",
+  "event_id": "134363",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T07:50:58+00:00",
+  "http_status": 200,
+  "market_id": "1071458",
+  "question": "Dota 2: yache123 vs Veroja - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.51,
+        "t": 1767164417
+      },
+      {
+        "p": 0.47,
+        "t": 1767168020
+      },
+      {
+        "p": 0.705,
+        "t": 1767171619
+      },
+      {
+        "p": 0.9995,
+        "t": 1767175217
+      },
+      {
+        "p": 0.9995,
+        "t": 1767178828
+      }
+    ]
+  },
+  "requested_end_ts": "1767181691",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1767160870",
+  "slug": "dota2-y123-ver-2025-12-31-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "48351687108365461608777293609934504946843840724265576576228996226469239030906"
+}

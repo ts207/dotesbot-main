@@ -1,0 +1,178 @@
+{
+  "calibration_method": "isotonic",
+  "estimator": "ExtraTreesClassifier",
+  "feature_names": [
+    "game_time_sec",
+    "radiant_score",
+    "dire_score",
+    "score_diff",
+    "radiant_tower_state",
+    "dire_tower_state",
+    "radiant_barracks_state",
+    "dire_barracks_state",
+    "radiant_net_worth",
+    "dire_net_worth",
+    "net_worth_diff",
+    "top1_net_worth_diff",
+    "top2_net_worth_diff",
+    "top3_net_worth_diff",
+    "level_diff",
+    "gpm_diff",
+    "xpm_diff",
+    "gold_diff",
+    "radiant_dead_count",
+    "dire_dead_count",
+    "radiant_core_dead_count",
+    "dire_core_dead_count",
+    "max_respawn_timer",
+    "radiant_has_aegis",
+    "dire_has_aegis",
+    "radiant_team_win_ratio",
+    "dire_team_win_ratio",
+    "game_time_sec_missing",
+    "radiant_net_worth_missing",
+    "dire_net_worth_missing",
+    "net_worth_diff_missing",
+    "top1_net_worth_diff_missing",
+    "top2_net_worth_diff_missing",
+    "top3_net_worth_diff_missing",
+    "level_diff_missing",
+    "gpm_diff_missing",
+    "xpm_diff_missing",
+    "gold_diff_missing",
+    "max_respawn_timer_missing",
+    "radiant_has_aegis_missing",
+    "dire_has_aegis_missing"
+  ],
+  "metrics": {
+    "early": {
+      "brier_score": 0.1946280206077578,
+      "calibration_method": "isotonic",
+      "log_loss": 0.5693507593605408,
+      "matches": 930,
+      "rows": 18600,
+      "test_rows": 3720
+    },
+    "laning": {
+      "brier_score": 0.1534110331547516,
+      "calibration_method": "isotonic",
+      "log_loss": 0.4681235699063837,
+      "matches": 923,
+      "rows": 18460,
+      "test_rows": 3700
+    },
+    "late": {
+      "brier_score": 0.07980999813569367,
+      "calibration_method": "isotonic",
+      "log_loss": 0.26357186442623787,
+      "matches": 622,
+      "rows": 12399,
+      "test_rows": 2487
+    },
+    "mid": {
+      "brier_score": 0.11631302959430648,
+      "calibration_method": "isotonic",
+      "log_loss": 0.7389287272498817,
+      "matches": 874,
+      "rows": 17480,
+      "test_rows": 3500
+    },
+    "ultra_late": {
+      "brier_score": 0.03865767860324669,
+      "calibration_method": "isotonic",
+      "log_loss": 0.12657532391665205,
+      "matches": 158,
+      "rows": 3160,
+      "test_rows": 640
+    }
+  },
+  "phase": "all",
+  "phase_counts": {
+    "early": {
+      "matches": 930,
+      "rows": 18600
+    },
+    "laning": {
+      "matches": 923,
+      "rows": 18460
+    },
+    "late": {
+      "matches": 622,
+      "rows": 12399
+    },
+    "mid": {
+      "matches": 874,
+      "rows": 17480
+    },
+    "ultra_late": {
+      "matches": 158,
+      "rows": 3160
+    }
+  },
+  "schema_version": "dota_fair_v2",
+  "target_name": "radiant_win",
+  "top_features": {
+    "early": [
+      "net_worth_diff",
+      "top3_net_worth_diff",
+      "top2_net_worth_diff",
+      "score_diff",
+      "top1_net_worth_diff",
+      "dire_net_worth",
+      "radiant_score",
+      "dire_score",
+      "radiant_net_worth",
+      "game_time_sec"
+    ],
+    "laning": [
+      "score_diff",
+      "net_worth_diff",
+      "top3_net_worth_diff",
+      "top2_net_worth_diff",
+      "top1_net_worth_diff",
+      "radiant_score",
+      "dire_tower_state",
+      "dire_score",
+      "radiant_tower_state",
+      "dire_net_worth"
+    ],
+    "late": [
+      "net_worth_diff",
+      "score_diff",
+      "radiant_tower_state",
+      "top3_net_worth_diff",
+      "dire_barracks_state",
+      "dire_tower_state",
+      "top2_net_worth_diff",
+      "radiant_barracks_state",
+      "top1_net_worth_diff",
+      "radiant_score"
+    ],
+    "mid": [
+      "net_worth_diff",
+      "score_diff",
+      "top3_net_worth_diff",
+      "top2_net_worth_diff",
+      "dire_tower_state",
+      "radiant_tower_state",
+      "top1_net_worth_diff",
+      "radiant_score",
+      "dire_score",
+      "dire_net_worth"
+    ],
+    "ultra_late": [
+      "dire_barracks_state",
+      "dire_tower_state",
+      "radiant_tower_state",
+      "radiant_barracks_state",
+      "score_diff",
+      "top3_net_worth_diff",
+      "net_worth_diff",
+      "top2_net_worth_diff",
+      "dire_score",
+      "top1_net_worth_diff"
+    ]
+  },
+  "training_match_count": 1009,
+  "training_rows": 70099
+}

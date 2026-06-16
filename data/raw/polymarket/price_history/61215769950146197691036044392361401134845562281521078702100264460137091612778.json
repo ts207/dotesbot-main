@@ -1,0 +1,52 @@
+{
+  "condition_id": "0xf074295638da0719e65aede1b9587da326b8405b5de25ad9a33a541261b4e6ce",
+  "event_id": "318040",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:02+00:00",
+  "http_status": 200,
+  "market_id": "1761288",
+  "question": "Dota 2: Xtreme Gaming vs PARIVISION - Game 1 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.405,
+        "t": 1774710042
+      },
+      {
+        "p": 0.4,
+        "t": 1774713636
+      },
+      {
+        "p": 0.4,
+        "t": 1774717244
+      },
+      {
+        "p": 0.375,
+        "t": 1774720846
+      },
+      {
+        "p": 0.385,
+        "t": 1774724437
+      },
+      {
+        "p": 0.0005,
+        "t": 1774728035
+      },
+      {
+        "p": 0.0005,
+        "t": 1774731641
+      },
+      {
+        "p": 0.0005,
+        "t": 1774735237
+      }
+    ]
+  },
+  "requested_end_ts": "1774738782",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1774708373",
+  "slug": "dota2-xtreme-pari-2026-03-28-game1",
+  "source_universe": "polymarket_public_search",
+  "token_id": "61215769950146197691036044392361401134845562281521078702100264460137091612778"
+}

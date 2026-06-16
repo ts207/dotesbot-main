@@ -1,0 +1,24 @@
+{
+  "condition_id": "0x41dd27fd407db9baaa361bd602b08f6c486e269609d83ed4b7834550b762d6eb",
+  "event_id": "374021",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:14:21+00:00",
+  "http_status": 200,
+  "market_id": "1966784",
+  "question": "Dota 2: OG vs REKONIX - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.5,
+        "t": 1776067257
+      }
+    ]
+  },
+  "requested_end_ts": "1776082691",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1776063168",
+  "slug": "dota2-og-rnx-2026-04-13-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "19079227235419454711767393677268180644598382490959570190601727076741177669981"
+}

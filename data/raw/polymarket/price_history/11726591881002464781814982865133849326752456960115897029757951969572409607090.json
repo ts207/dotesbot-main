@@ -1,0 +1,32 @@
+{
+  "condition_id": "0x9ed257994db5ed4a44838ade71570ca2a15897b913377149531d4bcfe99f63ae",
+  "event_id": "368914",
+  "fetch_status": "ok",
+  "fetched_at": "2026-06-07T03:45:00+00:00",
+  "http_status": 200,
+  "market_id": "1950484",
+  "question": "Dota 2: L1ga Team vs Rune Eaters - Game 2 Winner",
+  "raw_response": {
+    "history": [
+      {
+        "p": 0.515,
+        "t": 1775952000
+      },
+      {
+        "p": 0.515,
+        "t": 1775955658
+      },
+      {
+        "p": 0.8,
+        "t": 1775977257
+      }
+    ]
+  },
+  "requested_end_ts": "1776006769",
+  "requested_fidelity": "60",
+  "requested_interval": "all",
+  "requested_start_ts": "1775943255",
+  "slug": "dota2-l1ga-re-2026-04-12-game2",
+  "source_universe": "polymarket_public_search",
+  "token_id": "11726591881002464781814982865133849326752456960115897029757951969572409607090"
+}
