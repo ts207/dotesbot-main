@@ -46,32 +46,12 @@ VALUE_MAX_BOOK_AGE_MS = int(os.getenv("VALUE_MAX_BOOK_AGE_MS", "30000"))
 VALUE_FLIP_LEAD = int(os.getenv("VALUE_FLIP_LEAD", "5000"))
 VALUE_FLIP_ASK_FLOOR = float(os.getenv("VALUE_FLIP_ASK_FLOOR", "0.35"))
 
+from fair_value import compute_side_fair, _lead_slope
+
 _NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555556")
 
 def _make_signal_id(match_id: str, received_at_ns: int) -> str:
     return str(uuid.uuid5(_NAMESPACE, f"value|{match_id}|{received_at_ns}"))
-
-# Rolling radiant-lead history per match → net-worth-lead trajectory (slope).
-_SLOPE_WINDOW_NS = 300 * 1_000_000_000          # 5-minute window
-_lead_hist: dict[str, deque] = {}
-
-def _lead_slope(match_id: str, radiant_lead: int, now_ns: int) -> float:
-    """Change in radiant net-worth lead over the trailing ~5 min. 0.0 until enough
-    history exists. A growing leader's lead → positive (in radiant perspective)."""
-    dq = _lead_hist.setdefault(match_id, deque(maxlen=4000))
-    if not dq or dq[-1][0] != now_ns:
-        dq.append((now_ns, int(radiant_lead)))
-    cutoff = now_ns - int(_SLOPE_WINDOW_NS * 1.5)
-    while dq and dq[0][0] < cutoff:
-        dq.popleft()
-    target = now_ns - _SLOPE_WINDOW_NS
-    past = None
-    for ns, ld in dq:
-        if ns <= target:
-            past = ld
-        else:
-            break
-    return 0.0 if past is None else float(radiant_lead - past)
 
 @dataclass(frozen=True)
 class ValueSignal:
@@ -276,23 +256,10 @@ class ValueEngine:
         # 5. Compute fair price (LEADER perspective). Elo resolves by team_id OR
         # name (feed gives id ~3% of the time, name almost always). Trajectory =
         # leader's lead change /5min. Draft-H2H = leader's hero-matchup advantage.
-        rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
-        rname, dname = game.get("radiant_team"), game.get("dire_team")
-        slope_rad = _lead_slope(match_id, lead, cur_ns)   # radiant perspective
-        players = game.get("players") or []
-        rad_heroes = [p.get("hero_id") for p in players if p.get("team") == 0]
-        dire_heroes = [p.get("hero_id") for p in players if p.get("team") == 1]
-        draft_rad = winprob.draft_h2h(rad_heroes, dire_heroes)   # radiant perspective, or None
-        if direction == "radiant":
-            elo_diff = winprob.elo_diff(rtid, dtid, rname, dname)
-            lead_slope = slope_rad
-            draft = draft_rad
-        else:
-            elo_diff = winprob.elo_diff(dtid, rtid, dname, rname)
-            lead_slope = -slope_rad
-            draft = (-draft_rad) if draft_rad is not None else None
-
-        fair_price = winprob.fair(abs(lead), game_time, elo_diff, lead_slope, draft)
+        
+        fair_res = compute_side_fair(game=game, side=direction, received_at_ns_override=cur_ns)
+        fair_price = fair_res.fair
+        elo_diff = fair_res.elo_diff
         edge = fair_price - ask
 
         # Tiered gate: if we already hold the OPPOSITE token on this match, this is the

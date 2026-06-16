@@ -494,6 +494,9 @@ async def steam_loop(
 
                 # Drain manual orders from dashboard (one per tick)
                 try:
+                    import sys
+                    if "ops" not in sys.path:
+                        sys.path.append(os.path.join(os.getcwd(), "ops"))
                     from manual_orders import drain as _drain_manual, mark_processed as _mark_manual
                     for _mo in _drain_manual():
                         try:
@@ -1569,21 +1572,23 @@ async def steam_loop(
                                         "executable_edge": signal.get("executable_edge"),
                                     }, tok_id, book_store, signal_markout_logger))
 
-                                cp = _exit_adverse_position_for_signal(signal, mapping, trader, book_store)
-                                if cp:
-                                    position_logger.log_exit(cp)
-                                    print(
-                                        f"ADVERSE EXIT {mapping['name']} {cp.side} "
-                                        f"pnl=${cp.pnl_usd:+.2f} hold={cp.hold_sec:.0f}s"
-                                    )
-                                
-                                if check_live_exits_fn and signal.get("event_is_primary"):
-                                    favored_token_id = signal.get("token_id")
-                                    if favored_token_id:
-                                        yes_token = mapping.get("yes_token_id")
-                                        no_token = mapping.get("no_token_id")
-                                        opposing_token = no_token if favored_token_id == yes_token else yes_token
-                                        asyncio.create_task(check_live_exits_fn(adverse_token_ids={opposing_token}))
+                                from config import ENABLE_LEGACY_ADVERSE_EXITS
+                                if ENABLE_LEGACY_ADVERSE_EXITS:
+                                    cp = _exit_adverse_position_for_signal(signal, mapping, trader, book_store)
+                                    if cp:
+                                        position_logger.log_exit(cp)
+                                        print(
+                                            f"ADVERSE EXIT {mapping['name']} {cp.side} "
+                                            f"pnl=${cp.pnl_usd:+.2f} hold={cp.hold_sec:.0f}s"
+                                        )
+
+                                    if check_live_exits_fn and signal.get("event_is_primary"):
+                                        favored_token_id = signal.get("token_id")
+                                        if favored_token_id:
+                                            yes_token = mapping.get("yes_token_id")
+                                            no_token = mapping.get("no_token_id")
+                                            opposing_token = no_token if favored_token_id == yes_token else yes_token
+                                            asyncio.create_task(check_live_exits_fn(adverse_token_ids={opposing_token}))
 
                                 if ENABLE_MATCH_WINNER_RESEARCH and mapping.get("market_type") == "MATCH_WINNER":
                                     # Task 4: Match Winner research mode sidecar

@@ -11242,9 +11242,9 @@ markets:
   confidence: 0.0
   scheduled_start_utc: '2026-06-11 00:00:00+00'
   source_url: https://polymarket.com/event/dota2-nawedw-the-2026-06-11
-  current_game_number: 3
+  current_game_number: 2
   series_score_yes: 0
-  series_score_no: 2
+  series_score_no: 1
 - name: 'Dota 2: NA, we''d win vs the bug - Game 2 Winner'
   market_id: '2491162'
   condition_id: '0xf9aa9dafc3b304c7e08f38b4689821c5e0f682c902fd67a1f03604e621f67b50'
@@ -11258,9 +11258,9 @@ markets:
   confidence: 0.0
   scheduled_start_utc: '2026-06-11 00:00:00+00'
   source_url: https://polymarket.com/event/dota2-nawedw-the-2026-06-11
-  current_game_number: 3
+  current_game_number: 2
   series_score_yes: 0
-  series_score_no: 2
+  series_score_no: 1
 - name: 'Dota 2: D family vs InterActive Philippines - Game 2 Winner'
   condition_id: '0x9e3233f3322150dd1d652cc4a8223bee94e53dc71f4d508c8d4e8a8413c3c85a'
   market_id: '2547001'
@@ -11353,8 +11353,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 1
-  series_score_no: 0
-  current_game_number: 2
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Mentality Monster
   no_team: InterActive Philippines
   yes_token_id: '26103853155599657869085318905203473321590149287892758027529473093504241217982'
@@ -11373,9 +11373,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
+  series_score_yes: 1
   series_score_no: 0
-  current_game_number: 1
+  current_game_number: 2
   yes_team: Roar Gaming
   no_team: Cloud Rising
   yes_token_id: '16322333746911273088746398018421349741098602404187050287823176345438968444704'
@@ -11395,8 +11395,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 1
-  series_score_no: 0
-  current_game_number: 2
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Mentality Monster
   no_team: InterActive Philippines
   yes_token_id: '35809085094454129567581874454648426945591249478361386776445367668934766304215'
@@ -11405,6 +11405,49 @@ markets:
   confidence: 1.0
   scheduled_start_utc: '2026-06-15 20:29:32'
   auto_mapped_at_utc: '2026-06-16T04:55:39+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Mentality Monsters
+  steam_side_mapping: reversed
+- name: 'Dota 2: Roar Gaming vs Cloud Rising - Game 2 Winner'
+  condition_id: '0x7ec635b2e1335da1c01002aaa90ed9abe199ccc083f55c69836660f813bac48f'
+  market_id: '2552676'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 0
+  current_game_number: 2
+  yes_team: Roar Gaming
+  no_team: Cloud Rising
+  yes_token_id: '38425401820980484653600719985068828914490626043971747855655185836386733803329'
+  no_token_id: '104651044298821265941316990343231604438677961284707614632774173488319410623443'
+  dota_match_id: '8853816549'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T05:50:53+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Roar
+  steam_dire_team: Cloud Rising
+  steam_side_mapping: normal
+- name: 'Dota 2: Mentality Monster vs InterActive Philippines (BO3) - EPL World Series
+    Southeast Asia Group Stage'
+  condition_id: '0x70edd9f0f0571d82323699dbcb14a83924ad65c4c5e03f22ce38bde9ecc102f3'
+  market_id: '2556363'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Mentality Monster
+  no_team: InterActive Philippines
+  yes_token_id: '23609269158812881913451351883562868722676870772487127314578104419845296151675'
+  no_token_id: '87272339386393780934004560657212636371421118100003837514381519362897689038392'
+  dota_match_id: '8853817927'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 20:29:32'
+  auto_mapped_at_utc: '2026-06-16T05:53:06+00:00'
   auto_mapped_source: auto_series_binder
   steam_radiant_team: InterActive Philippines
   steam_dire_team: Mentality Monsters

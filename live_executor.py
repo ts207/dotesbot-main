@@ -1209,8 +1209,18 @@ class LiveExecutor:
         return attempt
 
     def _reject_value(self, signal, mapping, game, token_id, size_usd, reason) -> LiveOrderAttempt:
+        signal_kind = signal.__class__.__name__
+        if signal_kind == "EventTriggeredValueSignal":
+            event_type = "EVENT_TRIGGERED_VALUE"
+        elif signal_kind == "DSwingSignal":
+            event_type = "DSWING"
+        else:
+            event_type = "VALUE"
+            
+        trader_kind = "dswing" if event_type == "DSWING" else "value"
+
         return LiveOrderAttempt(
-            event_type="VALUE",
+            event_type=event_type,
             event_direction=str(signal.direction),
             token_id=str(token_id or ""),
             side=signal.side,
@@ -1225,7 +1235,7 @@ class LiveExecutor:
             match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
             game_time_sec=signal.game_time_sec,
             created_at_ns=time.time_ns(),
-            trader_kind="value",
+            trader_kind=trader_kind,
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
         )
@@ -1347,8 +1357,16 @@ class LiveExecutor:
         if not token_id:
             return self._reject_value(signal, mapping, game, "", 0.0, "missing_token_id")
 
-        # --- budget gates ---
         size_usd = min(float(signal.sized_usd), MAX_TRADE_USD)
+
+        mapping_result = validate_mapping_identity(mapping, game)
+        if not mapping_result.ok:
+            return self._reject_value(
+                signal, mapping, game, token_id, size_usd,
+                f"mapping_invalid:{';'.join(mapping_result.mapping_errors) or 'confidence_not_1'}"
+            )
+
+        # --- budget gates ---
         if not ALLOW_EVENT_TRADES:
             return self._reject_value(signal, mapping, game, token_id, size_usd, "event_trades_disabled")
         if self.total_submitted_usd + size_usd > MAX_TOTAL_LIVE_USD:
@@ -1401,8 +1419,27 @@ class LiveExecutor:
         price_cap = round(min(ask + _fak_ticks * _tick, signal.fair_price), 4)
         neg_risk = bool(mapping.get("neg_risk", False))
 
+        if ask > price_cap:
+            return self._reject_value(
+                signal, mapping, game, token_id, size_usd,
+                f"best_ask_above_price_cap:ask={ask:.4f}_cap={price_cap:.4f}"
+            )
+
+        if ask > signal.fair_price - 0.005:
+            return self._reject_value(
+                signal, mapping, game, token_id, size_usd,
+                f"fresh_ask_not_below_fair:ask={ask:.4f}_fair={signal.fair_price:.4f}"
+            )
+
         signal_kind = signal.__class__.__name__
-        attempt_event_type = "EVENT_TRIGGERED_VALUE" if signal_kind == "EventTriggeredValueSignal" else "VALUE"
+        if signal_kind == "EventTriggeredValueSignal":
+            attempt_event_type = "EVENT_TRIGGERED_VALUE"
+        elif signal_kind == "DSwingSignal":
+            attempt_event_type = "DSWING"
+        else:
+            attempt_event_type = "VALUE"
+            
+        trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"
 
         attempt = LiveOrderAttempt(
             event_type=attempt_event_type,
@@ -1423,7 +1460,7 @@ class LiveExecutor:
             match_id=signal_match_id,
             game_time_sec=signal.game_time_sec,
             created_at_ns=time.time_ns(),
-            trader_kind="value",
+            trader_kind=trader_kind,
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
         )

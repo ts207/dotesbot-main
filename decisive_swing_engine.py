@@ -31,9 +31,34 @@ DSWING_MAX_PRICE = float(os.getenv("DSWING_MAX_PRICE", "0.92"))
 DSWING_MIN_GAME_TIME = int(os.getenv("DSWING_MIN_GAME_TIME", "600"))
 DSWING_TRADE_USD = float(os.getenv("DSWING_TRADE_USD", "5.0"))
 DSWING_MAX_BOOK_AGE_MS = int(os.getenv("DSWING_MAX_BOOK_AGE_MS", "15000"))
+DSWING_MIN_P_GAME = float(os.getenv("DSWING_MIN_P_GAME", "0.88"))
 
 _NS = uuid.UUID("11111111-2222-3333-4444-555555555557")
 _sniped: set[tuple[str, str]] = set()   # (match_id, direction) already fired
+
+import json
+_SNIPES_FILE = "logs/dswing_snipes.json"
+
+def _load_snipes():
+    global _sniped
+    if os.path.exists(_SNIPES_FILE):
+        try:
+            with open(_SNIPES_FILE) as f:
+                data = json.load(f)
+                _sniped = {tuple(x) for x in data}
+        except Exception:
+            pass
+
+def _save_snipe(match_id, direction):
+    _sniped.add((match_id, direction))
+    try:
+        os.makedirs(os.path.dirname(_SNIPES_FILE), exist_ok=True)
+        with open(_SNIPES_FILE, "w") as f:
+            json.dump(list(_sniped), f)
+    except Exception:
+        pass
+
+_load_snipes()
 
 
 @dataclass(frozen=True)
@@ -62,10 +87,9 @@ class DSwingReject:
     reason: str
 
 
-def _series_fair(mapping: Mapping, side: str, p_game: float) -> float:
+def _series_fair(mapping: Mapping, side: str, p_game: float) -> float | None:
     """Model series-win prob for the side that just (near-)won this map. Uses the
-    binder's series state via compute_bo3_match_p when valid; else assumes game-1
-    0-0 (a 1-0 leader wins a BO3 ~0.62). p_game = winner's prob of THIS map (~0.95)."""
+    binder's series state via compute_bo3_match_p. Rejects if state or model is missing."""
     def _i(x):
         try:
             return int(x)
@@ -74,20 +98,17 @@ def _series_fair(mapping: Mapping, side: str, p_game: float) -> float:
     gn = _i(mapping.get("current_game_number")) or _i(mapping.get("game_number"))
     sy, sn = _i(mapping.get("series_score_yes")), _i(mapping.get("series_score_no"))
     if compute_bo3_match_p is None:
-        return p_game  # no series model → treat as single-game (conservative-ish)
+        return None
+    if gn is None or sy is None or sn is None:
+        return None
     # winner-as-yes terms
     pc_yes = p_game if side == "YES" else (1.0 - p_game)
     sy2, sn2 = (sy, sn) if side == "YES" else (sn, sy)
-    for state in [(gn, sy2, sn2), (1, 0, 0)]:   # try real state, then game-1 0-0 fallback
-        g, a, b = state
-        if g is None:
-            continue
-        try:
-            p_yes_series = compute_bo3_match_p(pc_yes, 0.5, a, b, g)
-            return p_yes_series if side == "YES" else (1.0 - p_yes_series)
-        except Exception:
-            continue
-    return p_game
+    try:
+        p_yes_series = compute_bo3_match_p(pc_yes, 0.5, sy2, sn2, gn)
+        return p_yes_series if side == "YES" else (1.0 - p_yes_series)
+    except Exception:
+        return None
 
 
 class DecisiveSwingEngine:
@@ -145,17 +166,22 @@ class DecisiveSwingEngine:
             return [DSwingReject(match_id, "price_too_high")]
 
         # Elo + single-game prob (~0.95 at a decisive lead), then series fair.
-        rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
-        rnm, dnm = game.get("radiant_team"), game.get("dire_team")
-        elo = (winprob.elo_diff(rtid, dtid, rnm, dnm) if direction == "radiant"
-               else winprob.elo_diff(dtid, rtid, dnm, rnm))
-        p_game = winprob.fair(abs(lead), gt, elo)
+        from fair_value import compute_side_fair
+        fair_res = compute_side_fair(game=game, side=direction)
+        p_game = fair_res.fair
+        
+        if p_game < DSWING_MIN_P_GAME:
+            return [DSwingReject(match_id, f"p_game_too_low:{p_game:.3f}")]
+
         series_fair = _series_fair(mapping, side, p_game)
+        if series_fair is None:
+            return [DSwingReject(match_id, "missing_series_state_or_model")]
+            
         edge = series_fair - ask
         if edge < DSWING_MIN_EDGE:
             return [DSwingReject(match_id, f"edge_too_small:{edge:.3f}")]
 
-        _sniped.add((match_id, direction))
+        _save_snipe(match_id, direction)
         return [DSwingSignal(
             signal_id=str(uuid.uuid5(_NS, f"dswing|{match_id}|{direction}")),
             match_id=match_id, received_at_ns=int(game.get("received_at_ns") or 0),

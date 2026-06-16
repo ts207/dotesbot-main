@@ -229,25 +229,19 @@ def decide_live_exit(
     return ExitDecision(False)
 
 
+from fair_value import compute_side_fair
+
 def _current_fair_for_position(position, game: dict) -> float | None:
     backed = getattr(position, "backed_direction", None) or getattr(position, "entry_backed_side", None)
     if backed not in ("radiant", "dire"):
         return None
     try:
         radiant_lead = int(float(game.get("radiant_lead")))
-        game_time = int(float(game.get("game_time_sec") or 0))
     except (TypeError, ValueError):
         return None
-    rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
-    rname, dname = game.get("radiant_team"), game.get("dire_team")
-    if backed == "radiant":
-        elo = winprob.elo_diff(rtid, dtid, rname, dname)
-        side_lead = radiant_lead
-    else:
-        elo = winprob.elo_diff(dtid, rtid, dname, rname)
-        side_lead = -radiant_lead
-    leader_fair = winprob.fair(abs(side_lead), game_time, elo)
-    return leader_fair if side_lead >= 0 else 1.0 - leader_fair
+        
+    fair_res = compute_side_fair(game=game, side=backed)
+    return fair_res.fair
 
 
 def _decide_dswing_exit(

@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import time
+from collections import deque
+from dataclasses import dataclass
+from typing import Any, Literal, Mapping
+
+import winprob
+
+@dataclass(frozen=True)
+class FairValueResult:
+    side: str
+    fair: float
+    elo_diff: float | None
+    lead_slope: float | None = None
+    draft_h2h: float | None = None
+    fair_source: str = "winprob"
+
+# Rolling radiant-lead history per match → net-worth-lead trajectory (slope).
+_SLOPE_WINDOW_NS = 300 * 1_000_000_000          # 5-minute window
+_lead_hist: dict[str, deque] = {}
+
+def _lead_slope(match_id: str, radiant_lead: int, now_ns: int) -> float:
+    """Change in radiant net-worth lead over the trailing ~5 min. 0.0 until enough
+    history exists. A growing leader's lead → positive (in radiant perspective)."""
+    dq = _lead_hist.setdefault(match_id, deque(maxlen=4000))
+    if not dq or dq[-1][0] != now_ns:
+        dq.append((now_ns, int(radiant_lead)))
+    cutoff = now_ns - int(_SLOPE_WINDOW_NS * 1.5)
+    while dq and dq[0][0] < cutoff:
+        dq.popleft()
+    target = now_ns - _SLOPE_WINDOW_NS
+    past = None
+    for ns, ld in dq:
+        if ns <= target:
+            past = ld
+        else:
+            break
+    return 0.0 if past is None else float(radiant_lead - past)
+
+def compute_side_fair(
+    *,
+    game: Mapping[str, Any],
+    side: str,  # "radiant" or "dire"
+    radiant_lead_override: int | None = None,
+    received_at_ns_override: int | None = None,
+    include_slope: bool = True,
+    include_draft: bool = True,
+) -> FairValueResult:
+    match_id = str(game.get("match_id") or game.get("lobby_id") or "")
+    now_ns = received_at_ns_override if received_at_ns_override is not None else int(game.get("received_at_ns") or time.time_ns())
+    
+    try:
+        radiant_lead = int(game.get("radiant_lead") or 0)
+    except (TypeError, ValueError):
+        radiant_lead = 0
+        
+    if radiant_lead_override is not None:
+        radiant_lead = radiant_lead_override
+        
+    rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
+    rname, dname = game.get("radiant_team"), game.get("dire_team")
+    game_time = int(float(game.get("game_time_sec") or 0))
+
+    slope_rad = _lead_slope(match_id, radiant_lead, now_ns) if include_slope else 0.0
+    
+    draft_rad = None
+    if include_draft:
+        players = game.get("players") or []
+        rad_heroes = [p.get("hero_id") for p in players if p.get("team") == 0]
+        dire_heroes = [p.get("hero_id") for p in players if p.get("team") == 1]
+        draft_rad = winprob.draft_h2h(rad_heroes, dire_heroes)
+
+    if side == "radiant":
+        elo_diff = winprob.elo_diff(rtid, dtid, rname, dname)
+        lead_slope = slope_rad
+        draft = draft_rad
+        side_lead = radiant_lead
+    else:
+        elo_diff = winprob.elo_diff(dtid, rtid, dname, rname)
+        lead_slope = -slope_rad
+        draft = (-draft_rad) if draft_rad is not None else None
+        side_lead = -radiant_lead
+
+    # Always compute from leader's perspective, then invert if we are behind.
+    fair_leader = winprob.fair(abs(side_lead), game_time, elo_diff, lead_slope, draft)
+    fair_price = fair_leader if side_lead >= 0 else 1.0 - fair_leader
+
+    return FairValueResult(
+        side=side,
+        fair=fair_price,
+        elo_diff=elo_diff,
+        lead_slope=lead_slope,
+        draft_h2h=draft,
+    )

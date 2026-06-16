@@ -379,7 +379,13 @@ class PaperTrader:
             # Value-style (thesis_invalidation): hold to settlement.
             # DSwing-style (map_end_convergence): hold to map end.
             # Both skip take_profit, stop_loss, trailing_stop, and horizon.
-            if pos.hold_policy == "thesis_invalidation" or pos.strategy_kind in {"VALUE", "EVENT_TRIGGERED_VALUE"}:
+            
+            sk = str(pos.strategy_kind or "").upper()
+            et = str(pos.event_type or "").upper()
+            hp = str(pos.hold_policy or "")
+            is_value = hp == "thesis_invalidation" or sk in {"VALUE", "EVENT_TRIGGERED_VALUE"} or et in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE"}
+            
+            if is_value:
                 if pos.match_id in game_over_match_ids:
                     px = exit_px if exit_px is not None else pos.entry_price
                     to_close.append((token_id, px, "game_over"))
@@ -394,9 +400,9 @@ class PaperTrader:
                         and pos.fair_price < exit_px - 0.05):
                         to_close.append((token_id, exit_px, "fair_invalidation"))
                     # Catastrophe salvage: residual value cut if near zero and not a flip.
-                    elif 0.0 < 0.12 and exit_px < 0.12:
+                    elif exit_px < 0.12 and pos.fair_price < pos.entry_price - 0.03:
                          # Paper trader doesn't have easy NW lead access here, so we use a simpler
-                         # price-only floor as a safety net.
+                         # price-only floor combined with fair drop as a safety net.
                          to_close.append((token_id, exit_px, "catastrophe_salvage"))
                 continue
 

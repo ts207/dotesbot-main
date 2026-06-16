@@ -15,41 +15,26 @@ from config import (
     EVENT_VALUE_MIN_EDGE,
     EVENT_VALUE_MIN_FAIR_DELTA,
     EVENT_VALUE_TRADE_USD,
+    EVENT_VALUE_MIN_GAME_TIME,
+    EVENT_VALUE_MAX_GAME_TIME,
+    EVENT_VALUE_REVERSAL_MIN_EDGE,
+    EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA,
+    EVENT_VALUE_REVERSAL_MAX_ASK,
 )
 from derived_game_state import derive_game_state
 from gettoplive_state import validate_top_live_state
 from value_engine import VALUE_FLIP_ASK_FLOOR, VALUE_FLIP_LEAD, VALUE_MAX_BOOK_AGE_MS
 
 
-_NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555560")
+from fair_value import compute_side_fair
 
+_NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555560")
 
 def _make_signal_id(match_id: str, event_id: str, token_id: str) -> str:
     return str(uuid.uuid5(_NAMESPACE, f"event_value|{match_id}|{event_id}|{token_id}"))
 
-
 def _event_type_value(event_type: Any) -> str:
     return str(getattr(event_type, "value", event_type) or "")
-
-
-def _side_fair(
-    *,
-    side: str,
-    radiant_lead: int,
-    game_time_sec: int,
-    game: Mapping[str, Any],
-) -> tuple[float, float | None]:
-    rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
-    rname, dname = game.get("radiant_team"), game.get("dire_team")
-    if side == "radiant":
-        elo = winprob.elo_diff(rtid, dtid, rname, dname)
-        side_lead = radiant_lead
-    else:
-        elo = winprob.elo_diff(dtid, rtid, dname, rname)
-        side_lead = -radiant_lead
-    p_leader = winprob.fair(abs(side_lead), game_time_sec, elo)
-    return (p_leader if side_lead >= 0 else 1.0 - p_leader), elo
-
 
 @dataclass(frozen=True)
 class EventTriggeredValueSignal:
@@ -72,6 +57,7 @@ class EventTriggeredValueSignal:
     sized_usd: float
     book_age_ms: int
     derived_state_flags: tuple[str, ...]
+    is_reversal: bool
     would_pass_live_gates: bool = True
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
@@ -79,6 +65,10 @@ class EventTriggeredValueSignal:
     @property
     def fair_price(self) -> float:
         return self.fair_after
+
+    @property
+    def is_continuation(self) -> bool:
+        return not self.is_reversal
 
     def to_signal_dict(self) -> dict:
         return {
@@ -104,6 +94,8 @@ class EventTriggeredValueSignal:
             "event_family": "VALUE",
             "event_quality": 1.0,
             "event_direction": self.direction,
+            "is_reversal": self.is_reversal,
+            "is_continuation": self.is_continuation,
             "derived_state_flags": ",".join(self.derived_state_flags),
             "ask": self.ask,
             "edge": self.edge,
@@ -134,6 +126,7 @@ class EventTriggeredValueReject:
     game_time_sec: int | None = None
     elo_diff: float | None = None
     book_age_ms: int | None = None
+    is_reversal: bool | None = None
     would_pass_live_gates: bool = False
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
@@ -176,6 +169,11 @@ class EventTriggeredValueEngine:
             return [self._reject(event, match_id, cur_ns, reason)]
 
         game_time = int(game.get("game_time_sec") or 0)
+        if game_time < EVENT_VALUE_MIN_GAME_TIME:
+            return [self._reject(event, match_id, cur_ns, "game_too_early", game_time_sec=game_time)]
+        if game_time > EVENT_VALUE_MAX_GAME_TIME:
+            return [self._reject(event, match_id, cur_ns, "game_too_late", game_time_sec=game_time)]
+            
         lead_after = event.radiant_lead_after
         lead_before = event.radiant_lead_before
         if lead_after is None or lead_before is None:
@@ -230,16 +228,32 @@ class EventTriggeredValueEngine:
         if abs(side_lead_after) > VALUE_FLIP_LEAD and ask < VALUE_FLIP_ASK_FLOOR:
             return [self._reject(event, match_id, cur_ns, "orientation_flip_suspected", direction=direction, side=side, token_id=token_id, ask=ask, lead=lead_after, book_age_ms=book_age_ms)]
 
-        fair_before, elo_diff = _side_fair(side=direction, radiant_lead=lead_before, game_time_sec=game_time, game=game)
-        fair_after, _ = _side_fair(side=direction, radiant_lead=lead_after, game_time_sec=game_time, game=game)
+        res_before = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_before, received_at_ns_override=cur_ns)
+        res_after = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_after, received_at_ns_override=cur_ns)
+        
+        fair_before = res_before.fair
+        fair_after = res_after.fair
+        elo_diff = res_after.elo_diff
+        
         fair_delta = fair_after - fair_before
         edge = fair_after - ask
-        if fair_delta < EVENT_VALUE_MIN_FAIR_DELTA:
-            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
-        if edge < EVENT_VALUE_MIN_EDGE:
-            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+        
+        current_leader_side = "radiant" if lead_after > 0 else "dire"
+        is_reversal = (direction != current_leader_side)
+        
+        min_fair_delta = EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA if is_reversal else EVENT_VALUE_MIN_FAIR_DELTA
+        min_edge = EVENT_VALUE_REVERSAL_MIN_EDGE if is_reversal else EVENT_VALUE_MIN_EDGE
+        max_ask = EVENT_VALUE_REVERSAL_MAX_ASK if is_reversal else EVENT_VALUE_MAX_ASK
+        
+        if ask > max_ask:
+            return [self._reject(event, match_id, cur_ns, "price_too_high", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+        
+        if fair_delta < min_fair_delta:
+            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+        if edge < min_edge:
+            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
         if edge > EVENT_VALUE_MAX_EDGE:
-            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
 
         derived = derive_game_state(game)
         return [EventTriggeredValueSignal(
@@ -262,6 +276,7 @@ class EventTriggeredValueEngine:
             sized_usd=EVENT_VALUE_TRADE_USD,
             book_age_ms=book_age_ms,
             derived_state_flags=derived.flags,
+            is_reversal=is_reversal,
         )]
 
     def _reject(self, event: ActualDotaEvent, match_id: str, received_at_ns: int, reason: str, **kwargs) -> EventTriggeredValueReject:
