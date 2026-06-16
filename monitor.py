@@ -47,7 +47,8 @@ async def run(halt_on_critical=False):
     over = {}   # match_id -> exposure
     stuck = []  # settled-but-held
     try:
-        positions = json.load(open("logs/live_positions.json")).get("positions", [])
+        from storage_v2 import StorageV2
+        positions = StorageV2().load_positions(mode="live")
     except Exception:
         positions = []
     openp = [p for p in positions if p.get("state") == "OPEN"]

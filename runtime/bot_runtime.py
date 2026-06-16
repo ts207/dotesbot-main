@@ -100,6 +100,37 @@ def _annotate_signal_policy_for_paper(
 
     match_id = str(game.get("match_id") or game.get("lobby_id") or "")
 
+    risk_state = {
+        "open_positions": len(getattr(trader, "positions", {}) or {}),
+        "match_open_usd": getattr(trader, "_match_open_usd", {}).get(match_id, 0.0),
+        "total_submitted_usd": sum(getattr(trader, "_match_open_usd", {}).values()),
+        "daily_realized_pnl_usd": 0.0,
+    }
+
+    if mode == "dry_live":
+        try:
+            from storage_v2 import StorageV2
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            budget = StorageV2().load_daily_budget(today) or {}
+            
+            risk_state["open_positions"] += budget.get("open_positions", 0)
+            risk_state["total_submitted_usd"] += budget.get("total_submitted_usd", 0.0)
+            risk_state["daily_realized_pnl_usd"] += budget.get("daily_realized_pnl_usd", 0.0)
+            
+            live_match_usd = budget.get("submitted_match_usd", {})
+            if isinstance(live_match_usd, dict):
+                risk_state["match_open_usd"] += live_match_usd.get(match_id, 0.0)
+                
+            live_family_usd = budget.get("submitted_family_usd", {})
+            if isinstance(live_family_usd, dict):
+                risk_state["submitted_family_usd"] = dict(live_family_usd)
+                
+            live_match_sides = budget.get("submitted_match_sides", {})
+            if isinstance(live_match_sides, dict):
+                risk_state["submitted_match_sides"] = list(live_match_sides.values()) if isinstance(live_match_sides, dict) else list(live_match_sides)
+        except Exception as e:
+            print(f"ShadowLiveRiskState error: {e}")
+
     result = evaluate_policy(
         PolicyInput(
             mode=mode,
@@ -118,12 +149,7 @@ def _annotate_signal_policy_for_paper(
             mapping=dict(mapping),
             book=dict(book) if book else None,
             now_ns=time.time_ns(),
-            risk_state={
-                "open_positions": len(getattr(trader, "positions", {}) or {}),
-                "match_open_usd": getattr(trader, "_match_open_usd", {}).get(match_id, 0.0),
-                "total_submitted_usd": 0.0,
-                "daily_realized_pnl_usd": 0.0,
-            },
+            risk_state=risk_state,
         )
     )
 
@@ -2469,7 +2495,7 @@ async def main():
         if ENABLE_REAL_LIVE_TRADING:
             attempt_csv = LIVE_ATTEMPTS_CSV_PATH
             exit_csv = "logs/live_exits.csv"
-            pos_json = "logs/live_positions.json"
+            pos_json = None
             execution_path = "real_clob"
         else:
             attempt_csv = PAPER_ATTEMPTS_CSV_PATH

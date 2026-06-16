@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import dashboard
+import storage_v2
 
 
 def _write_csv(path: Path, headers: list[str], rows: list[dict]):
@@ -22,9 +23,8 @@ def fake_logs(tmp_path, monkeypatch):
     """Point dashboard's hard-coded paths at tmp_path fixtures."""
     monkeypatch.setattr(dashboard, "LIVE_ATTEMPTS_CSV_PATH", str(tmp_path / "live_attempts.csv"))
     monkeypatch.setattr(dashboard, "LIVE_EXITS_CSV_PATH", str(tmp_path / "live_exits.csv"))
-    monkeypatch.setattr(dashboard, "LIVE_STATE_JSON_PATH", str(tmp_path / "live_state.json"))
-    monkeypatch.setattr(dashboard, "LIVE_POSITIONS_JSON_PATH", str(tmp_path / "live_positions.json"))
     monkeypatch.setattr(dashboard, "USDC_BALANCE_JSON_PATH", str(tmp_path / "usdc_balance.json"))
+    monkeypatch.setattr(storage_v2, "DEFAULT_DB_PATH", str(tmp_path / "state_v2.sqlite"))
     return tmp_path
 
 
@@ -40,9 +40,11 @@ async def test_live_health_filters_startup_heartbeat_from_exit_count(fake_logs):
              "position_id": "P1", "reason": "take_profit"},
         ],
     )
-    (fake_logs / "live_state.json").write_text(json.dumps({"open_positions": 0}))
-    (fake_logs / "live_positions.json").write_text(json.dumps({"positions": []}))
     _write_csv(fake_logs / "live_attempts.csv", ["timestamp_utc", "phase"], [])
+    
+    storage = storage_v2.StorageV2(path=str(fake_logs / "state_v2.sqlite"))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    storage.save_daily_budget(today, {"open_positions": 0})
 
     health = await dashboard._live_health()
     assert health["exits"] == 1  # heartbeat row excluded
@@ -52,15 +54,14 @@ async def test_live_health_filters_startup_heartbeat_from_exit_count(fake_logs):
 @pytest.mark.asyncio
 async def test_live_health_detects_drift(fake_logs):
     _write_csv(fake_logs / "live_exits.csv", ["timestamp_utc", "position_id", "reason"], [])
-    (fake_logs / "live_state.json").write_text(json.dumps({"open_positions": 0}))
-    (fake_logs / "live_positions.json").write_text(json.dumps({
-        "positions": [
-            {"state": "OPEN", "token_id": "T1"},
-            {"state": "PENDING_EXIT_GTC", "token_id": "T2"},
-            {"state": "CLOSED", "token_id": "T3"},
-        ]
-    }))
     _write_csv(fake_logs / "live_attempts.csv", ["timestamp_utc", "phase"], [])
+    
+    storage = storage_v2.StorageV2(path=str(fake_logs / "state_v2.sqlite"))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    storage.save_daily_budget(today, {"open_positions": 0})
+    storage.save_position({"position_id": "T1", "token_id": "T1", "state": "OPEN"}, mode="live")
+    storage.save_position({"position_id": "T2", "token_id": "T2", "state": "PENDING_EXIT_GTC"}, mode="live")
+    storage.save_position({"position_id": "T3", "token_id": "T3", "state": "CLOSED"}, mode="live")
 
     health = await dashboard._live_health()
     assert health["state_open_positions"] == 0
@@ -75,8 +76,6 @@ async def test_live_health_exposes_usdc_balance_and_age(fake_logs, monkeypatch):
     monkeypatch.delenv("POLY_PRIVATE_KEY", raising=False)
     _write_csv(fake_logs / "live_attempts.csv", ["timestamp_utc", "phase"], [])
     _write_csv(fake_logs / "live_exits.csv", ["timestamp_utc", "position_id", "reason"], [])
-    (fake_logs / "live_state.json").write_text(json.dumps({}))
-    (fake_logs / "live_positions.json").write_text(json.dumps({"positions": []}))
     (fake_logs / "usdc_balance.json").write_text(
         json.dumps({"usdc_balance": 27.5, "checked_at_ns": _time.time_ns() - 3_000_000_000})
     )
@@ -93,9 +92,6 @@ async def test_live_health_missing_usdc_file_is_none(fake_logs, monkeypatch):
     monkeypatch.delenv("POLY_PRIVATE_KEY", raising=False)
     _write_csv(fake_logs / "live_attempts.csv", ["timestamp_utc", "phase"], [])
     _write_csv(fake_logs / "live_exits.csv", ["timestamp_utc", "position_id", "reason"], [])
-    (fake_logs / "live_state.json").write_text(json.dumps({}))
-    (fake_logs / "live_positions.json").write_text(json.dumps({"positions": []}))
-    # Note: no usdc_balance.json
     health = await dashboard._live_health()
     assert health["usdc_balance"] == 0.0
     assert health["usdc_balance_age_sec"] is None
@@ -116,8 +112,6 @@ async def test_live_health_filled_usd_includes_resolution_rows(fake_logs):
         ],
     )
     _write_csv(fake_logs / "live_exits.csv", ["timestamp_utc", "position_id", "reason"], [])
-    (fake_logs / "live_state.json").write_text(json.dumps({}))
-    (fake_logs / "live_positions.json").write_text(json.dumps({"positions": []}))
 
     health = await dashboard._live_health()
     assert health["attempts"] == 1       # only submit phase counts as an attempt

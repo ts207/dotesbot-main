@@ -109,7 +109,7 @@ use the Dota match state, not vibes.
   ONLY thing trading. No discretionary cockpit bets.
 - **The balance API lies.** It returned a transient "$102" (real was different) and
   "$5.45" (real). **Always read cash 3-6× and require stability** before believing/
-  acting on it. NAV from `live_positions.json` alone is wrong — it misses on-chain +
+  acting on it. NAV from `logs/state_v2.sqlite` alone is wrong — it misses on-chain +
   cockpit tokens; value from a token scan.
 - **Over-stack bug (fixed):** the value path had no per-match cap → dumped ~$50 into
   one match. `VALUE_MAX_PER_MATCH` is the hard fix; never add a live order path

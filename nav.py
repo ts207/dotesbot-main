@@ -23,7 +23,8 @@ async def main():
 
     # 2) value held tokens (from the position store) at current bid
     try:
-        positions = json.load(open("logs/live_positions.json")).get("positions", [])
+        from storage_v2 import StorageV2
+        positions = StorageV2().load_positions(mode="live")
     except Exception:
         positions = []
     seen = set()

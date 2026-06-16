@@ -33,8 +33,6 @@ from hero_data import HERO_ID_MAP
 MATCH_WINNER_CSV_PATH = os.path.join("logs", "match_winner_signals.csv")
 RAW_SNAPSHOTS_CSV_PATH = os.path.join("logs", "raw_snapshots.csv")
 LIVE_EXITS_CSV_PATH = os.path.join("logs", "live_exits.csv")
-LIVE_STATE_JSON_PATH = os.path.join("logs", "live_state.json")
-LIVE_POSITIONS_JSON_PATH = os.path.join("logs", "live_positions.json")
 USDC_BALANCE_JSON_PATH = os.path.join("logs", "usdc_balance.json")
 
 _FEED_ROWS = 25   # rows shown per feed
@@ -151,12 +149,15 @@ def _health_item(label: str, rows: list[dict], *ts_keys: str) -> dict:
 
 async def _live_health() -> dict:
     import time as _time
+    from storage_v2 import StorageV2
     attempts = _read_csv(LIVE_ATTEMPTS_CSV_PATH, tail_lines=1000)
     exits = _read_csv(LIVE_EXITS_CSV_PATH, tail_lines=1000)
-    state = _read_json(LIVE_STATE_JSON_PATH)
-    pos_data = _read_json(LIVE_POSITIONS_JSON_PATH)
     balance_data = _read_json(USDC_BALANCE_JSON_PATH)
-    positions = pos_data.get("positions", [])
+    
+    storage = StorageV2()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    budget = storage.load_daily_budget(today) or {}
+    positions = storage.load_positions(mode="live")
     if not isinstance(positions, list):
         positions = []
 
@@ -176,7 +177,7 @@ async def _live_health() -> dict:
         p for p in positions
         if isinstance(p, dict) and p.get("state") in {"OPEN", "PARTIALLY_EXITED", "PENDING_ENTRY", "PENDING_EXIT_GTC", "EXITING"}
     ]
-    live_state_open = int(_fnum(state.get("open_positions")) or 0)
+    live_state_open = int(budget.get("open_positions", 0))
     drift_count = abs(live_state_open - len(active_positions))
     submitted_usd = sum(_fnum(r.get("submitted_size_usd")) or 0.0 for r in submit_rows)
     filled_usd = sum(_fnum(r.get("filled_size_usd")) or 0.0 for r in submit_rows + resolution_rows)
@@ -200,8 +201,8 @@ async def _live_health() -> dict:
         "state_open_positions": live_state_open,
         "store_active_positions": len(active_positions),
         "drift_count": drift_count,
-        "state_total_filled_usd": round(_fnum(state.get("total_filled_usd")) or 0.0, 2),
-        "state_total_submitted_usd": round(_fnum(state.get("total_submitted_usd")) or 0.0, 2),
+        "state_total_filled_usd": round(float(budget.get("total_filled_usd") or 0.0), 2),
+        "state_total_submitted_usd": round(float(budget.get("total_submitted_usd") or 0.0), 2),
         "usdc_balance": round(usdc_balance, 2) if usdc_balance is not None else 0.0,
         "usdc_balance_age_sec": usdc_age_sec,
         "is_mock_balance": real_balance is None and usdc_balance == 10.0 and usdc_age_sec is not None and usdc_age_sec > 3600,
@@ -607,8 +608,11 @@ async def _broadcast_loop(app: web.Application) -> None:
                 games = _live_games()
 
                 attempts = _read_csv(LIVE_ATTEMPTS_CSV_PATH)
-                pos_data = _read_json(LIVE_POSITIONS_JSON_PATH)
-                live_state = _read_json(LIVE_STATE_JSON_PATH)
+                from storage_v2 import StorageV2
+                storage = StorageV2()
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                live_state = storage.load_daily_budget(today) or {}
+                live_positions = storage.load_positions(mode="live")
                 
                 valid, _ = load_valid_mappings()
                 mapped_markets = {}
@@ -654,7 +658,7 @@ async def _broadcast_loop(app: web.Application) -> None:
                         }
                         for r in list(reversed(signal_rows[-_FEED_ROWS:]))
                     ],
-                    "live_positions":   pos_data.get("positions", []),
+                    "live_positions":   live_positions,
                     "live_state":       live_state,
                     "mapped_markets":   mapped_markets,
                 }
@@ -703,8 +707,11 @@ async def _api_data(_request: web.Request) -> web.Response:
     print(f"  GAMES: {len(games)}  SIGNALS: {len(signals)}  PRICES: {len(prices)}")
 
     attempts = _read_csv(LIVE_ATTEMPTS_CSV_PATH, tail_lines=1000)
-    pos_data = _read_json(LIVE_POSITIONS_JSON_PATH)
-    live_state = _read_json(LIVE_STATE_JSON_PATH)
+    from storage_v2 import StorageV2
+    storage = StorageV2()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    live_state = storage.load_daily_budget(today) or {}
+    live_positions = storage.load_positions(mode="live")
     
     valid, _ = load_valid_mappings()
     mapped_markets = {}
@@ -757,7 +764,7 @@ async def _api_data(_request: web.Request) -> web.Response:
             }
             for r in list(reversed(signal_rows[-_FEED_ROWS:]))
         ],
-        "live_positions":   pos_data.get("positions", []),
+        "live_positions":   live_positions,
         "live_state":       live_state,
         "mapped_markets":   mapped_markets,
     }

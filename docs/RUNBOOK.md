@@ -173,7 +173,7 @@ Restart the bot.
 | Continuous $/trade | ≥ $0.20 | tagged `trader_kind=continuous` |
 | Arb pair $/trade | ≥ $0.15 | tagged `trader_kind=arb` |
 | Total daily PnL | ≥ $5 | sum of realized + unrealized |
-| Open positions | ≤ 10 at all times | `live_positions.json` |
+| Open positions | ≤ 10 at all times | `logs/state_v2.sqlite` |
 | USDC balance trend | flat-to-up | wallet |
 
 ### Daily checks
@@ -267,7 +267,7 @@ USDC balance requirement becomes ~$600. Don't bump again without 100 more succes
 | Recent decisions | `tail -50 logs/continuous_attempts.csv` |
 | Recent arbs | `tail -50 logs/arb_attempts.csv` |
 | Recent attempts | `tail -50 logs/live_attempts.csv` |
-| Open positions | `cat logs/live_positions.json | python3 -m json.tool` |
+| Open positions | `sqlite3 logs/state_v2.sqlite "SELECT raw_json FROM positions WHERE state='OPEN';"` |
 | Test continuous scorer | `python3 -m pytest tests/test_continuous_scorer.py` |
 | Test arb scanner | `python3 -m pytest tests/test_arb_scanner.py` |
 | Re-run historical backtest | `python3 scripts/backtest_from_v2.py` |
