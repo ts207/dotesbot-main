@@ -5,7 +5,11 @@ from unittest.mock import MagicMock, patch
 from paper_trader import PaperTrader, Position
 from live_executor import LiveExecutor
 from decisive_swing_engine import DecisiveSwingEngine, _series_fair
+from event_triggered_value_engine import EventTriggeredValueEngine
+from actual_dota_event_types import ActualDotaEvent
 import config
+
+# ... existing tests ...
 
 def test_paper_value_hold_does_not_exit_tp_or_trailing():
     trader = PaperTrader()
@@ -128,3 +132,75 @@ def test_dswing_rejects_missing_state():
     mapping = {"market_type": "MATCH_WINNER", "current_game_number": None}
     res = _series_fair(mapping, "YES", 0.95)
     assert res is None
+
+@patch("decisive_swing_engine.DSWING_ENABLED", True)
+def test_dswing_engine_rejects_missing_series_state():
+    engine = DecisiveSwingEngine()
+    game = {
+        "match_id": "m1", "data_source": "top_live", "game_over": False,
+        "radiant_team": "A", "dire_team": "B", "radiant_team_id": 1, "dire_team_id": 2,
+        "game_time_sec": 1000, "radiant_lead": 10000, # Large lead to pass DSWING_LEAD
+        "server_steam_id": "1", "lobby_id": "1",
+        "received_at_ns": time.time_ns(),
+        "radiant_score": 10, "dire_score": 10,
+        "building_state": 1234, "tower_state": 1234
+    }
+    mapping = {"market_type": "MATCH_WINNER", "yes_token_id": "t1", "current_game_number": None}
+    book_store = {"t1": {"best_ask": 0.50, "received_at_ns": time.time_ns()}}
+    
+    res = engine.evaluate(game, mapping, book_store)
+    assert len(res) == 1
+    assert res[0].reason == "missing_series_state_or_model"
+
+@patch("event_triggered_value_engine.EVENT_TRIGGERED_VALUE_ENABLED", True)
+@patch("event_triggered_value_engine.EVENT_VALUE_REVERSAL_MAX_ASK", 0.45)
+@patch("event_triggered_value_engine.EVENT_VALUE_MIN_ASK", 0.50)
+def test_event_value_reversal_ask_bounds():
+    engine = EventTriggeredValueEngine()
+    
+    game = {
+        "match_id": "m1", "data_source": "top_live", "game_over": False,
+        "radiant_team": "A", "dire_team": "B", "radiant_team_id": 1, "dire_team_id": 2,
+        "game_time_sec": 1000, "server_steam_id": "1", "lobby_id": "1",
+        "received_at_ns": time.time_ns(),
+        "radiant_score": 10, "dire_score": 10,
+        "building_state": 1234, "tower_state": 1234,
+        "radiant_lead": -3000
+    }
+    
+    event = ActualDotaEvent(
+        event_id="e1", event_type="TEAM_KILL_SCORE_CHANGE",
+        side="radiant", match_id="m1", received_at_ns=time.time_ns(),
+        radiant_lead_before=-5000, radiant_lead_after=-3000, # Dire is leading (lead_after < 0), but Radiant got the event -> REVERSAL
+        source="top_live",
+        lobby_id="1", league_id=1, game_time_sec=1000
+    )
+    
+    mapping = {"market_type": "MAP_WINNER", "yes_token_id": "t1"}
+    
+    # Test 1: Reversal with ask=0.30 (Valid, below max_ask of 0.45, not blocked by global min of 0.50)
+    book_store_valid = {"t1": {"best_ask": 0.30, "received_at_ns": time.time_ns()}}
+    res_valid = engine.evaluate(event=event, game=game, mapping=mapping, book_store=book_store_valid)
+    assert len(res_valid) == 1
+    assert res_valid[0].__class__.__name__ == "EventTriggeredValueReject" # Will likely reject on edge, but importantly NOT on price_too_low
+    assert res_valid[0].reason != "price_too_low", "Should not be blocked by global min_ask"
+    
+    # Test 2: Reversal with ask=0.46 (Invalid, above max_ask of 0.45)
+    book_store_high = {"t1": {"best_ask": 0.46, "received_at_ns": time.time_ns()}}
+    res_high = engine.evaluate(event=event, game=game, mapping=mapping, book_store=book_store_high)
+    assert len(res_high) == 1
+    assert res_high[0].reason == "price_too_high"
+    
+    # Test 3: Continuation with ask=0.49 (Invalid, below global min_ask of 0.50)
+    event_cont = ActualDotaEvent(
+        event_id="e2", event_type="TEAM_KILL_SCORE_CHANGE",
+        side="dire", match_id="m1", received_at_ns=time.time_ns(),
+        radiant_lead_before=-3000, radiant_lead_after=-5000, # Dire is leading, Dire got event -> CONTINUATION
+        source="top_live",
+        lobby_id="1", league_id=1, game_time_sec=1000
+    )
+    mapping_cont = {"market_type": "MAP_WINNER", "no_token_id": "t2"} # Dire is NO token
+    book_store_cont = {"t2": {"best_ask": 0.49, "received_at_ns": time.time_ns()}}
+    res_cont = engine.evaluate(event=event_cont, game=game, mapping=mapping_cont, book_store=book_store_cont)
+    assert len(res_cont) == 1
+    assert res_cont[0].reason == "price_too_low"

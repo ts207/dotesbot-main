@@ -1209,7 +1209,7 @@ class StrategySignalLogger(CsvLogger):
             "token_id": rej.token_id,
             "fair_before": rej.fair_before,
             "fair_after": rej.fair_after,
-            "fair_price": rej.fair_price,
+            "fair_price": getattr(rej, "fair_price", getattr(rej, "fair_after", None)),
             "fair_delta": rej.fair_delta,
             "ask": rej.ask,
             "edge": rej.edge,
@@ -1218,8 +1218,13 @@ class StrategySignalLogger(CsvLogger):
             "elo_diff": rej.elo_diff,
             "book_age_ms": rej.book_age_ms,
             "sized_usd": None,
-            "derived_state_flags": "",
-            "would_pass_live_gates": rej.would_pass_live_gates,
-            "live_skip_reason": rej.live_skip_reason,
-            "paper_only_bypass": rej.paper_only_bypass,
+            "derived_state_flags": None,
+            "is_continuation": (
+                None if getattr(rej, "is_reversal", None) is None
+                else not getattr(rej, "is_reversal")
+            ),
+            "is_reversal": getattr(rej, "is_reversal", ""),
+            "would_pass_live_gates": False,
+            "live_skip_reason": "",
+            "paper_only_bypass": False,
         })

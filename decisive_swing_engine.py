@@ -8,9 +8,6 @@ model series-fair; exit when the map ends and the book reprices.
 
 This module only produces ENTRY signals. Exit is handled separately (sell/realize at
 map-end, NOT hold-to-series-settle — a non-decider win doesn't redeem at $1).
-
-NOT yet wired into main.py — entry logic + backtest are done; wiring the map-end exit
-is the remaining step (do it when there's capital to trade).
 """
 from __future__ import annotations
 import os, time, uuid

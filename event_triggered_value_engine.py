@@ -20,6 +20,7 @@ from config import (
     EVENT_VALUE_REVERSAL_MIN_EDGE,
     EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA,
     EVENT_VALUE_REVERSAL_MAX_ASK,
+    EVENT_VALUE_REVERSAL_MIN_ASK,
 )
 from derived_game_state import derive_game_state
 from gettoplive_state import validate_top_live_state
@@ -220,10 +221,18 @@ class EventTriggeredValueEngine:
         book_age_ms = int((time.time_ns() - received_at_ns) / 1_000_000)
         if book_age_ms > VALUE_MAX_BOOK_AGE_MS:
             return [self._reject(event, match_id, cur_ns, "book_stale", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
-        if ask > EVENT_VALUE_MAX_ASK:
-            return [self._reject(event, match_id, cur_ns, "price_too_high", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
-        if ask < EVENT_VALUE_MIN_ASK:
-            return [self._reject(event, match_id, cur_ns, "price_too_low", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms)]
+
+        current_leader_side = "radiant" if lead_after > 0 else "dire"
+        is_reversal = (direction != current_leader_side)
+        
+        min_ask = EVENT_VALUE_REVERSAL_MIN_ASK if is_reversal else EVENT_VALUE_MIN_ASK
+        max_ask = EVENT_VALUE_REVERSAL_MAX_ASK if is_reversal else EVENT_VALUE_MAX_ASK
+
+        if ask > max_ask:
+            return [self._reject(event, match_id, cur_ns, "price_too_high", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+        if ask < min_ask:
+            return [self._reject(event, match_id, cur_ns, "price_too_low", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+
         side_lead_after = lead_after if direction == "radiant" else -lead_after
         if abs(side_lead_after) > VALUE_FLIP_LEAD and ask < VALUE_FLIP_ASK_FLOOR:
             return [self._reject(event, match_id, cur_ns, "orientation_flip_suspected", direction=direction, side=side, token_id=token_id, ask=ask, lead=lead_after, book_age_ms=book_age_ms)]
@@ -238,15 +247,8 @@ class EventTriggeredValueEngine:
         fair_delta = fair_after - fair_before
         edge = fair_after - ask
         
-        current_leader_side = "radiant" if lead_after > 0 else "dire"
-        is_reversal = (direction != current_leader_side)
-        
         min_fair_delta = EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA if is_reversal else EVENT_VALUE_MIN_FAIR_DELTA
         min_edge = EVENT_VALUE_REVERSAL_MIN_EDGE if is_reversal else EVENT_VALUE_MIN_EDGE
-        max_ask = EVENT_VALUE_REVERSAL_MAX_ASK if is_reversal else EVENT_VALUE_MAX_ASK
-        
-        if ask > max_ask:
-            return [self._reject(event, match_id, cur_ns, "price_too_high", direction=direction, side=side, token_id=token_id, ask=ask, book_age_ms=book_age_ms, is_reversal=is_reversal)]
         
         if fair_delta < min_fair_delta:
             return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
