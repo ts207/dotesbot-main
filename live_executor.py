@@ -1476,7 +1476,7 @@ class LiveExecutor:
         if ask > signal.fair_price - 0.005:
             return self._reject_value(
                 signal, mapping, game, token_id, size_usd,
-                f"fresh_ask_not_below_fair:ask={ask:.4f}_fair={signal.fair_price:.4f}"
+                f"execution_price_protection_no_edge:ask={ask:.4f}_fair={signal.fair_price:.4f}"
             )
 
         trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"

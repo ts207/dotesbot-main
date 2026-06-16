@@ -279,9 +279,10 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         if DISABLE_STRUCTURE_TRADES and (event_type in STRUCTURE_EVENTS or cluster_types <= STRUCTURE_EVENTS):
             return reject("structure_trade_disabled", risk_tags=("structure_trade_disabled",))
         if TRADE_EVENTS and not (event_type in TRADE_EVENTS or cluster_types & TRADE_EVENTS):
-            return reject("event_not_allowed", risk_tags=("event_not_allowed",))
+            if event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
+                return reject("event_not_allowed", risk_tags=("event_not_allowed",))
         tier = event_tier(event_type)
-        if event_type not in TRADE_EVENTS:
+        if event_type not in TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
             if tier == "C" and not ALLOW_CONFIRMATION_ONLY_LIVE_TRADES:
                 return reject("confirmation_only_event", risk_tags=("confirmation_only_event",))
             if tier in {"research", "block", "unknown"}:

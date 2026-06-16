@@ -6,8 +6,12 @@ from live_executor import LiveExecutor
 from execution_policy import PolicyResult
 
 class MockBookStore:
+    def __init__(self):
+        self.book = {"best_ask": 0.50, "best_bid": 0.40, "ask_size": 100, "received_at_ns": time.time_ns()}
     def get(self, token_id):
-        return {"best_ask": 0.50, "best_bid": 0.40, "ask_size": 100, "received_at_ns": time.time_ns()}
+        return self.book
+    def get_book(self, token_id):
+        return self.book
 
 class MockDiskGuard:
     def reject_reason(self):
@@ -25,6 +29,7 @@ def executor():
     ex._submitted_family_usd = {}
     ex._submitted_match_sides = {}
     ex.total_submitted_usd = 0.0
+    ex.total_filled_usd = 0.0
     ex.open_positions = 0
     ex.daily_realized_pnl_usd = 0.0
     ex.disk_guard = MockDiskGuard()
@@ -34,6 +39,7 @@ def executor():
 def get_base_args():
     signal = {
         "strategy_kind": "VALUE",
+        "event_type": "VALUE",
         "side": "YES",
         "token_id": "TOK1",
         "size_usd": 10.0,
@@ -105,3 +111,32 @@ async def test_live_executor_preserves_policy_rejection_reason_for_match_conflic
     assert attempt.policy_reason == "match_already_submitted"
     assert attempt.live_skip_reason == "match_already_submitted"
     assert attempt.reason_if_rejected == "match_already_submitted"
+
+@pytest.mark.anyio
+async def test_live_executor_real_policy_rejects_stale_book_before_order_mechanics(executor):
+    signal, mapping, game, book_store = get_base_args()
+    book_store.book["received_at_ns"] = time.time_ns() - 120_000_000_000
+    
+    with patch("live_executor.validate_mapping_identity", return_value=MagicMock(ok=True)):
+        attempt = await executor.try_buy(
+            signal=signal, mapping=mapping, game=game, book_store=book_store
+        )
+        
+    assert attempt.order_status == "rejected_precheck"
+    assert attempt.policy_allowed is False
+    assert attempt.policy_reason.startswith("book_stale:")
+
+@pytest.mark.anyio
+async def test_live_executor_real_policy_rejects_match_conflict(executor):
+    signal, mapping, game, book_store = get_base_args()
+    signal["event_direction"] = "team1"
+    executor._submitted_match_sides[game["match_id"]] = {"team2"}
+    
+    with patch("live_executor.validate_mapping_identity", return_value=MagicMock(ok=True)):
+        attempt = await executor.try_buy(
+            signal=signal, mapping=mapping, game=game, book_store=book_store
+        )
+        
+    assert attempt.order_status == "rejected_precheck"
+    assert attempt.policy_allowed is False
+    assert "match_direction_conflict" in attempt.policy_reason or "match_already" in attempt.policy_reason

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+import execution_policy
 from execution_policy import POLICY_VERSION, PolicyInput, evaluate_policy
 from live_executor import LiveExecutor
 from storage import LiveAttemptLogger
@@ -12,6 +13,8 @@ import pytest
 def mock_storage_path(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test_state.sqlite")
     monkeypatch.setattr(storage_v2, "DEFAULT_DB_PATH", db_path)
+    import config
+    monkeypatch.setattr(config, "TRADE_EVENTS", {"POLL_FIGHT_SWING", "POLL_DECISIVE_STOMP", "VALUE"})
     return db_path
 
 
@@ -73,8 +76,9 @@ def test_execution_policy_allows_clean_live_candidate():
 def test_execution_policy_rejects_stale_book():
     now_ns = time.time_ns()
     old_book = {
-        "best_bid": 0.50,
-        "best_ask": 0.56,
+        "best_ask": 0.50,
+        "best_bid": 0.40,
+        "ask_size": 100,
         "received_at_ns": now_ns - 120_000_000_000,
     }
 
@@ -136,6 +140,7 @@ def test_execution_policy_rejects_low_decisive_stomp_quality():
     inp.signal["event_type"] = "POLL_DECISIVE_STOMP"
     inp.signal["event_quality"] = 0.1 # Very low quality
     inp.book["best_ask"] = 0.70 # above the 0.65 floor
+    inp.book["best_bid"] = 0.60
     result = evaluate_policy(inp)
     assert result.allowed is False
     assert "decisive_stomp_quality_too_low" in result.live_skip_reason
@@ -145,6 +150,7 @@ def test_execution_policy_rejects_low_decisive_stomp_price_floor():
     inp.signal["event_type"] = "POLL_DECISIVE_STOMP"
     inp.signal["event_quality"] = 1.0 
     inp.book["best_ask"] = 0.60 # below the 0.65 floor
+    inp.book["best_bid"] = 0.50
     result = evaluate_policy(inp)
     assert result.allowed is False
     assert "decisive_stomp_price_below_floor" in result.live_skip_reason
