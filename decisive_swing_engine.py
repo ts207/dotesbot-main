@@ -190,7 +190,10 @@ class DecisiveSwingEngine:
         # Elo + single-game prob (~0.95 at a decisive lead), then series fair.
         from fair_value import compute_side_fair
         fair_res = compute_side_fair(game=game, side=direction)
-        p_game = fair_res.fair
+        if not fair_res.model_available:
+            return [DSwingReject(match_id, f"model_unavailable:{fair_res.model_reason}")]
+
+        p_game = fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
         
         if p_game < DSWING_MIN_P_GAME:
             return [DSwingReject(match_id, f"p_game_too_low:{p_game:.3f}")]

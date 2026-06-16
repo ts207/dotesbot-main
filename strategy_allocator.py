@@ -165,18 +165,22 @@ def allocate_candidates(
 # Helpers for logging
 # ---------------------------------------------------------------------------
 
-def decision_to_log_row(decision: AllocationDecision) -> dict | None:
-    """Produce a log-dict for contested/blocked decisions.
+def decision_to_log_row(decision: AllocationDecision, *, include_uncontested: bool = True) -> dict | None:
+    """Produce a log-dict for allocation decisions.
 
-    Returns None for uncontested winners (nothing to attribute).
+    Returns None for uncontested winners if include_uncontested is False.
     """
-    if not decision.blocked and decision.block_reason != "already_entered":
+    if not include_uncontested and not decision.blocked and decision.block_reason != "already_entered":
         return None
 
     winner = decision.winner
+    candidate_count = (1 if winner else 0) + len(decision.blocked)
     return {
         "token_id": decision.token_id,
         "match_id": decision.match_id,
+        "candidate_count": candidate_count,
+        "blocked_count": len(decision.blocked),
+        "allocator_winner": winner.strategy if winner else "",
         "winner_strategy": winner.strategy if winner else "",
         "winner_edge": winner.edge if winner else "",
         "winner_fair": winner.fair if winner else "",

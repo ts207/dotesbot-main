@@ -260,7 +260,9 @@ def _current_fair_for_position(position, game: dict) -> float | None:
         return None
         
     fair_res = compute_side_fair(game=game, side=backed, record_history=False)
-    return fair_res.fair
+    if not fair_res.model_available:
+        return None
+    return fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
 
 
 def _decide_dswing_exit(

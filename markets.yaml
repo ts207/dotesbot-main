@@ -11565,3 +11565,45 @@ markets:
   current_game_number: 3
   series_score_yes: 2
   series_score_no: 0
+- name: 'Dota 2: Team Refuser vs Team Resilience - Game 1 Winner'
+  condition_id: '0xd39f7ea66fb88adaca79c7d3419446755c8211b193060629cfe08b50b0383d30'
+  market_id: '2551336'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: Team Refuser
+  no_team: Team Resilience
+  yes_token_id: '76940844556872302707058449985538920345685437480119066768142102410368635140753'
+  no_token_id: '32285110997806330479819186787247269558618694341969579251182890259992252560401'
+  dota_match_id: '8853982663'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 11:05:31'
+  auto_mapped_at_utc: '2026-06-16T10:07:40+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Refuser
+  steam_dire_team: Team Resilience
+  steam_side_mapping: normal
+- name: 'Dota 2: Team Refuser vs Team Resilience - Game 2 Winner'
+  condition_id: '0xd63af6c48ae07ce26cdea2e71ef86ed2b7be94afe65af74f0cf36e17312ac7fd'
+  market_id: '2551337'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: Team Refuser
+  no_team: Team Resilience
+  yes_token_id: '2372730193803453672120633137037564664466969519619394118882354391252868889637'
+  no_token_id: '105559284724526366306622650282017153467047484079399834280104107694574324096845'
+  dota_match_id: '8854031550'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 11:05:31'
+  auto_mapped_at_utc: '2026-06-16T11:07:04+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Resilience
+  steam_dire_team: Team Refuser
+  steam_side_mapping: reversed

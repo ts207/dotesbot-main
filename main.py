@@ -59,8 +59,6 @@ from sync_markets import sync_markets_to_games, load_markets, write_markets
 import team_id_cache  # 2026-05-27: backfills empty Steam team_names from team_ids
 from discover_markets import main as discover_markets_main
 from config import ENABLE_MATCH_WINNER_TRADING
-from dota_fair_model.inference import load_bundle
-from dota_fair_model.features import build_feature_row
 
 MAPPING_REFRESH_SECONDS = 60
 # 2026-06-02 — WS subscription debounce: a token must be absent from the live
@@ -490,7 +488,6 @@ async def steam_loop(
     signal_markout_logger: SignalMarkoutLogger,
     mappings: list[dict],
     asset_ids: list[str],
-    model_bundle: Any | None = None,
     http_session: aiohttp.ClientSession | None = None,
     live_position_store: LivePositionStore | None = None,
     live_exit_executor: LiveExitExecutor | None = None,
@@ -522,17 +519,6 @@ async def steam_loop(
     # periodic refresh and can wait for the normal interval.
     last_market_discover = time.monotonic()
     max_game_times: dict[str, int] = {}  # match_id -> max game_time_sec seen
-
-    # Load team win stats for ML features
-    team_stats = {}
-    stats_path = "dota_fair_model/models/team_stats.json"
-    if os.path.exists(stats_path):
-        try:
-            with open(stats_path, "r") as f:
-                team_stats = json.load(f)
-            print(f"Loaded {len(team_stats)} team win ratios from {stats_path}")
-        except Exception as e:
-            print(f"Failed to load team stats: {e}")
 
     async with aiohttp.ClientSession() as session:
         _iter_debug = 0
@@ -753,12 +739,6 @@ async def steam_loop(
                     )
                     game["game_time_lag_sec"] = _hybrid_delay_seconds(game)
 
-                    # Inject team win ratios from historical stats
-                    r_id = str(game.get("radiant_team_id") or "")
-                    d_id = str(game.get("dire_team_id") or "")
-                    game["radiant_team_win_ratio"] = team_stats.get(r_id, 0.5)
-                    game["dire_team_win_ratio"] = team_stats.get(d_id, 0.5)
-
                     # Log the final enriched rich context for this match
                     rich_context_logger.log_rich_context(game)
 
@@ -804,6 +784,24 @@ async def steam_loop(
                     if actual_event_detector is not None:
                         actual_events = actual_event_detector.observe(game)
                         if actual_events:
+                            # Pre-event book capture for EVENT strategy horizon markouts
+                            for mapping in mappings:
+                                if str(mapping.get("dota_match_id") or "") in {match_id, str(game.get("lobby_id") or "")}:
+                                    for key in ("yes_token_id", "no_token_id"):
+                                        tok = mapping.get(key)
+                                        if tok:
+                                            b = book_store.get(tok)
+                                            if b:
+                                                b["pre_event_bid"] = b.get("best_bid")
+                                                b["pre_event_ask"] = b.get("best_ask")
+                                                if b.get("best_bid") is not None and b.get("best_ask") is not None:
+                                                    b["pre_event_price"] = (b["best_bid"] + b["best_ask"]) / 2
+                                                else:
+                                                    b["pre_event_price"] = None
+                                                b["pre_event_book_received_at_ns"] = b.get("received_at_ns")
+                                                now_ns = time.time_ns()
+                                                b["pre_event_book_age_ms"] = (now_ns - b["received_at_ns"]) / 1e6 if b.get("received_at_ns") else None
+
                             actual_events_by_match[match_id] = actual_events
                             if actual_event_logger is not None:
                                 actual_event_logger.log_events(actual_events)
@@ -1094,9 +1092,15 @@ async def steam_loop(
                             value_results = value_engine.evaluate(game, mapping, book_store, entered_tokens=_entered_toks)
                             for result in value_results:
                                 if not isinstance(result, ValueSignal):
-                                    value_logger.log_reject(result)
+                                    if value_logger is not None:
+                                        value_logger.log_reject(result)
+                                    if strategy_signal_logger is not None:
+                                        strategy_signal_logger.log_reject(result, strategy="VALUE_EDGE")
                                     continue
-                                value_logger.log_signal(result)
+                                if value_logger is not None:
+                                    value_logger.log_signal(result)
+                                if strategy_signal_logger is not None:
+                                    strategy_signal_logger.log_signal(result, strategy="VALUE_EDGE")
                                 if not ENABLE_VALUE_TRADING:
                                     continue
                                 confirmed, confirm_reason = _value_confirmation_passes(result)
@@ -1127,9 +1131,13 @@ async def steam_loop(
                                     if not isinstance(ds_res, DSwingSignal):
                                         if dswing_logger is not None:
                                             dswing_logger.log_reject(ds_res, mapping=mapping)
+                                        if strategy_signal_logger is not None:
+                                            strategy_signal_logger.log_reject(ds_res, strategy="DSWING")
                                         continue
                                     if dswing_logger is not None:
                                         dswing_logger.log_signal(ds_res, mapping=mapping)
+                                    if strategy_signal_logger is not None:
+                                        strategy_signal_logger.log_signal(ds_res, strategy="DSWING")
                                     if not DSWING_ENABLED:
                                         continue
                                     # DSWING dedup: blocks both sides (prevents holding
@@ -1566,18 +1574,6 @@ async def steam_loop(
                                     else:
                                         signal["realtime_derived_events"] = []
 
-                                    # ML prediction for slow_model_fair
-                                    slow_model_fair = None
-                                    if model_bundle is not None:
-                                        try:
-                                            feat_row = build_feature_row(game)
-                                            pred = model_bundle.predict_radiant(feat_row)
-                                            p_rad = pred.get("radiant_fair_probability")
-                                            if p_rad is not None:
-                                                slow_model_fair = p_rad if event_direction == "radiant" else (1.0 - p_rad)
-                                        except Exception as e:
-                                            print(f"ML prediction error: {e}")
-
                                     hybrid_context = _hybrid_context(game)
                                     lag = _hybrid_delay_seconds(game)
                                     nowcast = compute_hybrid_nowcast(
@@ -1585,7 +1581,7 @@ async def steam_loop(
                                         latest_toplive_snapshot=game,
                                         toplive_event_cluster=cluster_events,
                                         source_delay_metrics={"game_time_lag_sec": lag},
-                                        slow_model_fair=slow_model_fair,
+                                        slow_model_fair=None,
                                         event_only_fair=signal.get("fair_price"),
                                         game_time_sec=game.get("game_time_sec"),
                                         event_direction=event_direction,
@@ -2162,112 +2158,7 @@ async def steam_loop(
                                     else:
                                         print(f"SKIP ENTRY: {reason}")
 
-                # 2. Tick-level model fair maintenance, with optional ML-only entries.
-                # This runs even when ML_STRATEGY_ENABLED=false so event/hybrid
-                # positions can exit against updated model value.
-                if model_bundle:
-                    for game in active_games:
-                        # Skip if we already just processed events for this match in this poll
-                        # (The hybrid nowcast already incorporated the ML fair for those)
-                        # Actually, running ML check every tick is safer to catch gradual drifts.
-                        
-                        match_id = str(game.get("match_id") or "")
-                        game_time = game.get("game_time_sec") or 0
-                        if game_time < 300: # 5m guard
-                            continue
-                            
-                        # Inject team win ratios from historical stats
-                        r_id = str(game.get("radiant_team_id") or "")
-                        d_id = str(game.get("dire_team_id") or "")
-                        game["radiant_team_win_ratio"] = team_stats.get(r_id, 0.5)
-                        game["dire_team_win_ratio"] = team_stats.get(d_id, 0.5)
-                        
-                        for mapping in mappings:
-                            if str(mapping["dota_match_id"]) not in {match_id, str(game.get("lobby_id") or "")}:
-                                continue
-                            
-                            yes_tok = mapping["yes_token_id"]
-                            no_tok = mapping["no_token_id"]
-                                
-                            try:
-                                feat_row = build_feature_row(game)
-                                pred = model_bundle.predict_radiant(feat_row)
-                                p_rad = pred.get("radiant_fair_probability")
-                                if p_rad is None: continue
-                                
-                                yes_book = book_store.get(yes_tok)
-                                if not yes_book or not yes_book.get("best_ask"): continue
-                                yes_bid = yes_book.get("best_bid")
-                                if yes_bid is None:
-                                    continue
-                                
-                                yes_fair_direction = _yes_fair_from_radiant(mapping, game, p_rad)
-                                if yes_fair_direction is None:
-                                    continue
-                                yes_fair, yes_direction = yes_fair_direction
-                                trader.update_fair_value(yes_tok, yes_fair)
-                                trader.update_fair_value(no_tok, 1.0 - yes_fair)
 
-                                if not ML_STRATEGY_ENABLED:
-                                    continue
-
-                                # Only enter if we don't already have an open position in this market.
-                                # Existing positions use the refreshed fair value in check_exits().
-                                if yes_tok in trader.positions or no_tok in trader.positions:
-                                    continue
-
-                                # Evaluate the market YES token using the mapped Steam side.
-                                mkt_price = float(yes_book["best_ask"])
-                                spread = mkt_price - float(yes_bid)
-                                ask_size = yes_book.get("ask_size")
-                                if mkt_price <= 0.05 or mkt_price >= 0.95:
-                                    continue
-                                if spread > MAX_SPREAD:
-                                    continue
-                                if ask_size is not None and mkt_price * float(ask_size) < MIN_ASK_SIZE_USD:
-                                    continue
-
-                                edge = yes_fair - mkt_price
-                                
-                                if edge >= MIN_ML_EDGE:
-                                    signal = {
-                                        "event_type": "ML_ARBITRAGE",
-                                        "event_direction": yes_direction,
-                                        "side": "YES",
-                                        "token_id": yes_tok,
-                                        "fair_price": round(yes_fair, 4),
-                                        "executable_price": mkt_price,
-                                        "executable_edge": round(edge, 4),
-                                        "remaining_move": round(edge, 4),
-                                        "expected_move": round(edge, 4),
-                                        "required_edge": MIN_ML_EDGE,
-                                        "ask": mkt_price,
-                                        "bid": float(yes_bid),
-                                        "spread": round(spread, 4),
-                                        "ask_size": ask_size,
-                                        "decision": "paper_buy_yes",
-                                        "reason": "ml_valuation_edge",
-                                        "severity": "ML",
-                                        "game_time_sec": game_time,
-                                    }
-                                    
-                                    # Reuse paper entry logic
-                                    paper_attempt_ns = time.time_ns()
-                                    pos, reason = trader.enter(
-                                        signal=signal,
-                                        token_id=yes_tok,
-                                        side="YES",
-                                        book_store=book_store,
-                                        match_id=match_id,
-                                        market_name=mapping.get("name"),
-                                        opposing_token_id=no_tok,
-                                )
-                                    if pos:
-                                        position_logger.log_entry(pos)
-                                        print(f"ML_ENTER {mapping['name']} YES price={pos.entry_price:.4f} edge={edge:.4f}")
-
-                            except Exception as e:
-                                print(f"Tick-level ML error: {e}")
 
             except Exception as e:
                 print("steam_loop error:", repr(e))
@@ -2556,19 +2447,6 @@ async def main():
                         print(f"RUNTIME_RECONCILE_ERROR: {exc}")
 
             asyncio.create_task(periodic_reconciliation())
-
-    model_bundle = None
-    if not ML_STRATEGY_ENABLED:
-        print("ML strategy disabled; skipping optional dota_fair model load")
-    elif os.path.exists(DOTA_FAIR_MODEL_PATH):
-        print(f"Loading dota_fair model from {DOTA_FAIR_MODEL_PATH}...")
-        try:
-            model_bundle = load_bundle(DOTA_FAIR_MODEL_PATH)
-            print(f"  model loaded (phases: {', '.join(model_bundle.models.keys())})")
-        except Exception as e:
-            print(f"  failed to load model: {e}")
-    else:
-        print(f"No model found at {DOTA_FAIR_MODEL_PATH} (skipping ML features)")
 
     asset_ids = []
     for m in mappings:
@@ -3136,7 +3014,7 @@ async def main():
                     live_executor, live_logger, rich_context_logger,
                     source_delay_logger, rescue_logger, match_winner_logger,
                     signal_markout_logger, mappings, asset_ids,
-                    model_bundle=model_bundle, http_session=session,
+                    http_session=session,
                     live_position_store=live_position_store,
                     live_exit_executor=live_exit_executor,
                     live_exit_logger=live_exit_logger,

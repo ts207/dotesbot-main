@@ -59,8 +59,9 @@ def test_single_candidate_no_blocking():
     assert d.winner is c
     assert d.blocked == []
     assert d.block_reason == ""
-    # No log row for uncontested winner.
-    assert decision_to_log_row(d) is None
+    row = decision_to_log_row(d)
+    assert row is not None
+    assert row["candidate_count"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -217,11 +218,15 @@ def test_empty_input():
 # test_decision_to_log_row_uncontested_returns_none
 # ---------------------------------------------------------------------------
 
-def test_decision_to_log_row_uncontested_returns_none():
-    """Uncontested winner produces no log row."""
+def test_decision_to_log_row_uncontested_default_include():
+    """Uncontested winner produces a log row by default."""
     c = _cand("VALUE_EDGE")
     d = AllocationDecision(token_id="tok_A", match_id="m1", winner=c, blocked=[])
-    assert decision_to_log_row(d) is None
+    row = decision_to_log_row(d)
+    assert row is not None
+    assert row["candidate_count"] == 1
+    assert row["blocked_count"] == 0
+    assert row["allocator_winner"] == "VALUE_EDGE"
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +240,8 @@ def test_decision_to_log_row_fields():
     decisions = allocate_candidates([c_event, c_value], entered_tokens=set())
     row = decision_to_log_row(decisions[0])
     assert row is not None
-    for key in ("token_id", "match_id", "winner_strategy", "winner_edge",
+    assert row["candidate_count"] == 2
+    assert row["blocked_count"] == 1
+    for key in ("token_id", "match_id", "winner_strategy", "winner_edge", "candidate_count", "blocked_count", "allocator_winner",
                 "blocked_strategies", "blocked_edges", "block_reason", "counterfactual_note"):
         assert key in row, f"Missing key: {key}"
