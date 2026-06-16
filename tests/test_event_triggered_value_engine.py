@@ -82,11 +82,14 @@ def test_event_triggered_value_uses_toplive_event_and_winprob_value():
     assert isinstance(signal, EventTriggeredValueSignal)
     assert signal.token_id == "YES"
     assert signal.direction == "radiant"
-    assert signal.fair_price > signal.fair_before
+    assert signal.fair_after > signal.fair_before
+    assert signal.fair_price == signal.fair_after
     assert signal.fair_delta >= 0.06
     assert signal.edge >= 0.10
     assert signal.to_signal_dict()["event_type"] == "EVENT_TRIGGERED_VALUE"
     assert signal.to_signal_dict()["actual_event_type"] == "NETWORTH_SWING_WINDOW"
+    assert signal.to_signal_dict()["fair_after"] == signal.fair_after
+    assert signal.to_signal_dict()["hold_policy"] == "thesis_invalidation"
 
 
 def test_event_triggered_value_rejects_non_toplive_or_game_end():
@@ -101,6 +104,14 @@ def test_event_triggered_value_rejects_non_toplive_or_game_end():
     )[0]
     assert non_toplive.reason == "not_top_live"
 
+    delayed_game = engine.evaluate(
+        event=_event(source="top_live"),
+        game=_game(data_source="realtime_stats"),
+        mapping=_mapping(),
+        book_store=books,
+    )[0]
+    assert delayed_game.reason == "not_top_live"
+
     game_end = engine.evaluate(
         event=_event(event_type="GAME_ENDED", side=""),
         game=_game(),
@@ -108,3 +119,24 @@ def test_event_triggered_value_rejects_non_toplive_or_game_end():
         book_store=books,
     )[0]
     assert game_end.reason == "game_over"
+
+
+def test_event_triggered_value_rejects_non_primitive_actual_events():
+    engine = EventTriggeredValueEngine()
+    books = FakeBookStore(YES={"best_ask": 0.58, "best_bid": 0.56, "received_at_ns": time.time_ns()})
+
+    roshan = engine.evaluate(
+        event=_event(event_type="ROSHAN_KILLED"),
+        game=_game(),
+        mapping=_mapping(),
+        book_store=books,
+    )[0]
+    assert roshan.reason == "unsupported_actual_event_type"
+
+    aegis = engine.evaluate(
+        event=_event(event_type="AEGIS_PICKED_UP"),
+        game=_game(),
+        mapping=_mapping(),
+        book_store=books,
+    )[0]
+    assert aegis.reason == "unsupported_actual_event_type"

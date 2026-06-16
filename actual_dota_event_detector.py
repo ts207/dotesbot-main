@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from actual_dota_event_types import ActualDotaEvent
+from actual_dota_event_types import ActualDotaEvent, ActualDotaEventType
 from structure_state import decode_structure_state, diff_structure_state
 
 
@@ -289,7 +289,7 @@ class ActualDotaEventDetector:
         ))
         return ActualDotaEvent(
             event_id=event_id,
-            event_type=event_type,
+            event_type=ActualDotaEventType(event_type),
             match_id=cur.match_id,
             lobby_id=str(cur.raw.get("lobby_id") or ""),
             league_id=str(cur.raw.get("league_id") or ""),

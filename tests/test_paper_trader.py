@@ -44,6 +44,46 @@ def test_paper_entry_fills_at_ask_not_mid():
     assert pos.shares == pytest.approx(50.0)
 
 
+def test_paper_entry_persists_strategy_metadata():
+    trader = PaperTrader()
+    store = Store({"YES": {"best_ask": 0.50, "best_bid": 0.40, "ask_size": 100}})
+
+    pos, reason = trader.enter(
+        signal=_signal(
+            event_type="EVENT_TRIGGERED_VALUE",
+            event_family="VALUE",
+            hold_policy="thesis_invalidation",
+            actual_event_type="NETWORTH_SWING_WINDOW",
+            executable_edge=0.12,
+            event_direction="radiant",
+            lead=7000,
+            derived_state_flags="DOMINANT_NETWORTH_LEAD,PUSH_SETUP_STATE",
+        ),
+        token_id="YES",
+        side="YES",
+        book_store=store,
+        match_id="M1",
+        market_name="Test",
+        opposing_token_id="NO",
+    )
+
+    assert reason == "filled"
+    assert pos is not None
+    assert pos.strategy_kind == "VALUE"
+    assert pos.hold_policy == "thesis_invalidation"
+    assert pos.entry_fair == pytest.approx(0.70)
+    assert pos.entry_edge == pytest.approx(0.12)
+    assert pos.entry_backed_side == "radiant"
+    assert pos.entry_radiant_lead == 7000
+    assert pos.entry_actual_event_type == "NETWORTH_SWING_WINDOW"
+    assert pos.entry_derived_state_flags == ["DOMINANT_NETWORTH_LEAD", "PUSH_SETUP_STATE"]
+
+    closed = trader.force_exit("YES", Store({"YES": {"best_bid": 0.60, "best_ask": 0.62}}), "test")
+    assert closed is not None
+    assert closed.strategy_kind == "VALUE"
+    assert closed.entry_derived_state_flags == ["DOMINANT_NETWORTH_LEAD", "PUSH_SETUP_STATE"]
+
+
 def test_paper_entry_rejects_when_ask_moves_above_limit():
     trader = PaperTrader()
     store = Store({"YES": {"best_ask": 0.53, "best_bid": 0.40, "ask_size": 100}})

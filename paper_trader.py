@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from typing import Any
 
@@ -33,6 +33,14 @@ class Position:
     fair_price: float = 0.0       # model fair at entry; caps TP target
     is_underdog_reversal: bool = False  # underdog comeback hold — wide stop, TP=0.75, no horizon
     peak_bid: float = 0.0         # highest bid seen since entry; drives trailing stop
+    strategy_kind: str | None = None
+    hold_policy: str | None = None
+    entry_fair: float | None = None
+    entry_edge: float | None = None
+    entry_backed_side: str | None = None
+    entry_radiant_lead: int | None = None
+    entry_actual_event_type: str | None = None
+    entry_derived_state_flags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -62,6 +70,14 @@ class ClosedPosition:
     exit_time_ns: int
     fair_price: float = 0.0
     is_underdog_reversal: bool = False
+    strategy_kind: str | None = None
+    hold_policy: str | None = None
+    entry_fair: float | None = None
+    entry_edge: float | None = None
+    entry_backed_side: str | None = None
+    entry_radiant_lead: int | None = None
+    entry_actual_event_type: str | None = None
+    entry_derived_state_flags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -152,8 +168,18 @@ class PaperTrader:
                 event_type=str(row.get("event_type") or ""),
                 lag=float(row.get("lag") or 0),
                 expected_move=expected_move,
-                fair_price=entry_price + expected_move if expected_move > 0 else entry_price,
+                fair_price=self._optional_float(row.get("fair_price")) or (
+                    entry_price + expected_move if expected_move > 0 else entry_price
+                ),
                 is_underdog_reversal=str(row.get("is_underdog_reversal", "")).lower() in {"true", "1"},
+                strategy_kind=row.get("strategy_kind") or None,
+                hold_policy=row.get("hold_policy") or None,
+                entry_fair=self._optional_float(row.get("entry_fair")),
+                entry_edge=self._optional_float(row.get("entry_edge")),
+                entry_backed_side=row.get("entry_backed_side") or None,
+                entry_radiant_lead=self._optional_int(row.get("entry_radiant_lead")),
+                entry_actual_event_type=row.get("entry_actual_event_type") or None,
+                entry_derived_state_flags=self._parse_flags(row.get("entry_derived_state_flags")),
             )
         except (TypeError, ValueError):
             return None
@@ -163,6 +189,20 @@ class PaperTrader:
         if value in (None, ""):
             return None
         return int(float(value))
+
+    @staticmethod
+    def _optional_float(value: Any) -> float | None:
+        if value in (None, ""):
+            return None
+        return float(value)
+
+    @staticmethod
+    def _parse_flags(value: Any) -> list[str]:
+        if value in (None, ""):
+            return []
+        if isinstance(value, (list, tuple, set)):
+            return [str(item) for item in value if str(item)]
+        return [part for part in str(value).split(",") if part]
 
     @staticmethod
     def _parse_trade_time_ns(value: str | None) -> int:
@@ -238,6 +278,8 @@ class PaperTrader:
 
         shares = size_usd / fill_price
         expected_move = float(signal.get("expected_move") or 0.0)
+        entry_edge = signal.get("executable_edge", signal.get("edge"))
+        entry_lead = signal.get("lead", signal.get("radiant_lead"))
 
         pos = Position(
             token_id=token_id,
@@ -255,6 +297,14 @@ class PaperTrader:
             fair_price=fair_price,
             is_underdog_reversal=bool(signal.get("is_underdog_reversal", False)),
             peak_bid=bid,  # initialize to current bid so trailing stop has a starting point
+            strategy_kind=signal.get("strategy_kind") or signal.get("event_family") or signal.get("event_type"),
+            hold_policy=signal.get("hold_policy"),
+            entry_fair=fair_price,
+            entry_edge=self._optional_float(entry_edge),
+            entry_backed_side=signal.get("event_direction") or signal.get("direction"),
+            entry_radiant_lead=self._optional_int(entry_lead),
+            entry_actual_event_type=signal.get("actual_event_type"),
+            entry_derived_state_flags=self._parse_flags(signal.get("derived_state_flags")),
         )
         self.positions[token_id] = pos
         self._match_open_usd[match_id] = self._match_open_usd.get(match_id, 0.0) + size_usd
@@ -448,6 +498,14 @@ class PaperTrader:
             exit_time_ns=time.time_ns(),
             fair_price=pos.fair_price,
             is_underdog_reversal=pos.is_underdog_reversal,
+            strategy_kind=pos.strategy_kind,
+            hold_policy=pos.hold_policy,
+            entry_fair=pos.entry_fair,
+            entry_edge=pos.entry_edge,
+            entry_backed_side=pos.entry_backed_side,
+            entry_radiant_lead=pos.entry_radiant_lead,
+            entry_actual_event_type=pos.entry_actual_event_type,
+            entry_derived_state_flags=pos.entry_derived_state_flags,
         )
         self.closed.append(cp)
         cooldown_ns = int(PAPER_REENTRY_COOLDOWN_SEC * 1_000_000_000)

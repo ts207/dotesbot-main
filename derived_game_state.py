@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Mapping
 
 from structure_state import decode_structure_state
+
+
+class DerivedGameStateType(str, Enum):
+    PHASE_ADJUSTED_NETWORTH_LEAD = "PHASE_ADJUSTED_NETWORTH_LEAD"
+    DOMINANT_NETWORTH_LEAD = "DOMINANT_NETWORTH_LEAD"
+    STRUCTURE_ADVANTAGE = "STRUCTURE_ADVANTAGE"
+    KILL_NETWORTH_ALIGNMENT = "KILL_NETWORTH_ALIGNMENT"
+    KILL_NETWORTH_DIVERGENCE = "KILL_NETWORTH_DIVERGENCE"
+    PUSH_SETUP_STATE = "PUSH_SETUP_STATE"
 
 
 def _to_int(value: Any) -> int | None:
@@ -77,17 +87,17 @@ def derive_game_state(game: Mapping[str, Any]) -> DerivedGameState:
 
     flags: list[str] = []
     if phase_lead is not None and abs(phase_lead) >= 2500:
-        flags.append("PHASE_ADJUSTED_NETWORTH_LEAD")
+        flags.append(DerivedGameStateType.PHASE_ADJUSTED_NETWORTH_LEAD.value)
     if lead is not None and abs(lead) >= 8000:
-        flags.append("DOMINANT_NETWORTH_LEAD")
+        flags.append(DerivedGameStateType.DOMINANT_NETWORTH_LEAD.value)
     if structure_advantage_side:
-        flags.append("STRUCTURE_ADVANTAGE")
+        flags.append(DerivedGameStateType.STRUCTURE_ADVANTAGE.value)
     if networth_side and kill_diff_side and networth_side == kill_diff_side:
-        flags.append("KILL_NETWORTH_ALIGNMENT")
+        flags.append(DerivedGameStateType.KILL_NETWORTH_ALIGNMENT.value)
     if networth_side and kill_diff_side and networth_side != kill_diff_side:
-        flags.append("KILL_NETWORTH_DIVERGENCE")
+        flags.append(DerivedGameStateType.KILL_NETWORTH_DIVERGENCE.value)
     if structure_advantage_side and networth_side == structure_advantage_side and gt >= 900:
-        flags.append("PUSH_SETUP_STATE")
+        flags.append(DerivedGameStateType.PUSH_SETUP_STATE.value)
 
     return DerivedGameState(
         flags=tuple(flags),

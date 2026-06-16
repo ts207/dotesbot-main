@@ -212,7 +212,7 @@ class SignalLogger(CsvLogger):
             "match_id", "lobby_id", "league_id", "radiant_team", "dire_team",
             "game_time_sec", "radiant_lead", "radiant_score", "dire_score",
             "market_name", "market_type", "yes_team", "yes_token_id",
-            "event_type", "cluster_event_types", "event_direction", "severity",
+            "event_type", "event_namespace", "cluster_event_types", "event_direction", "severity",
             "event_tier", "event_is_primary", "event_family", "event_quality",
             "event_schema_version", "snapshot_gap_sec", "actual_window_sec",
             "networth_delta", "kill_diff_delta", "total_kills_delta",
@@ -235,6 +235,7 @@ class SignalLogger(CsvLogger):
             "series_score_yes", "series_score_no",
             "current_game_number", "series_type",
             "structure_uncertainty_penalty",
+            "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
         ], parquet_table="signals")
 
     def _to_parquet_row(self, row: dict) -> dict:
@@ -269,6 +270,7 @@ class SignalLogger(CsvLogger):
             "yes_team": mapping.get("yes_team"),
             "yes_token_id": mapping.get("yes_token_id"),
             "event_type": signal.get("event_type") or event_type,
+            "event_namespace": signal.get("event_namespace") or "legacy_strategy_label",
             "cluster_event_types": signal.get("cluster_event_types"),
             "event_direction": signal.get("event_direction") or event_direction,
             "severity": severity,
@@ -335,6 +337,9 @@ class SignalLogger(CsvLogger):
             "current_game_number": signal.get("current_game_number"),
             "series_type": signal.get("series_type"),
             "structure_uncertainty_penalty": signal.get("structure_uncertainty_penalty"),
+            "would_pass_live_gates": signal.get("would_pass_live_gates"),
+            "live_skip_reason": signal.get("live_skip_reason"),
+            "paper_only_bypass": signal.get("paper_only_bypass"),
         })
 
 
@@ -394,7 +399,10 @@ class PositionLogger(CsvLogger):
             "timestamp_utc", "action",
             "token_id", "match_id", "market_name", "side",
             "entry_price", "shares", "cost_usd",
-            "event_type", "lag", "expected_move",
+            "event_type", "lag", "expected_move", "fair_price",
+            "strategy_kind", "hold_policy", "entry_fair", "entry_edge",
+            "entry_backed_side", "entry_radiant_lead", "entry_actual_event_type",
+            "entry_derived_state_flags",
             "entry_game_time_sec",
             "exit_price", "proceeds_usd", "pnl_usd", "roi",
             "hold_sec", "exit_game_time_sec", "exit_reason",
@@ -404,12 +412,16 @@ class PositionLogger(CsvLogger):
         d = pos.to_dict()
         d["timestamp_utc"] = utc_now_iso()
         d["action"] = "entry"
+        if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
+            d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
         self.append(d)
 
     def log_exit(self, cp) -> None:
         d = cp.to_dict()
         d["timestamp_utc"] = ns_to_iso(cp.exit_time_ns) or utc_now_iso()
         d["action"] = "exit"
+        if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
+            d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
         self.append(d)
 
 
@@ -445,7 +457,7 @@ class DotaEventLogger(CsvLogger):
         super().__init__(filename, [
             "timestamp_utc", "run_id", "code_version", "config_hash",
             "match_id", "lobby_id", "league_id", "mapping_name", "yes_team", "yes_token_id",
-            "event_type", "event_tier", "event_is_primary", "event_family", "event_quality", "event_dedupe_key",
+            "event_type", "event_namespace", "event_tier", "event_is_primary", "event_family", "event_quality", "event_dedupe_key",
             "event_schema_version", "snapshot_gap_sec", "actual_window_sec",
             "networth_delta", "kill_diff_delta", "total_kills_delta",
             "networth_delta_per_30s", "kill_diff_delta_per_30s", "source_cadence_quality",
@@ -467,6 +479,7 @@ class DotaEventLogger(CsvLogger):
             row["run_id"] = RUN_ID
             row["code_version"] = CODE_VERSION
             row["config_hash"] = CONFIG_HASH
+            row["event_namespace"] = row.get("event_namespace") or "legacy_strategy_label"
             rows.append(row)
         self.append_many(rows)
 
@@ -1140,7 +1153,7 @@ class StrategySignalLogger(CsvLogger):
             "strategy", "actual_event_type", "match_id",
             "would_trade", "reject_reason",
             "direction", "side", "token_id",
-            "fair_before", "fair_price", "fair_delta",
+            "fair_before", "fair_after", "fair_price", "fair_delta",
             "ask", "edge", "lead", "game_time_sec", "elo_diff",
             "book_age_ms", "sized_usd", "derived_state_flags",
             "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
@@ -1161,6 +1174,7 @@ class StrategySignalLogger(CsvLogger):
             "side": sig.side,
             "token_id": sig.token_id,
             "fair_before": sig.fair_before,
+            "fair_after": sig.fair_after,
             "fair_price": sig.fair_price,
             "fair_delta": sig.fair_delta,
             "ask": sig.ask,
@@ -1191,6 +1205,7 @@ class StrategySignalLogger(CsvLogger):
             "side": rej.side,
             "token_id": rej.token_id,
             "fair_before": rej.fair_before,
+            "fair_after": rej.fair_after,
             "fair_price": rej.fair_price,
             "fair_delta": rej.fair_delta,
             "ask": rej.ask,

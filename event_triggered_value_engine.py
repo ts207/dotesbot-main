@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 import winprob
-from actual_dota_event_types import ActualDotaEvent
+from actual_dota_event_types import ActualDotaEvent, PRIMITIVE_EVENT_TYPES
 from config import (
     EVENT_TRIGGERED_VALUE_ENABLED,
     EVENT_VALUE_MAX_ASK,
@@ -26,6 +26,10 @@ _NAMESPACE = uuid.UUID("11111111-2222-3333-4444-555555555560")
 
 def _make_signal_id(match_id: str, event_id: str, token_id: str) -> str:
     return str(uuid.uuid5(_NAMESPACE, f"event_value|{match_id}|{event_id}|{token_id}"))
+
+
+def _event_type_value(event_type: Any) -> str:
+    return str(getattr(event_type, "value", event_type) or "")
 
 
 def _side_fair(
@@ -58,7 +62,7 @@ class EventTriggeredValueSignal:
     side: str
     token_id: str
     fair_before: float
-    fair_price: float
+    fair_after: float
     fair_delta: float
     ask: float
     edge: float
@@ -72,6 +76,10 @@ class EventTriggeredValueSignal:
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
 
+    @property
+    def fair_price(self) -> float:
+        return self.fair_after
+
     def to_signal_dict(self) -> dict:
         return {
             "signal_id": self.signal_id,
@@ -80,13 +88,16 @@ class EventTriggeredValueSignal:
             "reason": "event_triggered_value_edge",
             "token_id": self.token_id,
             "side": self.side,
-            "fair_price": self.fair_price,
+            "fair_after": self.fair_after,
+            "fair_price": self.fair_after,
             "fair_before": self.fair_before,
             "fair_delta": self.fair_delta,
             "executable_edge": self.edge,
             "expected_move": 0.0,
             "target_size_usd": self.sized_usd,
             "event_type": "EVENT_TRIGGERED_VALUE",
+            "strategy_kind": "value",
+            "hold_policy": "thesis_invalidation",
             "actual_event_type": self.actual_event_type,
             "event_tier": "A",
             "event_is_primary": True,
@@ -94,6 +105,10 @@ class EventTriggeredValueSignal:
             "event_quality": 1.0,
             "event_direction": self.direction,
             "derived_state_flags": ",".join(self.derived_state_flags),
+            "ask": self.ask,
+            "edge": self.edge,
+            "game_time_sec": self.game_time_sec,
+            "lead": self.lead,
             "would_pass_live_gates": self.would_pass_live_gates,
             "live_skip_reason": self.live_skip_reason,
             "paper_only_bypass": self.paper_only_bypass,
@@ -111,7 +126,7 @@ class EventTriggeredValueReject:
     side: str = ""
     token_id: str = ""
     fair_before: float | None = None
-    fair_price: float | None = None
+    fair_after: float | None = None
     fair_delta: float | None = None
     ask: float | None = None
     edge: float | None = None
@@ -122,6 +137,10 @@ class EventTriggeredValueReject:
     would_pass_live_gates: bool = False
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
+
+    @property
+    def fair_price(self) -> float | None:
+        return self.fair_after
 
 
 class EventTriggeredValueEngine:
@@ -142,7 +161,10 @@ class EventTriggeredValueEngine:
             return []
         if game.get("data_source") != "top_live" or event.source != "top_live":
             return [self._reject(event, match_id, cur_ns, "not_top_live")]
-        if event.event_type == "GAME_ENDED" or game.get("game_over"):
+        actual_event_type = _event_type_value(event.event_type)
+        if actual_event_type not in PRIMITIVE_EVENT_TYPES:
+            return [self._reject(event, match_id, cur_ns, "unsupported_actual_event_type")]
+        if actual_event_type == "GAME_ENDED" or game.get("game_over"):
             return [self._reject(event, match_id, cur_ns, "game_over")]
         if event.side not in {"radiant", "dire"}:
             return [self._reject(event, match_id, cur_ns, "event_side_not_tradeable")]
@@ -213,24 +235,24 @@ class EventTriggeredValueEngine:
         fair_delta = fair_after - fair_before
         edge = fair_after - ask
         if fair_delta < EVENT_VALUE_MIN_FAIR_DELTA:
-            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
         if edge < EVENT_VALUE_MIN_EDGE:
-            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
         if edge > EVENT_VALUE_MAX_EDGE:
-            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_price=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
+            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms)]
 
         derived = derive_game_state(game)
         return [EventTriggeredValueSignal(
             signal_id=_make_signal_id(match_id, event.event_id, str(token_id)),
             event_id=event.event_id,
-            actual_event_type=event.event_type,
+            actual_event_type=actual_event_type,
             match_id=match_id,
             received_at_ns=cur_ns,
             direction=direction,
             side=side,
             token_id=str(token_id),
             fair_before=fair_before,
-            fair_price=fair_after,
+            fair_after=fair_after,
             fair_delta=fair_delta,
             ask=ask,
             edge=edge,
@@ -248,6 +270,6 @@ class EventTriggeredValueEngine:
             received_at_ns=received_at_ns,
             reason=reason,
             event_id=event.event_id,
-            actual_event_type=event.event_type,
+            actual_event_type=_event_type_value(event.event_type),
             **kwargs,
         )

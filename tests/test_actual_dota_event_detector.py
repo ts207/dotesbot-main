@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from actual_dota_event_detector import ActualDotaEventDetector
-from actual_dota_event_types import PRIMITIVE_EVENT_TYPES
+from actual_dota_event_types import ActualDotaEventType, PRIMITIVE_EVENT_TYPES
 from config import DEFAULT_TRADE_EVENTS
+from derived_game_state import DerivedGameStateType, derive_game_state
 
 
 def _game(**overrides):
@@ -84,3 +85,15 @@ def test_non_toplive_and_aegis_are_not_entry_events():
     events = detector.observe(_game(data_source="live_league", received_at_ns=2_000_000_000, radiant_score=9))
     assert events == []
     assert "POLL_AEGIS_MOMENTUM" not in DEFAULT_TRADE_EVENTS
+
+
+def test_event_and_derived_state_enums_are_explicit():
+    assert ActualDotaEventType.NETWORTH_SWING_WINDOW.value in PRIMITIVE_EVENT_TYPES
+    derived = derive_game_state(_game(
+        game_time_sec=1200,
+        radiant_lead=9000,
+        radiant_score=20,
+        dire_score=10,
+    ))
+    assert DerivedGameStateType.DOMINANT_NETWORTH_LEAD.value in derived.flags
+    assert all(isinstance(flag, str) for flag in derived.flags)

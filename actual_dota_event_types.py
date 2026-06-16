@@ -1,30 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Literal
+from enum import Enum
+from typing import Any
 
 
-ActualDotaEventType = Literal[
-    "TEAM_KILL_SCORE_CHANGE",
-    "MULTI_KILL_WINDOW",
-    "NETWORTH_LEAD_CHANGE",
-    "NETWORTH_SWING_WINDOW",
-    "NETWORTH_LEAD_FLIP",
-    "TOWER_DESTROYED",
-    "TOWER_TIER_CLEARED",
-    "GAME_ENDED",
-]
+class ActualDotaEventType(str, Enum):
+    TEAM_KILL_SCORE_CHANGE = "TEAM_KILL_SCORE_CHANGE"
+    MULTI_KILL_WINDOW = "MULTI_KILL_WINDOW"
+    NETWORTH_LEAD_CHANGE = "NETWORTH_LEAD_CHANGE"
+    NETWORTH_SWING_WINDOW = "NETWORTH_SWING_WINDOW"
+    NETWORTH_LEAD_FLIP = "NETWORTH_LEAD_FLIP"
+    TOWER_DESTROYED = "TOWER_DESTROYED"
+    TOWER_TIER_CLEARED = "TOWER_TIER_CLEARED"
+    GAME_ENDED = "GAME_ENDED"
 
 
 PRIMITIVE_EVENT_TYPES: set[str] = {
-    "TEAM_KILL_SCORE_CHANGE",
-    "MULTI_KILL_WINDOW",
-    "NETWORTH_LEAD_CHANGE",
-    "NETWORTH_SWING_WINDOW",
-    "NETWORTH_LEAD_FLIP",
-    "TOWER_DESTROYED",
-    "TOWER_TIER_CLEARED",
-    "GAME_ENDED",
+    event.value for event in ActualDotaEventType
 }
 
 
@@ -57,4 +50,7 @@ class ActualDotaEvent:
     details: str = ""
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        row = asdict(self)
+        if isinstance(self.event_type, ActualDotaEventType):
+            row["event_type"] = self.event_type.value
+        return row
