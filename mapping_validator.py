@@ -255,6 +255,16 @@ def validate_mapping_identity(mapping: dict, game: dict, liveleague_context: dic
                   and _matches(no_team, dire_team, no_aliases))
         reversed_side = (_matches(yes_team, dire_team, yes_aliases)
                          and _matches(no_team, radiant_team, no_aliases))
+        
+        # Fallback to binder-mapped steam team names
+        steam_rad_mapped = norm_team(mapping.get("steam_radiant_team") or "")
+        steam_dire_mapped = norm_team(mapping.get("steam_dire_team") or "")
+        if steam_rad_mapped and steam_dire_mapped:
+            normal_steam = (radiant_team == steam_rad_mapped and dire_team == steam_dire_mapped)
+            reversed_steam = (dire_team == steam_rad_mapped and radiant_team == steam_dire_mapped)
+            normal = normal or normal_steam
+            reversed_side = reversed_side or reversed_steam
+
         if not (normal or reversed_side):
             result.mapping_errors.append(
                 f"team_name_mismatch yes={yes_team} no={no_team} radiant={radiant_team} dire={dire_team}"

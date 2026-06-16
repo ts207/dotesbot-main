@@ -65,7 +65,7 @@ def extract_series_market(event: dict) -> dict | None:
         q = m.get("question") or ""
         if not q:
             continue
-        if "Game" in q:
+        if re.search(r"\bGame \d+\b", q, re.IGNORECASE):
             continue
         if not any(bo in q for bo in ("BO1", "BO3", "BO5")):
             continue
@@ -91,7 +91,7 @@ def _book_is_live(token_id: str) -> bool:
     return bool(bids) and bool(asks)
 
 
-def extract_live_game_market(event: dict) -> dict | None:
+def extract_live_game_market(event: dict, markets_yaml: dict | None = None) -> dict | None:
     """2026-06-01 — Return the LIVE single-game (Game-N-Winner / MAP) market.
 
     Binding the SERIES market (extract_series_market) is wrong for S1: S1
@@ -105,6 +105,14 @@ def extract_live_game_market(event: dict) -> dict | None:
         q = m.get("question") or ""
         if "Game" not in q or "Winner" not in q:
             continue
+        if markets_yaml:
+            is_bound = False
+            for x in markets_yaml.get("markets", []):
+                if x.get("condition_id") == m.get("conditionId") and str(x.get("dota_match_id", "")).isdigit():
+                    is_bound = True
+                    break
+            if is_bound:
+                continue
         if m.get("winner") or not m.get("acceptingOrders"):
             continue
         try:
@@ -328,7 +336,7 @@ def run_once(verbose: bool = True) -> int:
         # series market. S1 predicts the GAME winner and the live game's Game-N
         # market is the right (and liquid) one. Fall back to the series market
         # only if no game market is currently live (two-sided book).
-        live_game = extract_live_game_market(event)
+        live_game = extract_live_game_market(event, md)
         market = live_game or extract_series_market(event)
         is_map = live_game is not None
         if not market:

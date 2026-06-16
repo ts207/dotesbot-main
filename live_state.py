@@ -19,6 +19,7 @@ def load_live_state() -> dict:
         "last_reset_date": "",
         "submitted_match_sides": {},
         "submitted_match_usd": {},
+        "submitted_family_usd": {},
         "updated_at_ns": 0
     }
     if not os.path.exists(LIVE_STATE_PATH):
@@ -42,6 +43,7 @@ def save_live_state(
     last_reset_date: str = "",
     submitted_match_sides: dict | None = None,
     submitted_match_usd: dict | None = None,
+    submitted_family_usd: dict | None = None,
 ):
     """Persist live risk state to disk."""
     os.makedirs(os.path.dirname(LIVE_STATE_PATH), exist_ok=True)
@@ -53,6 +55,7 @@ def save_live_state(
         "last_reset_date": str(last_reset_date),
         "submitted_match_sides": submitted_match_sides or {},
         "submitted_match_usd": submitted_match_usd or {},
+        "submitted_family_usd": submitted_family_usd or {},
         "updated_at_ns": time.time_ns()
     }
     from atomic_writes import atomic_json_write

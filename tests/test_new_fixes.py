@@ -112,6 +112,40 @@ async def test_try_buy_value_rejects_ask_near_fair(mock_validate):
     assert att.order_status == "rejected_precheck"
     assert "fresh_ask_not_below_fair" in att.reason_if_rejected
 
+@pytest.mark.asyncio
+@patch("live_executor.validate_mapping_identity")
+async def test_try_buy_value_rejects_strategy_family_cap(mock_validate, monkeypatch):
+    mock_validate.return_value.ok = True
+    monkeypatch.setenv("EVENT_MAX_LIVE_USD", "6.0")
+
+    le = LiveExecutor()
+    le.total_submitted_usd = 0.0
+    le.open_positions = 0
+    le._submitted_match_usd = {}
+    le._submitted_family_usd = {"EVENT": 4.0}
+
+    sig = MagicMock()
+    sig.__class__.__name__ = "EventTriggeredValueSignal"
+    sig.token_id = "tok_yes"
+    sig.sized_usd = 5.0
+    sig.fair_price = 0.80
+    sig.edge = 0.20
+    sig.direction = "radiant"
+    sig.side = "YES"
+    sig.book_age_ms = 10
+    sig.game_time_sec = 1000
+    sig.signal_id = "sig_1"
+    sig.is_reversal = False
+    sig.is_continuation = True
+    sig.actual_event_type = "NETWORTH_SWING_WINDOW"
+
+    mapping = {"yes_token_id": "tok_yes", "no_token_id": "tok_no", "dota_match_id": "m1", "tick_size": 0.01}
+    game = {"match_id": "m1", "radiant_team_id": 1, "dire_team_id": 2, "radiant_team": "A", "dire_team": "B"}
+
+    att = await le.try_buy_value(signal=sig, mapping=mapping, game=game, book_store={})
+    assert att.order_status == "rejected_precheck"
+    assert "strategy_family_cap:EVENT" in att.reason_if_rejected
+
 def test_reject_value_labels():
     le = LiveExecutor()
     sig1 = MagicMock()

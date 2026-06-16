@@ -62,6 +62,10 @@ class ValueSignal:
     side: str
     token_id: str
     fair_price: float
+    fair_raw: float | None
+    fair_used: float | None
+    model_available: bool
+    model_reason: str
     ask: float
     edge: float
     lead: int
@@ -72,6 +76,15 @@ class ValueSignal:
     would_pass_live_gates: bool = True
     live_skip_reason: str = ""
     paper_only_bypass: bool = False
+    edge_type: str = "absolute_state_value"
+    target_horizon: str = "settlement"
+    expected_hold_sec: int = 0
+    entry_trigger: str = "fair_used - ask"
+    exit_trigger: str = "game_over / fair_invalidation / max_hold"
+    primary_metric: str = "settlement_roi"
+    secondary_metric: str = "fair_bucket_calibration"
+    promotion_rule: str = "calibrated_positive_roi_by_bucket"
+    disable_rule: str = "negative_settlement_roi_or_uncalibrated_bucket"
 
     def to_signal_dict(self) -> dict:
         return {
@@ -82,7 +95,20 @@ class ValueSignal:
             "token_id": self.token_id,
             "side": self.side,
             "fair_price": self.fair_price,
+            "fair_raw": self.fair_raw,
+            "fair_used": self.fair_used,
+            "model_available": self.model_available,
+            "model_reason": self.model_reason,
             "executable_edge": self.edge,
+            "edge_type": self.edge_type,
+            "target_horizon": self.target_horizon,
+            "expected_hold_sec": self.expected_hold_sec,
+            "entry_trigger": self.entry_trigger,
+            "exit_trigger": self.exit_trigger,
+            "primary_metric": self.primary_metric,
+            "secondary_metric": self.secondary_metric,
+            "promotion_rule": self.promotion_rule,
+            "disable_rule": self.disable_rule,
             "expected_move": 0.0,
             "target_size_usd": self.sized_usd,
             "size_multiplier": 1.0,
@@ -106,6 +132,10 @@ class ValueReject:
     side: str = ""
     token_id: str = ""
     fair_price: float | None = None
+    fair_raw: float | None = None
+    fair_used: float | None = None
+    model_available: bool | None = None
+    model_reason: str | None = None
     ask: float | None = None
     edge: float | None = None
     lead: int | None = None
@@ -258,7 +288,17 @@ class ValueEngine:
         # leader's lead change /5min. Draft-H2H = leader's hero-matchup advantage.
         
         fair_res = compute_side_fair(game=game, side=direction, received_at_ns_override=cur_ns)
-        fair_price = fair_res.fair
+        if not fair_res.model_available:
+            return [ValueReject(
+                match_id, cur_ns, "model_unavailable",
+                direction=direction, side=side, token_id=token_id,
+                fair_price=None, fair_raw=fair_res.fair_raw,
+                fair_used=fair_res.fair_used, model_available=False,
+                model_reason=fair_res.model_reason,
+                ask=ask, lead=lead, game_time_sec=game_time,
+                elo_diff=fair_res.elo_diff, book_age_ms=book_age_ms
+            )]
+        fair_price = fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
         elo_diff = fair_res.elo_diff
         edge = fair_price - ask
 
@@ -302,6 +342,10 @@ class ValueEngine:
             side=side,
             token_id=token_id,
             fair_price=fair_price,
+            fair_raw=fair_res.fair_raw,
+            fair_used=fair_price,
+            model_available=fair_res.model_available,
+            model_reason=fair_res.model_reason,
             ask=ask,
             edge=edge,
             lead=lead,

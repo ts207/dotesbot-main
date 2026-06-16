@@ -120,6 +120,14 @@ def maybe_attach_markouts(cohort: dict, markouts: pd.DataFrame, token_ids: pd.Se
     cohort["markout_3s"] = mean_num(sub, "markout_3s")
     cohort["markout_10s"] = mean_num(sub, "markout_10s")
     cohort["markout_30s"] = mean_num(sub, "markout_30s")
+    cohort["markout_60s"] = mean_num(sub, "markout_60s")
+    cohort["markout_120s"] = mean_num(sub, "markout_120s")
+    cohort["max_bid_120s"] = mean_num(sub, "max_bid_120s")
+    cohort["realizable_exit_30s"] = mean_num(sub, "realizable_exit_30s")
+    cohort["realizable_exit_60s"] = mean_num(sub, "realizable_exit_60s")
+    cohort["realizable_exit_120s"] = mean_num(sub, "realizable_exit_120s")
+    cohort["bounce_capture"] = mean_num(sub, "bounce_capture")
+    cohort["timeout_loss"] = mean_num(sub, "timeout_loss")
 
 def allocator_attribution() -> None:
     """Print attribution stats from logs/strategy_allocator.csv.
@@ -237,6 +245,9 @@ def generate_report():
                 "avg_fair": mean_num(s_sigs, "fair_price"),
                 "avg_edge": mean_num(s_sigs, "edge"),
                 "avg_fair_delta": mean_num(s_sigs, "fair_delta"),
+                "avg_market_reprice": mean_num(s_sigs, "market_reprice"),
+                "avg_remaining_event_edge": mean_num(s_sigs, "remaining_event_edge"),
+                "avg_event_reprice_gap": mean_num(s_sigs, "event_reprice_gap"),
                 "avg_book_age_ms": mean_num(s_sigs, "book_age_ms"),
                 "p50_book_age_ms": p50_num(s_sigs, "book_age_ms"),
                 "p90_book_age_ms": p90_num(s_sigs, "book_age_ms"),
@@ -289,6 +300,17 @@ def generate_report():
             ("Markout 3s", "markout_3s"),
             ("Markout 10s", "markout_10s"),
             ("Markout 30s", "markout_30s"),
+            ("Markout 60s", "markout_60s"),
+            ("Markout 120s", "markout_120s"),
+            ("Max Bid 120s", "max_bid_120s"),
+            ("Real Exit 30s", "realizable_exit_30s"),
+            ("Real Exit 60s", "realizable_exit_60s"),
+            ("Real Exit 120s", "realizable_exit_120s"),
+            ("Bounce Cap", "bounce_capture"),
+            ("Timeout Loss", "timeout_loss"),
+            ("Mkt Reprice", "avg_market_reprice"),
+            ("Remain Event", "avg_remaining_event_edge"),
+            ("Reprice Gap", "avg_event_reprice_gap"),
         ]:
             value = data.get(key)
             if value is not None:

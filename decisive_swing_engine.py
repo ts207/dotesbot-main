@@ -75,6 +75,7 @@ class DSwingSignal:
     lead: int
     game_time_sec: int
     p_game: float
+    p_game_used: float
     series_fair: float
     ask: float
     edge: float
@@ -82,6 +83,15 @@ class DSwingSignal:
     # aliases so live_executor.try_buy_value can consume this directly
     fair_price: float = 0.0
     book_age_ms: int = 0
+    edge_type: str = "map_end_series_convergence"
+    target_horizon: str = "map_end"
+    expected_hold_sec: int = 0
+    entry_trigger: str = "series_fair - ask"
+    exit_trigger: str = "map_end_convergence"
+    primary_metric: str = "exit_bid - entry_price"
+    secondary_metric: str = "captured_edge_by_bucket"
+    promotion_rule: str = "positive_captured_edge_by_bucket"
+    disable_rule: str = "negative_captured_edge_or_missing_map_end_exit"
 
 
 @dataclass(frozen=True)
@@ -198,7 +208,7 @@ class DecisiveSwingEngine:
             signal_id=str(uuid.uuid5(_NS, f"dswing|{match_id}|{direction}")),
             match_id=match_id, received_at_ns=int(game.get("received_at_ns") or 0),
             direction=direction, side=side, token_id=str(token_id),
-            lead=lead, game_time_sec=gt, p_game=p_game, series_fair=series_fair,
+            lead=lead, game_time_sec=gt, p_game=p_game, p_game_used=p_game, series_fair=series_fair,
             ask=ask, edge=edge, sized_usd=DSWING_TRADE_USD,
             fair_price=series_fair, book_age_ms=int((time.time_ns() - rcv) / 1e6),
         )]

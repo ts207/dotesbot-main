@@ -122,6 +122,29 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
+def _value_signal_strategy_meta(signal: Any) -> tuple[str, str, str | None, bool, bool]:
+    signal_kind = signal.__class__.__name__
+    if signal_kind == "EventTriggeredValueSignal":
+        return (
+            "EVENT_REVERSAL_EDGE" if signal.is_reversal else "EVENT_CONTINUATION_EDGE",
+            "EVENT",
+            signal.actual_event_type,
+            signal.is_reversal,
+            signal.is_continuation,
+        )
+    if signal_kind == "DSwingSignal":
+        return ("DSWING", "DSWING", None, False, False)
+    return ("VALUE_EDGE", "VALUE", None, False, False)
+
+
+def _strategy_family_cap_usd(strategy_family: str) -> float:
+    env_key = f"{strategy_family.upper()}_MAX_LIVE_USD"
+    try:
+        return float(os.getenv(env_key, str(MAX_TOTAL_LIVE_USD)))
+    except (TypeError, ValueError):
+        return MAX_TOTAL_LIVE_USD
+
+
 def _response_to_dict(resp: Any) -> dict[str, Any]:
     data = _jsonable(resp)
     if isinstance(data, dict):
@@ -673,10 +696,12 @@ class LiveExecutor:
             self.last_reset_date = today_date
             self._submitted_match_sides = state.get("submitted_match_sides", {})
             self._submitted_match_usd = state.get("submitted_match_usd", {})
+            self._submitted_family_usd = state.get("submitted_family_usd", {})
             self._save()
         else:
             self._submitted_match_sides = state.get("submitted_match_sides", {})
             self._submitted_match_usd = state.get("submitted_match_usd", {})
+            self._submitted_family_usd = state.get("submitted_family_usd", {})
 
         # In-memory only — per-direction re-entry cooldown for value-family entries.
         # Key: "value|<match_id>|<direction>". Value: last_entry_time_ns.
@@ -764,6 +789,7 @@ class LiveExecutor:
             self.last_reset_date,
             self._submitted_match_sides,
             self._submitted_match_usd,
+            self._submitted_family_usd,
         )
 
     def add_realized_pnl(self, pnl_usd: float) -> None:
@@ -780,13 +806,25 @@ class LiveExecutor:
             if match_id in self._submitted_match_usd:
                 del self._submitted_match_usd[match_id]
 
-    def release_submitted_budget(self, order_usd: float, match_id: str | None = None) -> None:
+    def release_submitted_budget(
+        self,
+        order_usd: float,
+        match_id: str | None = None,
+        strategy_family: str | None = None,
+    ) -> None:
         """Refund a submitted-but-unfilled order back to the available budget."""
         self.total_submitted_usd = max(0.0, self.total_submitted_usd - order_usd)
         if match_id and match_id in self._submitted_match_usd:
             self._submitted_match_usd[match_id] = max(0.0, self._submitted_match_usd[match_id] - order_usd)
             if self._submitted_match_usd[match_id] <= 0:
                 del self._submitted_match_usd[match_id]
+        if strategy_family and strategy_family in self._submitted_family_usd:
+            self._submitted_family_usd[strategy_family] = max(
+                0.0,
+                self._submitted_family_usd[strategy_family] - order_usd,
+            )
+            if self._submitted_family_usd[strategy_family] <= 0:
+                del self._submitted_family_usd[strategy_family]
         self._save()
 
     def remaining_budget(self) -> float:
@@ -1392,6 +1430,13 @@ class LiveExecutor:
             return self._reject_value(signal, mapping, game, "", 0.0, "missing_token_id")
 
         size_usd = min(float(signal.sized_usd), MAX_TRADE_USD)
+        (
+            attempt_event_type,
+            strategy_family,
+            strategy_subtype,
+            is_reversal,
+            is_continuation,
+        ) = _value_signal_strategy_meta(signal)
 
         mapping_result = validate_mapping_identity(mapping, game)
         if not mapping_result.ok:
@@ -1407,6 +1452,13 @@ class LiveExecutor:
             return self._reject_value(signal, mapping, game, token_id, size_usd, "max_total_live_usd_reached")
         if self.open_positions >= MAX_OPEN_POSITIONS:
             return self._reject_value(signal, mapping, game, token_id, size_usd, "max_open_positions_reached")
+        family_cap = _strategy_family_cap_usd(strategy_family)
+        family_used = float(self._submitted_family_usd.get(strategy_family, 0.0))
+        if family_used + size_usd > family_cap:
+            return self._reject_value(
+                signal, mapping, game, token_id, size_usd,
+                f"strategy_family_cap:{strategy_family}:used={family_used:.1f}_cap={family_cap:.1f}"
+            )
         if self.daily_realized_pnl_usd <= -MAX_DAILY_DRAWDOWN_USD:
             return self._reject_value(
                 signal, mapping, game, token_id, size_usd,
@@ -1465,26 +1517,6 @@ class LiveExecutor:
                 f"fresh_ask_not_below_fair:ask={ask:.4f}_fair={signal.fair_price:.4f}"
             )
 
-        signal_kind = signal.__class__.__name__
-        if signal_kind == "EventTriggeredValueSignal":
-            attempt_event_type = "EVENT_REVERSAL_EDGE" if signal.is_reversal else "EVENT_CONTINUATION_EDGE"
-            strategy_family = "EVENT"
-            strategy_subtype = signal.actual_event_type
-            is_reversal = signal.is_reversal
-            is_continuation = signal.is_continuation
-        elif signal_kind == "DSwingSignal":
-            attempt_event_type = "DSWING"
-            strategy_family = "DSWING"
-            strategy_subtype = None
-            is_reversal = False
-            is_continuation = False
-        else:
-            attempt_event_type = "VALUE_EDGE"
-            strategy_family = "VALUE"
-            strategy_subtype = None
-            is_reversal = False
-            is_continuation = False
-            
         trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"
 
         attempt = LiveOrderAttempt(
@@ -1529,6 +1561,7 @@ class LiveExecutor:
             self.total_filled_usd += attempt.filled_size_usd
             self.open_positions += 1
             self._submitted_match_usd[signal_match_id] = self._submitted_match_usd.get(signal_match_id, 0.0) + size_usd
+            self._submitted_family_usd[strategy_family] = self._submitted_family_usd.get(strategy_family, 0.0) + size_usd
             self._value_last_entry_ns[cd_key] = time.time_ns()
             self._save()
             return attempt
@@ -1572,6 +1605,7 @@ class LiveExecutor:
             self.total_filled_usd += attempt.filled_size_usd
             self.open_positions += 1
             self._submitted_match_usd[signal_match_id] = self._submitted_match_usd.get(signal_match_id, 0.0) + size_usd
+            self._submitted_family_usd[strategy_family] = self._submitted_family_usd.get(strategy_family, 0.0) + size_usd
             self._value_last_entry_ns[cd_key] = time.time_ns()
             self._save()
 
@@ -1580,7 +1614,7 @@ class LiveExecutor:
             asyncio.ensure_future(
                 self._poll_and_cancel_delayed(
                     order_id=attempt.order_id, order_usd=size_usd,
-                    match_id=signal_match_id, attempt=attempt,
+                    match_id=signal_match_id, strategy_family=strategy_family, attempt=attempt,
                 )
             )
 
@@ -1592,6 +1626,7 @@ class LiveExecutor:
         order_id: str,
         order_usd: float,
         match_id: str,
+        strategy_family: str | None = None,
         attempt: LiveOrderAttempt | None = None,
     ) -> None:
         """Poll a delayed FAK order and cancel it if still unfilled after 30s."""
@@ -1636,7 +1671,7 @@ class LiveExecutor:
                     attempt.order_status = order_status
                     attempt.reason_if_rejected = f"delayed_order_{order_status}"
                     attempt.raw_response_json = json.dumps(_jsonable(status), sort_keys=True)[:4000]
-                self.release_submitted_budget(order_usd, match_id=match_id)
+                self.release_submitted_budget(order_usd, match_id=match_id, strategy_family=strategy_family)
                 self.decrement_open_positions(match_id, full_exit=False)
                 await self._emit_delayed_resolution(attempt)
                 return
@@ -1652,7 +1687,7 @@ class LiveExecutor:
         if attempt is not None:
             attempt.order_status = "cancelled"
             attempt.reason_if_rejected = "delayed_order_timeout_cancelled"
-        self.release_submitted_budget(order_usd, match_id=match_id)
+        self.release_submitted_budget(order_usd, match_id=match_id, strategy_family=strategy_family)
         self.decrement_open_positions(match_id, full_exit=False)
         await self._emit_delayed_resolution(attempt)
 

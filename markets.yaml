@@ -11474,3 +11474,94 @@ markets:
   steam_radiant_team: Cloud Rising
   steam_dire_team: Roar
   steam_side_mapping: reversed
+- name: 'Dota 2: Game Master vs Grey Trac - Game 2 Winner'
+  condition_id: '0x2c0bc825d5e34420e3cb777bf3f06762c534795cbe142c0671a687ef27257946'
+  market_id: '2552696'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Game Master
+  no_team: Grey Trac
+  yes_token_id: '16291353244983753275193020232291381975042887800207963865228277828813545365403'
+  no_token_id: '106253593742723622257972192445769309022777026384734793420606482032196817861318'
+  dota_match_id: '8853931510'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T08:42:45+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Grey Track
+  steam_dire_team: Game Master
+  steam_side_mapping: reversed
+- name: 'Dota 2: Carstensz vs WinteR SquadronS - Game 1 Winner'
+  market_id: '2556396'
+  condition_id: '0xb96145a607c3bdf03cea2e894dc0e586fbebc35793d8e404d6af0b18957a246c'
+  yes_token_id: '86142142751661521756540167611678460651757155475172665689746437510825138588598'
+  no_token_id: '15474851694758631246225916197960100549655265858923179280414823303817828217275'
+  market_type: MAP_WINNER
+  yes_team: Carstensz
+  no_team: WinteR SquadronS
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 07:00:00+00'
+  source_url: https://polymarket.com/event/dota2-carst-winter-2026-06-16
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0
+- name: 'Dota 2: Carstensz vs WinteR SquadronS - Game 2 Winner'
+  market_id: '2556397'
+  condition_id: '0xc7e84e2d6b5b0eb763011d124cda53af5dcf21414ee21745d76e1f0a1382db61'
+  yes_token_id: '102201467697013731591531352758987796253869450473818167975010056390904517323466'
+  no_token_id: '82114748185022095241391718645242191631639140709126257611827988704480169480400'
+  market_type: MAP_WINNER
+  yes_team: Carstensz
+  no_team: WinteR SquadronS
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 07:00:00+00'
+  source_url: https://polymarket.com/event/dota2-carst-winter-2026-06-16
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0
+- name: 'Dota 2: Game Master vs Grey Trac (BO3) - The International China Closed Qualifier
+    Playoffs'
+  condition_id: '0xb330ce7f8add081911ba314020bdf8b229dd1394ab6b4532b0da99963583637f'
+  market_id: '2552697'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Game Master
+  no_team: Grey Trac
+  yes_token_id: '39005261072826733448357213277797752465823996082272301043702900075750133466371'
+  no_token_id: '65304841015875628859447640450689281521810758281072653210964295517544284800240'
+  dota_match_id: '8853931510'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T09:07:26+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Grey Track
+  steam_dire_team: Game Master
+  steam_side_mapping: reversed
+- name: 'Dota 2: Game Master vs Grey Trac - Game 1 Winner'
+  market_id: '2552695'
+  condition_id: '0x123fcbbcf00f1393c7bcebf9c260c69942b586b940f477765bc54474fae8c226'
+  yes_token_id: '15620385915646889243423815486700018760173964120882494176814235568372748216858'
+  no_token_id: '73447552053167524575722010119249798583200580046539854707630389681394339855619'
+  market_type: MAP_WINNER
+  yes_team: Game Master
+  no_team: Grey Trac
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 07:55:00+00'
+  source_url: https://polymarket.com/event/dota2-gamema-greytr-2026-06-16
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0

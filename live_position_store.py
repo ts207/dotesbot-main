@@ -50,6 +50,15 @@ class LivePosition:
     entry_engine: str | None = None
     exit_engine: str | None = None
     hold_policy: str | None = None
+    edge_type: str | None = None
+    target_horizon: str | None = None
+    expected_hold_sec: int | None = None
+    entry_trigger: str | None = None
+    exit_trigger: str | None = None
+    primary_metric: str | None = None
+    secondary_metric: str | None = None
+    promotion_rule: str | None = None
+    disable_rule: str | None = None
     entry_fair: float | None = None
     entry_edge: float | None = None
     entry_ask: float | None = None

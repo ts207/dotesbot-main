@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import time
 
+import pytest
+
 from actual_dota_event_types import ActualDotaEvent
 from event_triggered_value_engine import EventTriggeredValueEngine, EventTriggeredValueSignal
 
@@ -90,6 +92,29 @@ def test_event_triggered_value_uses_toplive_event_and_winprob_value():
     assert signal.to_signal_dict()["actual_event_type"] == "NETWORTH_SWING_WINDOW"
     assert signal.to_signal_dict()["fair_after"] == signal.fair_after
     assert signal.to_signal_dict()["hold_policy"] == "thesis_invalidation"
+
+
+def test_event_triggered_value_rejects_when_known_market_repriced_too_much():
+    engine = EventTriggeredValueEngine()
+    books = FakeBookStore(YES={
+        "best_ask": 0.58,
+        "best_bid": 0.56,
+        "pre_event_ask": 0.40,
+        "received_at_ns": time.time_ns(),
+    })
+
+    result = engine.evaluate(
+        event=_event(),
+        game=_game(),
+        mapping=_mapping(),
+        book_store=books,
+        entered_tokens=set(),
+    )[0]
+
+    assert result.reason == "event_reprice_gap_too_small"
+    assert result.market_price_before_event == 0.40
+    assert result.market_reprice == pytest.approx(0.18)
+    assert result.event_reprice_gap is not None
 
 
 def test_event_triggered_value_rejects_non_toplive_or_game_end():

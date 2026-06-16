@@ -37,6 +37,18 @@ def _make_signal_id(match_id: str, event_id: str, token_id: str) -> str:
 def _event_type_value(event_type: Any) -> str:
     return str(getattr(event_type, "value", event_type) or "")
 
+
+def _first_float(mapping: Mapping[str, Any], *keys: str) -> float | None:
+    for key in keys:
+        value = mapping.get(key)
+        if value in (None, ""):
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
 @dataclass(frozen=True)
 class EventTriggeredValueSignal:
     signal_id: str
@@ -50,6 +62,30 @@ class EventTriggeredValueSignal:
     fair_before: float
     fair_after: float
     fair_delta: float
+    fair_before_raw: float | None
+    fair_before_used: float | None
+    fair_after_raw: float | None
+    fair_after_used: float | None
+    fair_delta_raw: float | None
+    fair_delta_used: float | None
+    model_available: bool
+    model_reason: str
+    market_price_before_event: float | None
+    market_price_after_event: float | None
+    market_reprice: float | None
+    remaining_event_edge: float | None
+    event_reprice_gap: float | None
+    edge_type: str
+    target_horizon: str
+    expected_hold_sec: int
+    entry_trigger: str
+    exit_trigger: str
+    primary_metric: str
+    secondary_metric: str
+    promotion_rule: str
+    disable_rule: str
+    bounce_target: float | None
+    timeout_sec: int | None
     ask: float
     edge: float
     lead: int
@@ -65,7 +101,7 @@ class EventTriggeredValueSignal:
 
     @property
     def fair_price(self) -> float:
-        return self.fair_after
+        return self.fair_after_used if self.fair_after_used is not None else self.fair_after
 
     @property
     def is_continuation(self) -> bool:
@@ -84,7 +120,31 @@ class EventTriggeredValueSignal:
             "fair_price": self.fair_after,
             "fair_before": self.fair_before,
             "fair_delta": self.fair_delta,
+            "fair_before_raw": self.fair_before_raw,
+            "fair_before_used": self.fair_before_used,
+            "fair_after_raw": self.fair_after_raw,
+            "fair_after_used": self.fair_after_used,
+            "fair_delta_raw": self.fair_delta_raw,
+            "fair_delta_used": self.fair_delta_used,
+            "model_available": self.model_available,
+            "model_reason": self.model_reason,
+            "market_price_before_event": self.market_price_before_event,
+            "market_price_after_event": self.market_price_after_event,
+            "market_reprice": self.market_reprice,
+            "remaining_event_edge": self.remaining_event_edge,
+            "event_reprice_gap": self.event_reprice_gap,
             "executable_edge": self.edge,
+            "edge_type": self.edge_type,
+            "target_horizon": self.target_horizon,
+            "expected_hold_sec": self.expected_hold_sec,
+            "entry_trigger": self.entry_trigger,
+            "exit_trigger": self.exit_trigger,
+            "primary_metric": self.primary_metric,
+            "secondary_metric": self.secondary_metric,
+            "promotion_rule": self.promotion_rule,
+            "disable_rule": self.disable_rule,
+            "bounce_target": self.bounce_target,
+            "timeout_sec": self.timeout_sec,
             "expected_move": 0.0,
             "target_size_usd": self.sized_usd,
             "event_type": strategy_kind,
@@ -123,6 +183,30 @@ class EventTriggeredValueReject:
     fair_before: float | None = None
     fair_after: float | None = None
     fair_delta: float | None = None
+    fair_before_raw: float | None = None
+    fair_before_used: float | None = None
+    fair_after_raw: float | None = None
+    fair_after_used: float | None = None
+    fair_delta_raw: float | None = None
+    fair_delta_used: float | None = None
+    model_available: bool | None = None
+    model_reason: str | None = None
+    market_price_before_event: float | None = None
+    market_price_after_event: float | None = None
+    market_reprice: float | None = None
+    remaining_event_edge: float | None = None
+    event_reprice_gap: float | None = None
+    edge_type: str = ""
+    target_horizon: str = ""
+    expected_hold_sec: int | None = None
+    entry_trigger: str = ""
+    exit_trigger: str = ""
+    primary_metric: str = ""
+    secondary_metric: str = ""
+    promotion_rule: str = ""
+    disable_rule: str = ""
+    bounce_target: float | None = None
+    timeout_sec: int | None = None
     ask: float | None = None
     edge: float | None = None
     lead: int | None = None
@@ -137,6 +221,36 @@ class EventTriggeredValueReject:
     @property
     def fair_price(self) -> float | None:
         return self.fair_after
+
+
+def _strategy_contract(is_reversal: bool) -> dict[str, Any]:
+    if is_reversal:
+        return {
+            "edge_type": "event_overreaction_bounce",
+            "target_horizon": "bounce_120s",
+            "expected_hold_sec": 120,
+            "entry_trigger": "overreaction_score + bounce_setup",
+            "exit_trigger": "bounce_tp / timeout / hard_stop",
+            "primary_metric": "max_realizable_bounce_after_spread",
+            "secondary_metric": "settlement_roi",
+            "promotion_rule": "positive_bounce_roi_by_event_bucket",
+            "disable_rule": "negative_realizable_bounce_or_unvalidated_spread",
+            "bounce_target": None,
+            "timeout_sec": 120,
+        }
+    return {
+        "edge_type": "event_repricing",
+        "target_horizon": "repricing_120s",
+        "expected_hold_sec": 120,
+        "entry_trigger": "fair_delta_used - market_reprice",
+        "exit_trigger": "markout_target / timeout / thesis_invalidation",
+        "primary_metric": "120s_realizable_markout",
+        "secondary_metric": "incremental_settlement_roi_over_value",
+        "promotion_rule": "positive_markout_or_incremental_settlement_roi_over_value",
+        "disable_rule": "negative_event_markout_or_no_incremental_edge",
+        "bounce_target": None,
+        "timeout_sec": 120,
+    }
 
 
 class EventTriggeredValueEngine:
@@ -247,22 +361,63 @@ class EventTriggeredValueEngine:
         res_before = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_before, received_at_ns_override=cur_ns, record_history=False)
         res_after = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_after, received_at_ns_override=cur_ns, record_history=False)
         
-        fair_before = res_before.fair
-        fair_after = res_after.fair
+        model_available = bool(res_before.model_available and res_after.model_available)
+        model_reason = "ok" if model_available else f"{res_before.model_reason}|{res_after.model_reason}"
+        if not model_available:
+            return [self._reject(
+                event, match_id, cur_ns, "model_unavailable",
+                direction=direction, side=side, token_id=token_id,
+                fair_before_raw=res_before.fair_raw,
+                fair_before_used=res_before.fair_used,
+                fair_after_raw=res_after.fair_raw,
+                fair_after_used=res_after.fair_used,
+                model_available=model_available,
+                model_reason=model_reason,
+                ask=ask, lead=lead_after, game_time_sec=game_time,
+                book_age_ms=book_age_ms, is_reversal=is_reversal,
+                **_strategy_contract(is_reversal),
+            )]
+
+        fair_before = res_before.fair_used if res_before.fair_used is not None else res_before.fair
+        fair_after = res_after.fair_used if res_after.fair_used is not None else res_after.fair
         elo_diff = res_after.elo_diff
         
         fair_delta = fair_after - fair_before
-        edge = fair_after - ask
+        fair_delta_raw = (
+            None if res_before.fair_raw is None or res_after.fair_raw is None
+            else res_after.fair_raw - res_before.fair_raw
+        )
+        market_price_before_event = _first_float(
+            book,
+            "market_price_before_event",
+            "best_ask_before_event",
+            "pre_event_ask",
+            "pre_event_price",
+        )
+        market_price_after_event = ask
+        market_reprice = (
+            None if market_price_before_event is None
+            else market_price_after_event - market_price_before_event
+        )
+        remaining_event_edge = fair_after - ask
+        event_reprice_gap = (
+            None if market_reprice is None
+            else fair_delta - market_reprice
+        )
+        edge = remaining_event_edge
+        contract = _strategy_contract(is_reversal)
         
         min_fair_delta = EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA if is_reversal else EVENT_VALUE_MIN_FAIR_DELTA
         min_edge = EVENT_VALUE_REVERSAL_MIN_EDGE if is_reversal else EVENT_VALUE_MIN_EDGE
         
         if fair_delta < min_fair_delta:
-            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+            return [self._reject(event, match_id, cur_ns, "fair_delta_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, fair_before_raw=res_before.fair_raw, fair_before_used=fair_before, fair_after_raw=res_after.fair_raw, fair_after_used=fair_after, fair_delta_raw=fair_delta_raw, fair_delta_used=fair_delta, model_available=model_available, model_reason=model_reason, market_price_before_event=market_price_before_event, market_price_after_event=market_price_after_event, market_reprice=market_reprice, remaining_event_edge=remaining_event_edge, event_reprice_gap=event_reprice_gap, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal, **contract)]
+        if event_reprice_gap is not None and event_reprice_gap < min_edge:
+            return [self._reject(event, match_id, cur_ns, "event_reprice_gap_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, fair_before_raw=res_before.fair_raw, fair_before_used=fair_before, fair_after_raw=res_after.fair_raw, fair_after_used=fair_after, fair_delta_raw=fair_delta_raw, fair_delta_used=fair_delta, model_available=model_available, model_reason=model_reason, market_price_before_event=market_price_before_event, market_price_after_event=market_price_after_event, market_reprice=market_reprice, remaining_event_edge=remaining_event_edge, event_reprice_gap=event_reprice_gap, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal, **contract)]
         if edge < min_edge:
-            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+            return [self._reject(event, match_id, cur_ns, "edge_too_small", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, fair_before_raw=res_before.fair_raw, fair_before_used=fair_before, fair_after_raw=res_after.fair_raw, fair_after_used=fair_after, fair_delta_raw=fair_delta_raw, fair_delta_used=fair_delta, model_available=model_available, model_reason=model_reason, market_price_before_event=market_price_before_event, market_price_after_event=market_price_after_event, market_reprice=market_reprice, remaining_event_edge=remaining_event_edge, event_reprice_gap=event_reprice_gap, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal, **contract)]
         if edge > EVENT_VALUE_MAX_EDGE:
-            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal)]
+            return [self._reject(event, match_id, cur_ns, "edge_too_large", direction=direction, side=side, token_id=token_id, fair_before=fair_before, fair_after=fair_after, fair_delta=fair_delta, fair_before_raw=res_before.fair_raw, fair_before_used=fair_before, fair_after_raw=res_after.fair_raw, fair_after_used=fair_after, fair_delta_raw=fair_delta_raw, fair_delta_used=fair_delta, model_available=model_available, model_reason=model_reason, market_price_before_event=market_price_before_event, market_price_after_event=market_price_after_event, market_reprice=market_reprice, remaining_event_edge=remaining_event_edge, event_reprice_gap=event_reprice_gap, ask=ask, edge=edge, lead=lead_after, game_time_sec=game_time, elo_diff=elo_diff, book_age_ms=book_age_ms, is_reversal=is_reversal, **contract)]
 
         derived = derive_game_state(game)
         return [EventTriggeredValueSignal(
@@ -277,6 +432,20 @@ class EventTriggeredValueEngine:
             fair_before=fair_before,
             fair_after=fair_after,
             fair_delta=fair_delta,
+            fair_before_raw=res_before.fair_raw,
+            fair_before_used=fair_before,
+            fair_after_raw=res_after.fair_raw,
+            fair_after_used=fair_after,
+            fair_delta_raw=fair_delta_raw,
+            fair_delta_used=fair_delta,
+            model_available=model_available,
+            model_reason=model_reason,
+            market_price_before_event=market_price_before_event,
+            market_price_after_event=market_price_after_event,
+            market_reprice=market_reprice,
+            remaining_event_edge=remaining_event_edge,
+            event_reprice_gap=event_reprice_gap,
+            **contract,
             ask=ask,
             edge=edge,
             lead=lead_after,

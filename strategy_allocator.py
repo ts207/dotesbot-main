@@ -44,6 +44,15 @@ class StrategyCandidate:
     fair: float
     game_time_sec: int
     signal: Any             # raw signal object (kept for executor use)
+    edge_type: str = ""
+    target_horizon: str = ""
+    expected_hold_sec: int | None = None
+    entry_trigger: str = ""
+    exit_trigger: str = ""
+    primary_metric: str = ""
+    secondary_metric: str = ""
+    promotion_rule: str = ""
+    disable_rule: str = ""
     # VALUE_EDGE only — whether _value_confirmation_passes() returned True
     would_pass_confirmation: bool = True
     is_reversal: bool = False
@@ -175,9 +184,18 @@ def decision_to_log_row(decision: AllocationDecision) -> dict | None:
         "winner_direction": winner.direction if winner else "",
         "winner_event_subtype": winner.event_subtype if winner else "",
         "winner_is_reversal": winner.is_reversal if winner else "",
+        "winner_edge_type": winner.edge_type if winner else "",
+        "winner_target_horizon": winner.target_horizon if winner else "",
+        "winner_expected_hold_sec": winner.expected_hold_sec if winner else "",
+        "winner_entry_trigger": winner.entry_trigger if winner else "",
+        "winner_exit_trigger": winner.exit_trigger if winner else "",
+        "winner_primary_metric": winner.primary_metric if winner else "",
         "blocked_strategies": json.dumps([c.strategy for c in decision.blocked]),
         "blocked_edges": json.dumps([round(c.edge, 6) for c in decision.blocked]),
         "blocked_fairs": json.dumps([round(c.fair, 6) for c in decision.blocked]),
+        "blocked_edge_types": json.dumps([c.edge_type for c in decision.blocked]),
+        "blocked_target_horizons": json.dumps([c.target_horizon for c in decision.blocked]),
+        "blocked_expected_hold_secs": json.dumps([c.expected_hold_sec for c in decision.blocked]),
         "block_reason": decision.block_reason,
         "counterfactual_note": decision.counterfactual_note,
     }

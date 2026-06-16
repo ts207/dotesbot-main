@@ -15,6 +15,10 @@ class FairValueResult:
     lead_slope: float | None = None
     draft_h2h: float | None = None
     fair_source: str = "winprob"
+    fair_raw: float | None = None
+    fair_used: float | None = None
+    model_available: bool = True
+    model_reason: str = "ok"
 
 # Rolling radiant-lead history per match → net-worth-lead trajectory (slope).
 _SLOPE_WINDOW_NS = 300 * 1_000_000_000          # 5-minute window
@@ -50,18 +54,71 @@ def compute_side_fair(
 ) -> FairValueResult:
     match_id = str(game.get("match_id") or game.get("lobby_id") or "")
     now_ns = received_at_ns_override if received_at_ns_override is not None else int(game.get("received_at_ns") or time.time_ns())
-    
-    try:
-        radiant_lead = int(game.get("radiant_lead") or 0)
-    except (TypeError, ValueError):
-        radiant_lead = 0
-        
+
+    if side not in {"radiant", "dire"}:
+        return FairValueResult(
+            side=side,
+            fair=0.5,
+            elo_diff=None,
+            fair_raw=None,
+            fair_used=None,
+            model_available=False,
+            model_reason="unknown_side",
+        )
+
+    lead_input = game.get("radiant_lead")
+    if radiant_lead_override is None and lead_input in (None, ""):
+        return FairValueResult(
+            side=side,
+            fair=0.5,
+            elo_diff=None,
+            fair_raw=None,
+            fair_used=None,
+            model_available=False,
+            model_reason="missing_radiant_lead",
+        )
+
     if radiant_lead_override is not None:
         radiant_lead = radiant_lead_override
+    else:
+        try:
+            radiant_lead = int(lead_input or 0)
+        except (TypeError, ValueError):
+            return FairValueResult(
+                side=side,
+                fair=0.5,
+                elo_diff=None,
+                fair_raw=None,
+                fair_used=None,
+                model_available=False,
+                model_reason="invalid_radiant_lead",
+            )
         
     rtid, dtid = game.get("radiant_team_id"), game.get("dire_team_id")
     rname, dname = game.get("radiant_team"), game.get("dire_team")
-    game_time = int(float(game.get("game_time_sec") or 0))
+    game_time_input = game.get("game_time_sec")
+    if game_time_input in (None, ""):
+        return FairValueResult(
+            side=side,
+            fair=0.5,
+            elo_diff=None,
+            fair_raw=None,
+            fair_used=None,
+            model_available=False,
+            model_reason="missing_game_time",
+        )
+    try:
+        game_time = int(float(game_time_input))
+    except (TypeError, ValueError):
+        return FairValueResult(
+            side=side,
+            fair=0.5,
+            elo_diff=None,
+            fair_raw=None,
+            fair_used=None,
+            model_available=False,
+            model_reason="invalid_game_time",
+        )
 
     slope_rad = _lead_slope(match_id, radiant_lead, now_ns, record_history) if include_slope else 0.0
     
@@ -93,4 +150,8 @@ def compute_side_fair(
         elo_diff=elo_diff,
         lead_slope=lead_slope,
         draft_h2h=draft,
+        fair_raw=fair_price,
+        fair_used=fair_price,
+        model_available=True,
+        model_reason="ok",
     )

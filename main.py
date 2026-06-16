@@ -218,7 +218,7 @@ async def _log_live_attempt_with_markouts(attempt, book_store: BookStore, live_l
 
 
 async def _log_signal_markouts(row: dict, token_id: str, book_store: BookStore, markout_logger: SignalMarkoutLogger):
-    """Log post-signal mid-price movement for skipped/filled signal analysis."""
+    """Log post-signal executable markouts for skipped/filled signal analysis."""
     reference = row.get("reference_price")
     try:
         reference = float(reference) if reference is not None else None
@@ -233,17 +233,67 @@ async def _log_signal_markouts(row: dict, token_id: str, book_store: BookStore, 
 
     markouts = {}
     edges = {}
+    horizon_prices = {}
+    max_bid_120s = None
+    min_bid_120s = None
+
+    def read_prices() -> dict:
+        book = book_store.get(token_id)
+        bid = ask = mid = None
+        if book:
+            try:
+                bid = float(book.get("best_bid")) if book.get("best_bid") is not None else None
+            except (TypeError, ValueError):
+                bid = None
+            try:
+                ask = float(book.get("best_ask")) if book.get("best_ask") is not None else None
+            except (TypeError, ValueError):
+                ask = None
+            mid = _book_mid(book)
+        return {"bid": bid, "ask": ask, "mid": mid}
 
     async def sample(delay: int, label: str):
+        nonlocal max_bid_120s, min_bid_120s
         await asyncio.sleep(delay)
-        mid = _book_mid(book_store.get(token_id))
-        markouts[f"markout_{label}"] = round(mid - reference, 4) if mid is not None and reference is not None else None
+        prices = read_prices()
+        bid = prices["bid"]
+        mid = prices["mid"]
+        if bid is not None:
+            max_bid_120s = bid if max_bid_120s is None else max(max_bid_120s, bid)
+            min_bid_120s = bid if min_bid_120s is None else min(min_bid_120s, bid)
+        horizon_prices[label] = prices
+        if label in {"30s", "60s", "120s"}:
+            markouts[f"markout_{label}"] = round(bid - reference, 4) if bid is not None and reference is not None else None
+            markouts[f"realizable_exit_{label}"] = markouts[f"markout_{label}"]
+        else:
+            markouts[f"markout_{label}"] = round(mid - reference, 4) if mid is not None and reference is not None else None
         edges[f"edge_after_{label}"] = round(fair - mid, 4) if mid is not None and fair is not None else None
 
     await sample(3, "3s")
     await sample(7, "10s")
     await sample(20, "30s")
+    await sample(30, "60s")
+    await sample(60, "120s")
     out = dict(row)
+    out["price_at_signal"] = reference
+    for label in ("30s", "60s", "120s"):
+        prices = horizon_prices.get(label) or {}
+        out[f"bid_{label}"] = prices.get("bid")
+        out[f"ask_{label}"] = prices.get("ask")
+        out[f"mid_{label}"] = prices.get("mid")
+    out["max_bid_120s"] = max_bid_120s
+    out["min_bid_120s"] = min_bid_120s
+    out["bounce_capture"] = (
+        round(max_bid_120s - reference, 4)
+        if max_bid_120s is not None and reference is not None
+        else None
+    )
+    bid_120s = (horizon_prices.get("120s") or {}).get("bid")
+    out["timeout_loss"] = (
+        round(bid_120s - reference, 4)
+        if bid_120s is not None and reference is not None
+        else None
+    )
     out.update(markouts)
     out.update(edges)
     markout_logger.log_markout(out)
@@ -977,6 +1027,39 @@ async def steam_loop(
                                         strategy_signal_logger.log_reject(ev_result)
                                         continue
                                     strategy_signal_logger.log_signal(ev_result)
+                                    if signal_markout_logger is not None:
+                                        ev_book = book_store.get(ev_result.token_id)
+                                        asyncio.create_task(_log_signal_markouts({
+                                            "signal_timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+                                            "match_id": str(game.get("match_id") or ""),
+                                            "market_name": mapping.get("name"),
+                                            "event_type": "EVENT_REVERSAL_EDGE" if ev_result.is_reversal else "EVENT_CONTINUATION_EDGE",
+                                            "event_tier": "A",
+                                            "event_is_primary": True,
+                                            "event_direction": ev_result.direction,
+                                            "token_id": ev_result.token_id,
+                                            "side": ev_result.side,
+                                            "decision": "paper_buy_yes",
+                                            "skip_reason": "",
+                                            "reference_price": ev_result.ask,
+                                            "reference_bid": ev_book.get("best_bid") if ev_book else None,
+                                            "reference_ask": ev_result.ask,
+                                            "fair_price": ev_result.fair_price,
+                                            "fair_raw": ev_result.fair_after_raw,
+                                            "fair_used": ev_result.fair_after_used,
+                                            "model_available": ev_result.model_available,
+                                            "model_reason": ev_result.model_reason,
+                                            "executable_edge": ev_result.edge,
+                                            "edge_type": ev_result.edge_type,
+                                            "target_horizon": ev_result.target_horizon,
+                                            "expected_hold_sec": ev_result.expected_hold_sec,
+                                            "entry_trigger": ev_result.entry_trigger,
+                                            "exit_trigger": ev_result.exit_trigger,
+                                            "primary_metric": ev_result.primary_metric,
+                                            "secondary_metric": ev_result.secondary_metric,
+                                            "promotion_rule": ev_result.promotion_rule,
+                                            "disable_rule": ev_result.disable_rule,
+                                        }, ev_result.token_id, book_store, signal_markout_logger))
                                     if not ENABLE_EVENT_TRIGGERED_VALUE_TRADING:
                                         continue
                                     ev_strategy = (
@@ -993,6 +1076,15 @@ async def steam_loop(
                                         fair=ev_result.fair_price,
                                         game_time_sec=ev_result.game_time_sec,
                                         signal=ev_result,
+                                        edge_type=ev_result.edge_type,
+                                        target_horizon=ev_result.target_horizon,
+                                        expected_hold_sec=ev_result.expected_hold_sec,
+                                        entry_trigger=ev_result.entry_trigger,
+                                        exit_trigger=ev_result.exit_trigger,
+                                        primary_metric=ev_result.primary_metric,
+                                        secondary_metric=ev_result.secondary_metric,
+                                        promotion_rule=ev_result.promotion_rule,
+                                        disable_rule=ev_result.disable_rule,
                                         is_reversal=ev_result.is_reversal,
                                         event_subtype=ev_result.actual_event_type,
                                     ))
@@ -1017,39 +1109,57 @@ async def steam_loop(
                                     fair=result.fair_price,
                                     game_time_sec=result.game_time_sec,
                                     signal=result,
+                                    edge_type=result.edge_type,
+                                    target_horizon=result.target_horizon,
+                                    expected_hold_sec=result.expected_hold_sec,
+                                    entry_trigger=result.entry_trigger,
+                                    exit_trigger=result.exit_trigger,
+                                    primary_metric=result.primary_metric,
+                                    secondary_metric=result.secondary_metric,
+                                    promotion_rule=result.promotion_rule,
+                                    disable_rule=result.disable_rule,
                                     would_pass_confirmation=confirmed,
                                 ))
 
-                        # --- Decisive-Swing Engine (collect phase) ---
-                        if dswing_engine is not None:
-                            for ds_res in dswing_engine.evaluate(game, mapping, book_store):
-                                if not isinstance(ds_res, DSwingSignal):
-                                    if dswing_logger is not None:
-                                        dswing_logger.log_reject(ds_res, mapping=mapping)
-                                    continue
-                                if dswing_logger is not None:
-                                    dswing_logger.log_signal(ds_res, mapping=mapping)
-                                if not DSWING_ENABLED:
-                                    continue
-                                # DSWING dedup: blocks both sides (prevents holding
-                                # opposing tokens), using ALL live positions not just
-                                # the current-mapping set.
-                                ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
-                                if live_position_store:
-                                    _act = {p.token_id for p in live_position_store.positions.values()
-                                            if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
-                                    if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
+                            # --- Decisive-Swing Engine (collect phase) ---
+                            if dswing_engine is not None:
+                                for ds_res in dswing_engine.evaluate(game, mapping, book_store):
+                                    if not isinstance(ds_res, DSwingSignal):
+                                        if dswing_logger is not None:
+                                            dswing_logger.log_reject(ds_res, mapping=mapping)
                                         continue
-                                _all_candidates.append(StrategyCandidate(
-                                    strategy="DSWING",
-                                    token_id=str(ds_res.token_id),
-                                    match_id=str(game.get("match_id") or ""),
-                                    direction=ds_res.direction,
-                                    edge=ds_res.edge,
-                                    fair=ds_res.series_fair,
-                                    game_time_sec=ds_res.game_time_sec,
-                                    signal=ds_res,
-                                ))
+                                    if dswing_logger is not None:
+                                        dswing_logger.log_signal(ds_res, mapping=mapping)
+                                    if not DSWING_ENABLED:
+                                        continue
+                                    # DSWING dedup: blocks both sides (prevents holding
+                                    # opposing tokens), using ALL live positions not just
+                                    # the current-mapping set.
+                                    ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+                                    if live_position_store:
+                                        _act = {p.token_id for p in live_position_store.positions.values()
+                                                if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
+                                        if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
+                                            continue
+                                    _all_candidates.append(StrategyCandidate(
+                                        strategy="DSWING",
+                                        token_id=str(ds_res.token_id),
+                                        match_id=str(game.get("match_id") or ""),
+                                        direction=ds_res.direction,
+                                        edge=ds_res.edge,
+                                        fair=ds_res.series_fair,
+                                        game_time_sec=ds_res.game_time_sec,
+                                        signal=ds_res,
+                                        edge_type=ds_res.edge_type,
+                                        target_horizon=ds_res.target_horizon,
+                                        expected_hold_sec=ds_res.expected_hold_sec,
+                                        entry_trigger=ds_res.entry_trigger,
+                                        exit_trigger=ds_res.exit_trigger,
+                                        primary_metric=ds_res.primary_metric,
+                                        secondary_metric=ds_res.secondary_metric,
+                                        promotion_rule=ds_res.promotion_rule,
+                                        disable_rule=ds_res.disable_rule,
+                                    ))
 
                         # ── ALLOCATE: explicit priority + counterfactual attribution ──────
                         _decisions = allocate_candidates(_all_candidates, _entered_toks)
@@ -1145,8 +1255,18 @@ async def steam_loop(
                                             entry_engine="event_triggered_value",
                                             exit_engine=ev_exit_engine,
                                             hold_policy=ev_hold_policy,
+                                            edge_type=ev_result.edge_type,
+                                            target_horizon=ev_result.target_horizon,
+                                            expected_hold_sec=ev_result.expected_hold_sec,
+                                            entry_trigger=ev_result.entry_trigger,
+                                            exit_trigger=ev_result.exit_trigger,
+                                            primary_metric=ev_result.primary_metric,
+                                            secondary_metric=ev_result.secondary_metric,
+                                            promotion_rule=ev_result.promotion_rule,
+                                            disable_rule=ev_result.disable_rule,
                                             entry_fair=ev_result.fair_price,
                                             entry_edge=ev_result.edge,
+                                            entry_ask=ev_result.ask,
                                             entry_backed_side=ev_result.direction,
                                             entry_radiant_lead=ev_result.lead,
                                             entry_actual_event_type=ev_result.actual_event_type,
@@ -1161,7 +1281,6 @@ async def steam_loop(
                                         print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
                                 else:
                                     # Paper path (PaperTrader simulated fills).
-                                    opposing_tok = mapping["no_token_id"] if ev_result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
                                     pos, reason = trader.enter(
                                         signal=ev_result.to_signal_dict(),
                                         token_id=ev_result.token_id,
@@ -1221,7 +1340,7 @@ async def steam_loop(
                                             cost_usd=cost,
                                             entry_time_ns=v_attempt.created_at_ns,
                                             entry_game_time_sec=result.game_time_sec,
-                                            event_type="VALUE",
+                                            event_type="VALUE_EDGE",
                                             expected_move=0.0,
                                             fair_price=result.fair_price,
                                             trader_kind="value",
@@ -1229,12 +1348,23 @@ async def steam_loop(
                                             signal_id=result.signal_id,
                                             backed_direction=result.direction,
                                             pending_entry_order_id=v_attempt.order_id if not is_filled else None,
-                                            strategy_kind="VALUE",
+                                            strategy_kind="VALUE_EDGE",
+                                            strategy_family="VALUE",
                                             entry_engine="value",
                                             exit_engine="value_fair_invalidation",
                                             hold_policy="thesis_invalidation",
+                                            edge_type=result.edge_type,
+                                            target_horizon=result.target_horizon,
+                                            expected_hold_sec=result.expected_hold_sec,
+                                            entry_trigger=result.entry_trigger,
+                                            exit_trigger=result.exit_trigger,
+                                            primary_metric=result.primary_metric,
+                                            secondary_metric=result.secondary_metric,
+                                            promotion_rule=result.promotion_rule,
+                                            disable_rule=result.disable_rule,
                                             entry_fair=result.fair_price,
                                             entry_edge=result.edge,
+                                            entry_ask=result.ask,
                                             entry_backed_side=result.direction,
                                             entry_radiant_lead=result.lead,
                                         )
@@ -1271,12 +1401,23 @@ async def steam_loop(
                                         cost = a.filled_size_usd or a.submitted_size_usd or 0.0
                                         live_position_store.add(LivePosition(
                                             position_id=f"{a.match_id}:{a.token_id}:{a.created_at_ns}",
-                                            state="OPEN", token_id=a.token_id, opposing_token_id=ds_opp or "",
-                                            match_id=a.match_id, market_name=mapping.get("name"), side=ds_res.side,
-                                            entry_price=epx, shares=(cost / epx if epx else 0.0), cost_usd=cost,
-                                            entry_time_ns=a.created_at_ns, entry_game_time_sec=ds_res.game_time_sec,
-                                            event_type="DSWING", expected_move=0.0, fair_price=ds_res.series_fair,
-                                            trader_kind="dswing", exit_horizon_sec=None, signal_id=ds_res.signal_id,
+                                            state="OPEN",
+                                            token_id=a.token_id,
+                                            opposing_token_id=ds_opp or "",
+                                            match_id=a.match_id,
+                                            market_name=mapping.get("name"),
+                                            side=ds_res.side,
+                                            entry_price=epx,
+                                            shares=(cost / epx if epx else 0.0),
+                                            cost_usd=cost,
+                                            entry_time_ns=a.created_at_ns,
+                                            entry_game_time_sec=ds_res.game_time_sec,
+                                            event_type="DSWING",
+                                            expected_move=0.0,
+                                            fair_price=ds_res.series_fair,
+                                            trader_kind="dswing",
+                                            exit_horizon_sec=None,
+                                            signal_id=ds_res.signal_id,
                                             backed_direction=ds_res.direction,
                                             strategy_kind="DSWING",
                                             strategy_family="DSWING",
@@ -1286,6 +1427,15 @@ async def steam_loop(
                                             entry_engine="decisive_swing",
                                             exit_engine="dswing_map_end",
                                             hold_policy="map_end_convergence",
+                                            edge_type=ds_res.edge_type,
+                                            target_horizon=ds_res.target_horizon,
+                                            expected_hold_sec=ds_res.expected_hold_sec,
+                                            entry_trigger=ds_res.entry_trigger,
+                                            exit_trigger=ds_res.exit_trigger,
+                                            primary_metric=ds_res.primary_metric,
+                                            secondary_metric=ds_res.secondary_metric,
+                                            promotion_rule=ds_res.promotion_rule,
+                                            disable_rule=ds_res.disable_rule,
                                             entry_fair=ds_res.series_fair,
                                             entry_edge=ds_res.edge,
                                             entry_ask=ds_res.ask,
@@ -1297,15 +1447,14 @@ async def steam_loop(
                                             entry_series_score_no=mapping.get("series_score_no"),
                                             entry_current_game_number=mapping.get("current_game_number") or mapping.get("game_number"),
                                             entry_market_type=mapping.get("market_type"),
-                                            entry_book_age_ms=ds_res.book_age_ms))
+                                            entry_book_age_ms=ds_res.book_age_ms,
+                                        ))
                                         mode = "LIVE" if ENABLE_REAL_LIVE_TRADING else "PAPER"
                                         print(f"DSWING {mode} ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")
                                     else:
                                         print(f"DSWING REJECT {mapping.get('name')} {ds_res.side} reason={a.reason_if_rejected}")
                                 else:
                                     # Paper path (PaperTrader simulated fills).
-                                    # Previously missing — now implemented so DSWING paper
-                                    # trades are recorded in paper_trades.csv / position_logger.
                                     ds_signal_dict = {
                                         "signal_id": ds_res.signal_id,
                                         "match_id": ds_res.match_id,
@@ -1329,6 +1478,16 @@ async def steam_loop(
                                         "entry_engine": "decisive_swing",
                                         "exit_engine": "dswing_map_end",
                                         "hold_policy": "map_end_convergence",
+                                        "edge_type": ds_res.edge_type,
+                                        "target_horizon": ds_res.target_horizon,
+                                        "expected_hold_sec": ds_res.expected_hold_sec,
+                                        "entry_trigger": ds_res.entry_trigger,
+                                        "exit_trigger": ds_res.exit_trigger,
+                                        "primary_metric": ds_res.primary_metric,
+                                        "secondary_metric": ds_res.secondary_metric,
+                                        "promotion_rule": ds_res.promotion_rule,
+                                        "disable_rule": ds_res.disable_rule,
+                                        "p_game_used": ds_res.p_game_used,
                                         "entry_is_reversal": False,
                                         "entry_is_continuation": False,
                                     }
@@ -1430,7 +1589,7 @@ async def steam_loop(
                                         event_only_fair=signal.get("fair_price"),
                                         game_time_sec=game.get("game_time_sec"),
                                         event_direction=event_direction,
-                                    )
+                                )
                                     nowcast_data = nowcast.to_dict()
                                     signal.update(nowcast_data)
 
@@ -1472,7 +1631,7 @@ async def steam_loop(
                                         yes_book=yes_book,
                                         no_book=no_book,
                                         require_primary=False,
-                                    )
+                                )
                                     if diagnostic_signal.get("decision") == "paper_buy_yes":
                                         diagnostic_signal = dict(diagnostic_signal)
                                         diagnostic_signal["decision"] = "skip"
@@ -1637,46 +1796,46 @@ async def steam_loop(
                                 # Latency logging
                                 selected_book = (yes_book if tok_id == mapping["yes_token_id"] else no_book) if tok_id else (yes_book or no_book)
                                 latency_row = {
-                                    "match_id": str(game.get("match_id") or ""),
-                                    "market_name": mapping.get("name"),
-                                    "event_type": signal.get("event_type") or "+".join(event_names),
-                                    "cluster_event_types": signal.get("cluster_event_types") or "+".join(event_names),
-                                    "event_direction": event_direction,
-                                    "game_time_sec": game.get("game_time_sec"),
-                                    "data_source": game.get("data_source"),
-                                    "steam_received_at_ns": game.get("received_at_ns"),
-                                    "steam_source_update_age_sec": game.get("source_update_age_sec"),
-                                    "stream_delay_s": game.get("stream_delay_s"),
-                                    "event_detected_ns": event_detected_ns,
-                                    "signal_eval_start_ns": signal_eval_start_ns,
-                                    "signal_evaluated_ns": signal_evaluated_ns,
-                                    "token_id": tok_id,
-                                    "side": tok_side,
-                                    "book_received_at_ns": selected_book.get("received_at_ns") if selected_book else None,
-                                    "book_age_at_signal_ms": signal.get("book_age_ms"),
-                                    "best_bid": selected_book.get("best_bid") if selected_book else None,
-                                    "best_ask": selected_book.get("best_ask") if selected_book else None,
-                                    "spread": signal.get("spread"),
-                                    "ask_size": signal.get("ask_size"),
-                                    "decision": signal.get("decision"),
-                                    "skip_reason": signal.get("reason"),
-                                    "fair_price": signal.get("fair_price"),
-                                    "executable_price": signal.get("executable_price"),
-                                    "executable_edge": signal.get("executable_edge"),
-                                    "remaining_move": signal.get("remaining_move"),
-                                    "fair_source": signal.get("fair_source"),
-                                    "required_edge": signal.get("required_edge"),
-                                    "lag": signal.get("lag"),
-                                    "mapping_confidence": game.get("mapping_confidence"),
-                                    "mapping_errors": game.get("mapping_errors"),
-                                    "team_id_match": game.get("team_id_match"),
-                                    "market_game_number_match": game.get("market_game_number_match"),
-                                    "duplicate_match_id_error": game.get("duplicate_match_id_error"),
-                                    "slow_model_fair": signal.get("slow_model_fair"),
-                                    "fast_event_adjustment": signal.get("fast_event_adjustment"),
-                                    "hybrid_fair": signal.get("hybrid_fair"),
-                                    "hybrid_confidence": signal.get("hybrid_confidence"),
-                                    "uncertainty_penalty": signal.get("uncertainty_penalty"),
+                                "match_id": str(game.get("match_id") or ""),
+                                "market_name": mapping.get("name"),
+                                "event_type": signal.get("event_type") or "+".join(event_names),
+                                "cluster_event_types": signal.get("cluster_event_types") or "+".join(event_names),
+                                "event_direction": event_direction,
+                                "game_time_sec": game.get("game_time_sec"),
+                                "data_source": game.get("data_source"),
+                                "steam_received_at_ns": game.get("received_at_ns"),
+                                "steam_source_update_age_sec": game.get("source_update_age_sec"),
+                                "stream_delay_s": game.get("stream_delay_s"),
+                                "event_detected_ns": event_detected_ns,
+                                "signal_eval_start_ns": signal_eval_start_ns,
+                                "signal_evaluated_ns": signal_evaluated_ns,
+                                "token_id": tok_id,
+                                "side": tok_side,
+                                "book_received_at_ns": selected_book.get("received_at_ns") if selected_book else None,
+                                "book_age_at_signal_ms": signal.get("book_age_ms"),
+                                "best_bid": selected_book.get("best_bid") if selected_book else None,
+                                "best_ask": selected_book.get("best_ask") if selected_book else None,
+                                "spread": signal.get("spread"),
+                                "ask_size": signal.get("ask_size"),
+                                "decision": signal.get("decision"),
+                                "skip_reason": signal.get("reason"),
+                                "fair_price": signal.get("fair_price"),
+                                "executable_price": signal.get("executable_price"),
+                                "executable_edge": signal.get("executable_edge"),
+                                "remaining_move": signal.get("remaining_move"),
+                                "fair_source": signal.get("fair_source"),
+                                "required_edge": signal.get("required_edge"),
+                                "lag": signal.get("lag"),
+                                "mapping_confidence": game.get("mapping_confidence"),
+                                "mapping_errors": game.get("mapping_errors"),
+                                "team_id_match": game.get("team_id_match"),
+                                "market_game_number_match": game.get("market_game_number_match"),
+                                "duplicate_match_id_error": game.get("duplicate_match_id_error"),
+                                "slow_model_fair": signal.get("slow_model_fair"),
+                                "fast_event_adjustment": signal.get("fast_event_adjustment"),
+                                "hybrid_fair": signal.get("hybrid_fair"),
+                                "hybrid_confidence": signal.get("hybrid_confidence"),
+                                "uncertainty_penalty": signal.get("uncertainty_penalty"),
                                 }
                                 latency_logger.log_latency(latency_row)
 
@@ -1685,7 +1844,7 @@ async def steam_loop(
                                     event_type=signal.get("cluster_event_types") or "+".join(event_names),
                                     event_direction=event_direction,
                                     severity=signal.get("severity") or "+".join(evt.severity for evt in cluster_events),
-                                    token_id=tok_id,
+                                token_id=tok_id,
                                     side=tok_side,
                                 )
                                 if tok_id and (
@@ -1698,7 +1857,7 @@ async def steam_loop(
                                     reference_price = ref_ask or signal.get("executable_price")
                                     if reference_price is None:
                                         reference_price = _book_mid(selected_book)
-                                    asyncio.create_task(_log_signal_markouts({
+                                asyncio.create_task(_log_signal_markouts({
                                         "signal_timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
                                         "match_id": str(game.get("match_id") or ""),
                                         "market_name": mapping.get("name"),
@@ -1853,7 +2012,7 @@ async def steam_loop(
 
                                 opposing_tok = (
                                     mapping["no_token_id"] if tok_id == mapping["yes_token_id"]
-                                    else mapping["yes_token_id"]
+                                else mapping["yes_token_id"]
                                 )
 
                                 # Block entry if we already hold the opposing side or are stacking
@@ -1972,7 +2131,7 @@ async def steam_loop(
                                         match_id=str(game.get("match_id") or ""),
                                         market_name=mapping.get("name"),
                                         opposing_token_id=opposing_tok,
-                                    )
+                                )
                                     paper_fill_ns = time.time_ns()
 
                                     # Log paper latency result
@@ -2102,7 +2261,7 @@ async def steam_loop(
                                         match_id=match_id,
                                         market_name=mapping.get("name"),
                                         opposing_token_id=no_tok,
-                                    )
+                                )
                                     if pos:
                                         position_logger.log_entry(pos)
                                         print(f"ML_ENTER {mapping['name']} YES price={pos.entry_price:.4f} edge={edge:.4f}")
@@ -2399,7 +2558,9 @@ async def main():
             asyncio.create_task(periodic_reconciliation())
 
     model_bundle = None
-    if os.path.exists(DOTA_FAIR_MODEL_PATH):
+    if not ML_STRATEGY_ENABLED:
+        print("ML strategy disabled; skipping optional dota_fair model load")
+    elif os.path.exists(DOTA_FAIR_MODEL_PATH):
         print(f"Loading dota_fair model from {DOTA_FAIR_MODEL_PATH}...")
         try:
             model_bundle = load_bundle(DOTA_FAIR_MODEL_PATH)
