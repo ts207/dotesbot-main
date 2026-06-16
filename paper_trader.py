@@ -159,36 +159,31 @@ class PaperTrader:
         # token_id → earliest next entry time after a close
         self._token_cooldown_until_ns: dict[str, int] = {}
 
-    def load_open_positions(self, filename: str) -> int:
-        """Restore open paper positions by replaying the trade CSV."""
+    def load_open_positions(self, filename: str = None) -> int:
+        """Restore open paper positions from SQLite."""
         try:
-            with open(filename, newline="", encoding="utf-8") as f:
-                rows = list(csv.DictReader(f))
-        except FileNotFoundError:
+            from storage_v2 import StorageV2
+            loaded = StorageV2().load_positions(mode="paper")
+        except Exception as e:
+            print(f"Failed to load paper positions from DB: {e}")
             return 0
 
         self.positions.clear()
         self._match_open_usd.clear()
 
-        for row in rows:
-            token_id = str(row.get("token_id") or "")
+        for pos_dict in loaded:
+            token_id = str(pos_dict.get("token_id") or "")
             if not token_id:
                 continue
 
-            action = str(row.get("action") or "").lower()
-            if action == "exit":
-                self.positions.pop(token_id, None)
-                self._rebuild_match_open_usd()
-                continue
-            if action != "entry":
+            try:
+                pos = Position(**pos_dict)
+                self.positions[token_id] = pos
+            except Exception as e:
+                print(f"Failed to parse paper position {token_id}: {e}")
                 continue
 
-            pos = self._position_from_trade_row(row)
-            if pos is None:
-                continue
-            self.positions[token_id] = pos
-            self._rebuild_match_open_usd()
-
+        self._rebuild_match_open_usd()
         return len(self.positions)
 
     def _rebuild_match_open_usd(self) -> None:
@@ -432,6 +427,11 @@ class PaperTrader:
         )
         self.positions[token_id] = pos
         self._match_open_usd[match_id] = self._match_open_usd.get(match_id, 0.0) + size_usd
+        try:
+            from storage_v2 import StorageV2
+            StorageV2().save_position(asdict(pos), mode="paper")
+        except Exception as e:
+            print(f"Failed to save paper entry to DB: {e}")
         return pos, "filled"
 
     def force_exit(self, token_id: str, book_store, reason: str) -> ClosedPosition | None:
@@ -740,6 +740,15 @@ class PaperTrader:
         cooldown_ns = int(PAPER_REENTRY_COOLDOWN_SEC * 1_000_000_000)
         if cooldown_ns > 0:
             self._token_cooldown_until_ns[pos.token_id] = cp.exit_time_ns + cooldown_ns
+            
+        try:
+            from storage_v2 import StorageV2
+            storage = StorageV2()
+            storage.save_closed_position(asdict(cp), mode="paper")
+            storage.remove_position(cp.token_id)
+        except Exception as e:
+            print(f"Failed to save paper exit to DB: {e}")
+            
         return cp
 
     def summary(self) -> dict:

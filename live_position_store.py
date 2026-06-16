@@ -7,7 +7,8 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-LIVE_POSITIONS_PATH = "logs/live_positions.json"
+from storage_v2 import StorageV2
+
 logger = logging.getLogger(__name__)
 
 
@@ -79,53 +80,30 @@ class LivePosition:
 
 
 class LivePositionStore:
-    def __init__(self, path: str = LIVE_POSITIONS_PATH, state_db_path: str | None = None):
-        self.path = path
-        self.state_db_path = state_db_path or (
-            "logs/state.sqlite" if path == LIVE_POSITIONS_PATH else f"{path}.sqlite"
-        )
+    def __init__(self, path: str = None, state_db_path: str | None = None):
+        # path and state_db_path are kept for backwards compatibility in signatures,
+        # but the backend is strictly storage_v2 now.
+        self.storage = StorageV2()
         self.positions: dict[str, LivePosition] = {}
         self.load()
 
     def load(self) -> None:
-        if not os.path.exists(self.path):
-            self.positions = {}
-            return
-
+        self.positions = {}
         try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            self.positions = {
-                row["position_id"]: LivePosition(**row)
-                for row in data.get("positions", [])
-            }
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            import logging
-            import shutil
-            logging.getLogger(__name__).critical(f"FATAL: {self.path} is corrupt ({e}). Backing up and resetting positions to empty!")
-            try:
-                shutil.copy2(self.path, f"{self.path}.corrupt.{int(time.time())}")
-            except OSError:
-                pass
-            self.positions = {}
+            loaded = self.storage.load_positions(mode="live")
+            for pos_dict in loaded:
+                pos = LivePosition(**pos_dict)
+                self.positions[pos.position_id] = pos
+        except Exception as e:
+            logger.critical(f"FATAL: Failed to load live positions from SQLite: {e}")
 
     def save(self) -> None:
-        parent = os.path.dirname(self.path)
-        if parent:
-            os.makedirs(parent, exist_ok=True)
-
-        data = {
-            "updated_at_ns": time.time_ns(),
-            "positions": [asdict(p) for p in self.positions.values()],
-        }
-        from atomic_writes import atomic_json_write
-        atomic_json_write(self.path, data, indent=2)
-        try:
-            from state_store import StateStore
-            StateStore(self.state_db_path).mirror_live_positions(self.positions.values())
-        except Exception as exc:
-            logger.warning("SQLite live position mirror failed: %s", exc)
+        for pos in self.positions.values():
+            if pos.state == "CLOSED":
+                self.storage.save_closed_position(asdict(pos), mode="live")
+                self.storage.remove_position(pos.position_id)
+            else:
+                self.storage.save_position(asdict(pos), mode="live")
 
     def add(self, pos: LivePosition) -> None:
         self.positions[pos.position_id] = pos

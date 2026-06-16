@@ -401,50 +401,16 @@ class LatencyLogger(CsvLogger):
         self.append(row)
 
 
-class PositionLogger(CsvLogger):
-    """Logs paper trade entries and exits to a single CSV.
-
-    Entries have action='entry' and exit_* fields empty.
-    Exits have action='exit' with full P&L data.
-    """
-
-    def __init__(self, filename: str = PAPER_TRADES_CSV_PATH, execution_path: str = "paper_trader"):
-        self._execution_path = execution_path
-        super().__init__(filename, [
-            "timestamp_utc", "action",
-            "token_id", "match_id", "market_name", "side",
-            "entry_price", "shares", "cost_usd",
-            "event_type", "lag", "expected_move", "fair_price",
-            "strategy_kind", "strategy_family", "strategy_subtype", "entry_is_reversal", "entry_is_continuation", "hold_policy",
-            "edge_type", "target_horizon", "expected_hold_sec", "entry_trigger", "exit_trigger",
-            "primary_metric", "secondary_metric", "promotion_rule", "disable_rule",
-            "entry_fair", "entry_edge",
-            "entry_backed_side", "entry_radiant_lead", "entry_actual_event_type",
-            "entry_derived_state_flags",
-            "paper_mode", "would_pass_live", "live_skip_reason", "paper_only_bypass",
-            "policy_allowed", "policy_reason", "policy_version", "risk_tags",
-            "entry_game_time_sec",
-            "exit_price", "proceeds_usd", "pnl_usd", "roi",
-            "hold_sec", "exit_game_time_sec", "exit_reason", "execution_path",
-        ])
-
+class PositionLogger:
+    """Obsolete. Writing to paper_trades.csv is disabled in favor of SQLite."""
+    def __init__(self, *args, **kwargs):
+        self.filename = "obsolete_do_not_use"
+        
     def log_entry(self, pos) -> None:
-        d = pos.to_dict()
-        d["timestamp_utc"] = utc_now_iso()
-        d["action"] = "entry"
-        d["execution_path"] = self._execution_path
-        if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
-            d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
-        self.append(d)
+        pass
 
     def log_exit(self, cp) -> None:
-        d = cp.to_dict()
-        d["timestamp_utc"] = ns_to_iso(cp.exit_time_ns) or utc_now_iso()
-        d["action"] = "exit"
-        d["execution_path"] = self._execution_path
-        if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
-            d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
-        self.append(d)
+        pass
 
 
 class ActualDotaEventLogger(CsvLogger):
