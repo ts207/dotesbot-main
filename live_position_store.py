@@ -52,10 +52,19 @@ class LivePosition:
     hold_policy: str | None = None
     entry_fair: float | None = None
     entry_edge: float | None = None
+    entry_ask: float | None = None
     entry_backed_side: str | None = None
     entry_radiant_lead: int | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
+    # 2026-06-16 — DSWING audit extensions
+    entry_p_game: float | None = None
+    entry_series_fair: float | None = None
+    entry_series_score_yes: int | None = None
+    entry_series_score_no: int | None = None
+    entry_current_game_number: int | None = None
+    entry_market_type: str | None = None
+    entry_book_age_ms: int | None = None
 
 
 class LivePositionStore:

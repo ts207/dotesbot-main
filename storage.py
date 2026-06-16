@@ -20,6 +20,7 @@ from config import (
     BOOK_REFRESH_RESCUE_CSV_PATH,
     BOOK_MOVES_CSV_PATH,
     ACTUAL_DOTA_EVENTS_CSV_PATH, LEGACY_DOTA_EVENTS_CSV_PATH, STRATEGY_SIGNALS_CSV_PATH,
+    DSWING_EXIT_QUALITY_CSV_PATH, ALLOCATOR_LOG_CSV_PATH,
     RUN_ID, CODE_VERSION, CONFIG_HASH,
 )
 
@@ -1155,6 +1156,107 @@ class DSwingAttemptLogger(CsvLogger):
         })
 
 
+class DSwingExitQualityLogger(CsvLogger):
+    def __init__(self, filename: str = DSWING_EXIT_QUALITY_CSV_PATH):
+        super().__init__(filename, [
+            "timestamp_utc",
+            "position_id",
+            "signal_id",
+            "match_id",
+            "market_name",
+            "token_id",
+            "side",
+            "direction",
+            "entry_time_ns",
+            "entry_game_time_sec",
+            "entry_current_game_number",
+            "entry_series_score_yes",
+            "entry_series_score_no",
+            "entry_price",
+            "entry_ask",
+            "entry_p_game",
+            "entry_series_fair",
+            "entry_edge",
+            "entry_book_age_ms",
+            "map_end_detected_ns",
+            "exit_decision_ns",
+            "exit_reason",
+            "exit_bid",
+            "exit_price_posted",
+            "exit_order_status",
+            "exit_filled_shares",
+            "exit_delay_sec",
+            "hold_sec",
+            "convergence_markout",
+            "captured_edge",
+            "execution_path",
+        ])
+
+    def log_dswing_exit_quality(
+        self,
+        *,
+        position,
+        decision,
+        exit_attempt=None,
+        map_end_detected_ns: int | None = None,
+        execution_path: str = "",
+    ):
+        exit_decision_ns = time.time_ns()
+        hold_sec = (exit_decision_ns - position.entry_time_ns) / 1e9
+        exit_delay_sec = (
+            (exit_decision_ns - map_end_detected_ns) / 1e9
+            if map_end_detected_ns else None
+        )
+
+        convergence_markout = (
+            decision.reference_bid - position.entry_price
+            if decision.reference_bid is not None else None
+        )
+        captured_edge = convergence_markout  # same for DSWING convergence trades
+
+        status = "missing_book"
+        filled = 0.0
+        px_posted = None
+        if exit_attempt:
+            status = exit_attempt.order_status
+            filled = exit_attempt.filled_shares
+            px_posted = exit_attempt.price_posted
+
+        self.append({
+            "timestamp_utc": utc_now_iso(),
+            "position_id": position.position_id,
+            "signal_id": position.signal_id,
+            "match_id": position.match_id,
+            "market_name": position.market_name,
+            "token_id": position.token_id,
+            "side": position.side,
+            "direction": position.backed_direction,
+            "entry_time_ns": position.entry_time_ns,
+            "entry_game_time_sec": position.entry_game_time_sec,
+            "entry_current_game_number": getattr(position, "entry_current_game_number", None),
+            "entry_series_score_yes": getattr(position, "entry_series_score_yes", None),
+            "entry_series_score_no": getattr(position, "entry_series_score_no", None),
+            "entry_price": position.entry_price,
+            "entry_ask": getattr(position, "entry_ask", None) or position.entry_price,
+            "entry_p_game": getattr(position, "entry_p_game", None),
+            "entry_series_fair": getattr(position, "entry_series_fair", None),
+            "entry_edge": getattr(position, "entry_edge", None),
+            "entry_book_age_ms": getattr(position, "entry_book_age_ms", None),
+            "map_end_detected_ns": map_end_detected_ns,
+            "exit_decision_ns": exit_decision_ns,
+            "exit_reason": decision.reason,
+            "exit_bid": decision.reference_bid,
+            "exit_price_posted": px_posted,
+            "exit_order_status": status,
+            "exit_filled_shares": filled,
+            "exit_delay_sec": exit_delay_sec,
+            "hold_sec": hold_sec,
+            "convergence_markout": convergence_markout,
+            "captured_edge": captured_edge,
+            "execution_path": execution_path,
+        })
+
+
 class StrategySignalLogger(CsvLogger):
     """Unified strategy-decision sidecar for new paper strategies."""
 
@@ -1241,4 +1343,40 @@ class StrategySignalLogger(CsvLogger):
             "live_skip_reason": "",
             "paper_only_bypass": False,
             "execution_path": self._execution_path,
+        })
+
+
+class AllocatorLogger(CsvLogger):
+    """Logs contested allocation decisions: any tick where one strategy preempts
+    another on the same token, or a token is already held when candidates arrive.
+    Uncontested wins are NOT logged (nothing to attribute).
+    """
+
+    def __init__(self, filename: str = ALLOCATOR_LOG_CSV_PATH):
+        super().__init__(filename, [
+            "timestamp_utc",
+            "match_id",
+            "token_id",
+            "winner_strategy",
+            "winner_edge",
+            "winner_fair",
+            "winner_game_time_sec",
+            "winner_direction",
+            "winner_event_subtype",
+            "winner_is_reversal",
+            "blocked_strategies",   # JSON list of strategy names
+            "blocked_edges",        # JSON list of edge values
+            "blocked_fairs",        # JSON list of fair values
+            "block_reason",         # already_entered | preempted_by_event | ...
+            "counterfactual_note",
+        ], parquet_table="strategy_allocator")
+
+    def log_decision(self, decision_row: dict) -> None:
+        """Log one row produced by strategy_allocator.decision_to_log_row().
+
+        Pass the raw dict directly; None values are safe (filtered by CsvLogger).
+        """
+        self.append({
+            "timestamp_utc": utc_now_iso(),
+            **decision_row,
         })

@@ -74,6 +74,11 @@ PAPER_POSITIONS_PATH = os.getenv("PAPER_POSITIONS_PATH", "logs/paper_positions_v
 ACTUAL_DOTA_EVENTS_CSV_PATH = os.getenv("ACTUAL_DOTA_EVENTS_CSV_PATH", "logs/actual_dota_events.csv")
 LEGACY_DOTA_EVENTS_CSV_PATH = os.getenv("LEGACY_DOTA_EVENTS_CSV_PATH", "logs/legacy_dota_events.csv")
 STRATEGY_SIGNALS_CSV_PATH = os.getenv("STRATEGY_SIGNALS_CSV_PATH", "logs/strategy_signals.csv")
+ALLOCATOR_LOG_CSV_PATH = os.getenv("ALLOCATOR_LOG_CSV_PATH", "logs/strategy_allocator.csv")
+DSWING_EXIT_QUALITY_CSV_PATH = os.getenv(
+    "DSWING_EXIT_QUALITY_CSV_PATH",
+    "logs/dswing_exit_quality.csv",
+)
 
 EVENT_TRIGGERED_VALUE_ENABLED = os.getenv("EVENT_TRIGGERED_VALUE_ENABLED", "true").lower() in {"1", "true", "yes"}
 ENABLE_EVENT_TRIGGERED_VALUE_TRADING = os.getenv("ENABLE_EVENT_TRIGGERED_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}

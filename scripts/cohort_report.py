@@ -121,6 +121,83 @@ def maybe_attach_markouts(cohort: dict, markouts: pd.DataFrame, token_ids: pd.Se
     cohort["markout_10s"] = mean_num(sub, "markout_10s")
     cohort["markout_30s"] = mean_num(sub, "markout_30s")
 
+def allocator_attribution() -> None:
+    """Print attribution stats from logs/strategy_allocator.csv.
+
+    Answers: how often does EVENT preempt VALUE, and is the EVENT edge higher?
+    """
+    alloc = load_csv("logs/strategy_allocator.csv")
+    if alloc.empty:
+        print("\n=== STRATEGY ALLOCATOR ATTRIBUTION ===")
+        print("  (no data — logs/strategy_allocator.csv not found or empty)")
+        return
+
+    import json as _json
+
+    def _parse_json_list(s):
+        try:
+            return _json.loads(s)
+        except Exception:
+            return []
+
+    total = len(alloc)
+    already_entered = alloc[alloc.get("block_reason", pd.Series("", index=alloc.index)).fillna("") == "already_entered"] if "block_reason" in alloc.columns else pd.DataFrame()
+    preempted = alloc[alloc.get("block_reason", pd.Series("", index=alloc.index)).fillna("").str.startswith("preempted")] if "block_reason" in alloc.columns else pd.DataFrame()
+
+    print("\n=== STRATEGY ALLOCATOR ATTRIBUTION ===")
+    print(f"  Total contested decisions: {total}")
+    print(f"  Already-entered blocks:    {len(already_entered)}")
+    print(f"  Preemption decisions:      {len(preempted)}")
+
+    if not preempted.empty and "winner_strategy" in preempted.columns and "blocked_strategies" in preempted.columns:
+        # Count (winner, blocked) pairs.
+        pair_counts: Counter = Counter()
+        for _, row in preempted.iterrows():
+            winner = str(row.get("winner_strategy", ""))
+            blocked_list = _parse_json_list(row.get("blocked_strategies", "[]"))
+            for b in blocked_list:
+                pair_counts[(winner, b)] += 1
+
+        print("\n  Preemption pairs (winner → blocked):")
+        for (w, b), cnt in pair_counts.most_common(10):
+            print(f"    {w} → {b}: {cnt}x")
+
+        # Edge comparison: EVENT preempting VALUE
+        ev_preempts = preempted[
+            preempted["winner_strategy"].fillna("").str.startswith("EVENT")
+        ] if "winner_strategy" in preempted.columns else pd.DataFrame()
+
+        if not ev_preempts.empty and "winner_edge" in ev_preempts.columns:
+            winner_edges = pd.to_numeric(ev_preempts["winner_edge"], errors="coerce").dropna()
+            # Extract VALUE edge from blocked_edges JSON
+            value_blocked_edges = []
+            for _, row in ev_preempts.iterrows():
+                blocked_strats = _parse_json_list(row.get("blocked_strategies", "[]"))
+                blocked_edge_vals = _parse_json_list(row.get("blocked_edges", "[]"))
+                for strat, edge_val in zip(blocked_strats, blocked_edge_vals):
+                    if strat == "VALUE_EDGE":
+                        try:
+                            value_blocked_edges.append(float(edge_val))
+                        except (TypeError, ValueError):
+                            pass
+
+            print(f"\n  EVENT preempting VALUE ({len(ev_preempts)} decisions):")
+            if not winner_edges.empty:
+                print(f"    Avg EVENT edge:  {winner_edges.mean():.4f}")
+            if value_blocked_edges:
+                import statistics
+                print(f"    Avg VALUE edge:  {statistics.mean(value_blocked_edges):.4f}  (n={len(value_blocked_edges)})")
+                edge_diff = winner_edges.mean() - statistics.mean(value_blocked_edges) if not winner_edges.empty else None
+                if edge_diff is not None:
+                    direction = "better" if edge_diff > 0 else "worse"
+                    print(f"    EVENT edge {direction} than VALUE by {abs(edge_diff):.4f}")
+
+    if not already_entered.empty and "winner_strategy" in already_entered.columns:
+        print("\n  Already-entered by strategy that was blocked:")
+        for strat, cnt in top_counts(already_entered, "winner_strategy"):
+            print(f"    {strat}: {cnt}x")
+
+
 def generate_report():
     signals = load_csv("logs/strategy_signals.csv")
     value_att = load_csv("logs/value_attempts.csv")
@@ -228,6 +305,8 @@ def generate_report():
             if data.get("pnl") is not None:
                 print(f"  PnL:            ${data['pnl']:.2f}")
             print(f"  Exit Reasons:    {data.get('exit_reasons', [])}")
+
+    allocator_attribution()
 
 if __name__ == "__main__":
     generate_report()

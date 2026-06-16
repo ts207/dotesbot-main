@@ -13,11 +13,12 @@ from steam_client import fetch_all_live_games
 from poly_ws import listen_books, BookStore
 from signal_engine import EventSignalEngine, apply_probability_move
 from paper_trader import PaperTrader
-from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger, ActualDotaEventLogger, StrategySignalLogger
+from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger, ActualDotaEventLogger, StrategySignalLogger, DSwingExitQualityLogger, AllocatorLogger
 from value_engine import ValueEngine, ValueSignal, VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
 from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED
 from actual_dota_event_detector import ActualDotaEventDetector
 from event_triggered_value_engine import EventTriggeredValueEngine, EventTriggeredValueSignal
+from strategy_allocator import StrategyCandidate, allocate_candidates, decision_to_log_row
 from config import EVENT_DETECTORS_ENABLED
 from book_move_detector import BookMoveDetector
 from mapping import load_valid_mappings
@@ -455,6 +456,7 @@ async def steam_loop(
     actual_event_logger: ActualDotaEventLogger | None = None,
     event_value_engine: EventTriggeredValueEngine | None = None,
     strategy_signal_logger: StrategySignalLogger | None = None,
+    allocator_logger: AllocatorLogger | None = None,
 ):
     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
         print("Missing STEAM_API_KEY. Copy .env.example to .env and fill it in.")
@@ -755,6 +757,8 @@ async def steam_loop(
                     if game.get("game_over"):
                         game_over_match_ids.add(match_id)
                         _PERSISTENT_GAME_OVER_MATCH_IDS.add(match_id)
+                        if match_id not in dswing_map_end_detected_ns:
+                            dswing_map_end_detected_ns[match_id] = time.time_ns()
                     else:
                         active_games.append(game)
 
@@ -949,7 +953,12 @@ async def steam_loop(
                             and str(p.token_id) in _mkt_toks
                         } if live_position_store else set())
 
-                        # --- Event-Triggered Value Engine ---
+                        # ── COLLECT: gather all strategy candidates this tick ──────────────
+                        # Rejects are logged immediately. Signals are turned into
+                        # StrategyCandidate objects for the allocator to prioritize.
+                        _all_candidates: list[StrategyCandidate] = []
+
+                        # --- Event-Triggered Value Engine (collect phase) ---
                         if event_value_engine is not None and strategy_signal_logger is not None:
                             match_actual_events = actual_events_by_match.get(str(game.get("match_id") or ""), [])
                             for actual_event in match_actual_events:
@@ -967,112 +976,25 @@ async def steam_loop(
                                     strategy_signal_logger.log_signal(ev_result)
                                     if not ENABLE_EVENT_TRIGGERED_VALUE_TRADING:
                                         continue
-                                    opposing_tok = mapping["no_token_id"] if ev_result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
-                                    if str(ev_result.token_id) in _entered_toks:
-                                        continue
-                                    if live_executor is not None and live_position_store is not None:
-                                        ev_attempt = await live_executor.try_buy_value(
-                                            signal=ev_result,
-                                            mapping=mapping,
-                                            game=game,
-                                            book_store=book_store,
-                                        )
-                                        if live_logger is not None:
-                                            live_logger.log_attempt(ev_attempt, phase="event_value_entry")
-                                        landed = (
-                                            ev_attempt.filled_size_usd > 0
-                                            or ev_attempt.order_status in ("delayed", "live", "matched", "filled")
-                                        )
-                                        if landed:
-                                            entry_px = ev_attempt.avg_fill_price or ev_attempt.price_cap or ev_result.ask
-                                            fill = _normalized_entry_fill(
-                                                filled_usd=ev_attempt.filled_size_usd,
-                                                filled_shares=None,
-                                                avg_fill_price=ev_attempt.avg_fill_price,
-                                                fallback_price=entry_px,
-                                            )
-                                            is_filled = fill is not None and ev_attempt.filled_size_usd > 0
-                                            if fill:
-                                                cost, shares, entry_px = fill
-                                            else:
-                                                cost = ev_attempt.submitted_size_usd or 0.0
-                                                shares = 0.0
+                                    ev_strategy = (
+                                        "EVENT_REVERSAL_EDGE"
+                                        if ev_result.is_reversal
+                                        else "EVENT_CONTINUATION_EDGE"
+                                    )
+                                    _all_candidates.append(StrategyCandidate(
+                                        strategy=ev_strategy,
+                                        token_id=str(ev_result.token_id),
+                                        match_id=str(game.get("match_id") or ""),
+                                        direction=ev_result.direction,
+                                        edge=ev_result.edge,
+                                        fair=ev_result.fair_price,
+                                        game_time_sec=ev_result.game_time_sec,
+                                        signal=ev_result,
+                                        is_reversal=ev_result.is_reversal,
+                                        event_subtype=ev_result.actual_event_type,
+                                    ))
 
-                                            ev_strategy_kind = (
-                                                "EVENT_REVERSAL_EDGE"
-                                                if ev_result.is_reversal
-                                                else "EVENT_CONTINUATION_EDGE"
-                                            )
-                                            ev_hold_policy = (
-                                                "reversal_bounce_or_thesis"
-                                                if ev_result.is_reversal
-                                                else "thesis_invalidation"
-                                            )
-                                            ev_exit_engine = (
-                                                "event_reversal_exit"
-                                                if ev_result.is_reversal
-                                                else "value_fair_invalidation"
-                                            )
-
-                                            live_position_store.add(LivePosition(
-                                                position_id=f"{ev_attempt.match_id}:{ev_attempt.token_id}:{ev_attempt.created_at_ns}",
-                                                state="OPEN" if is_filled else "PENDING_ENTRY",
-                                                token_id=ev_attempt.token_id,
-                                                opposing_token_id=opposing_tok or "",
-                                                match_id=ev_attempt.match_id,
-                                                market_name=mapping.get("name"),
-                                                side=ev_result.side,
-                                                entry_price=entry_px,
-                                                shares=shares,
-                                                cost_usd=cost,
-                                                entry_time_ns=ev_attempt.created_at_ns,
-                                                entry_game_time_sec=ev_result.game_time_sec,
-                                                event_type=ev_strategy_kind,
-                                                expected_move=0.0,
-                                                fair_price=ev_result.fair_price,
-                                                trader_kind="value",
-                                                exit_horizon_sec=None,
-                                                signal_id=ev_result.signal_id,
-                                                backed_direction=ev_result.direction,
-                                                pending_entry_order_id=ev_attempt.order_id if not is_filled else None,
-                                                strategy_kind=ev_strategy_kind,
-                                                strategy_family="EVENT",
-                                                strategy_subtype=ev_result.actual_event_type,
-                                                entry_is_reversal=ev_result.is_reversal,
-                                                entry_is_continuation=ev_result.is_continuation,
-                                                entry_engine="event_triggered_value",
-                                                exit_engine=ev_exit_engine,
-                                                hold_policy=ev_hold_policy,
-                                                entry_fair=ev_result.fair_price,
-                                                entry_edge=ev_result.edge,
-                                                entry_backed_side=ev_result.direction,
-                                                entry_radiant_lead=ev_result.lead,
-                                                entry_actual_event_type=ev_result.actual_event_type,
-                                                entry_derived_state_flags=list(ev_result.derived_state_flags),
-                                            ))
-                                            _entered_toks.add(str(ev_result.token_id))
-                                            print(
-                                                f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} "
-                                                f"event={ev_result.actual_event_type} entry≈{entry_px:.4f} edge={ev_result.edge:.4f} status={ev_attempt.order_status}"
-                                            )
-                                        else:
-                                            print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
-                                    else:
-                                        # Paper path (PaperTrader simulated fills).
-                                        pos, reason = trader.enter(
-                                            signal=ev_result.to_signal_dict(),
-                                            token_id=ev_result.token_id,
-                                            side=ev_result.side,
-                                            book_store=book_store,
-                                            match_id=str(game.get("match_id") or ""),
-                                            market_name=mapping.get("name"),
-                                            opposing_token_id=opposing_tok,
-                                        )
-                                        if pos:
-                                            position_logger.log_entry(pos)
-                                            print(f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} event={ev_result.actual_event_type} price={pos.entry_price:.4f} edge={ev_result.edge:.4f}")
-
-                        # --- Value Engine ---
+                        # --- Value Engine (collect phase) ---
                         if value_engine is not None and value_logger is not None:
                             value_results = value_engine.evaluate(game, mapping, book_store, entered_tokens=_entered_toks)
                             for result in value_results:
@@ -1082,32 +1004,191 @@ async def steam_loop(
                                 value_logger.log_signal(result)
                                 if not ENABLE_VALUE_TRADING:
                                     continue
-                                opposing_tok = mapping["no_token_id"] if result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
-                                # Skip only if we already hold THIS side (no double-buy). The
-                                # OPPOSITE side is ALLOWED (offset/hedge in a swingy match); the
-                                # engine already applied the looser hedge gate (fair>0.5, edge>=0.04) to it.
-                                if str(result.token_id) in _entered_toks:
-                                    continue
                                 confirmed, confirm_reason = _value_confirmation_passes(result)
-                                if not confirmed:
+                                _all_candidates.append(StrategyCandidate(
+                                    strategy="VALUE_EDGE",
+                                    token_id=str(result.token_id),
+                                    match_id=str(game.get("match_id") or ""),
+                                    direction=result.direction,
+                                    edge=result.edge,
+                                    fair=result.fair_price,
+                                    game_time_sec=result.game_time_sec,
+                                    signal=result,
+                                    would_pass_confirmation=confirmed,
+                                ))
+
+                        # --- Decisive-Swing Engine (collect phase) ---
+                        if dswing_engine is not None:
+                            for ds_res in dswing_engine.evaluate(game, mapping, book_store):
+                                if not isinstance(ds_res, DSwingSignal):
+                                    if dswing_logger is not None:
+                                        dswing_logger.log_reject(ds_res, mapping=mapping)
+                                    continue
+                                if dswing_logger is not None:
+                                    dswing_logger.log_signal(ds_res, mapping=mapping)
+                                if not DSWING_ENABLED:
+                                    continue
+                                # DSWING dedup: blocks both sides (prevents holding
+                                # opposing tokens), using ALL live positions not just
+                                # the current-mapping set.
+                                ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+                                if live_position_store:
+                                    _act = {p.token_id for p in live_position_store.positions.values()
+                                            if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
+                                    if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
+                                        continue
+                                _all_candidates.append(StrategyCandidate(
+                                    strategy="DSWING",
+                                    token_id=str(ds_res.token_id),
+                                    match_id=str(game.get("match_id") or ""),
+                                    direction=ds_res.direction,
+                                    edge=ds_res.edge,
+                                    fair=ds_res.series_fair,
+                                    game_time_sec=ds_res.game_time_sec,
+                                    signal=ds_res,
+                                ))
+
+                        # ── ALLOCATE: explicit priority + counterfactual attribution ──────
+                        _decisions = allocate_candidates(_all_candidates, _entered_toks)
+
+                        # Log contested decisions (preemptions + already_entered).
+                        if allocator_logger is not None:
+                            for _dec in _decisions:
+                                _row = decision_to_log_row(_dec)
+                                if _row:
+                                    allocator_logger.log_decision(_row)
+
+                        # ── EXECUTE: run the winning candidate for each token ─────────────
+                        for _dec in _decisions:
+                            if _dec.winner is None:
+                                continue
+                            _cand = _dec.winner
+                            _sig = _cand.signal
+
+                            # ── EVENT_CONTINUATION_EDGE / EVENT_REVERSAL_EDGE ──────────────
+                            if _cand.strategy in ("EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE"):
+                                ev_result = _sig
+                                opposing_tok = mapping["no_token_id"] if ev_result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+                                if live_executor is not None and live_position_store is not None:
+                                    ev_attempt = await live_executor.try_buy_value(
+                                        signal=ev_result,
+                                        mapping=mapping,
+                                        game=game,
+                                        book_store=book_store,
+                                    )
+                                    if live_logger is not None:
+                                        live_logger.log_attempt(ev_attempt, phase="event_value_entry")
+                                    landed = (
+                                        ev_attempt.filled_size_usd > 0
+                                        or ev_attempt.order_status in ("delayed", "live", "matched", "filled")
+                                    )
+                                    if landed:
+                                        entry_px = ev_attempt.avg_fill_price or ev_attempt.price_cap or ev_result.ask
+                                        fill = _normalized_entry_fill(
+                                            filled_usd=ev_attempt.filled_size_usd,
+                                            filled_shares=None,
+                                            avg_fill_price=ev_attempt.avg_fill_price,
+                                            fallback_price=entry_px,
+                                        )
+                                        is_filled = fill is not None and ev_attempt.filled_size_usd > 0
+                                        if fill:
+                                            cost, shares, entry_px = fill
+                                        else:
+                                            cost = ev_attempt.submitted_size_usd or 0.0
+                                            shares = 0.0
+
+                                        ev_strategy_kind = (
+                                            "EVENT_REVERSAL_EDGE"
+                                            if ev_result.is_reversal
+                                            else "EVENT_CONTINUATION_EDGE"
+                                        )
+                                        ev_hold_policy = (
+                                            "reversal_bounce_or_thesis"
+                                            if ev_result.is_reversal
+                                            else "thesis_invalidation"
+                                        )
+                                        ev_exit_engine = (
+                                            "event_reversal_exit"
+                                            if ev_result.is_reversal
+                                            else "value_fair_invalidation"
+                                        )
+
+                                        live_position_store.add(LivePosition(
+                                            position_id=f"{ev_attempt.match_id}:{ev_attempt.token_id}:{ev_attempt.created_at_ns}",
+                                            state="OPEN" if is_filled else "PENDING_ENTRY",
+                                            token_id=ev_attempt.token_id,
+                                            opposing_token_id=opposing_tok or "",
+                                            match_id=ev_attempt.match_id,
+                                            market_name=mapping.get("name"),
+                                            side=ev_result.side,
+                                            entry_price=entry_px,
+                                            shares=shares,
+                                            cost_usd=cost,
+                                            entry_time_ns=ev_attempt.created_at_ns,
+                                            entry_game_time_sec=ev_result.game_time_sec,
+                                            event_type=ev_strategy_kind,
+                                            expected_move=0.0,
+                                            fair_price=ev_result.fair_price,
+                                            trader_kind="value",
+                                            exit_horizon_sec=None,
+                                            signal_id=ev_result.signal_id,
+                                            backed_direction=ev_result.direction,
+                                            pending_entry_order_id=ev_attempt.order_id if not is_filled else None,
+                                            strategy_kind=ev_strategy_kind,
+                                            strategy_family="EVENT",
+                                            strategy_subtype=ev_result.actual_event_type,
+                                            entry_is_reversal=ev_result.is_reversal,
+                                            entry_is_continuation=ev_result.is_continuation,
+                                            entry_engine="event_triggered_value",
+                                            exit_engine=ev_exit_engine,
+                                            hold_policy=ev_hold_policy,
+                                            entry_fair=ev_result.fair_price,
+                                            entry_edge=ev_result.edge,
+                                            entry_backed_side=ev_result.direction,
+                                            entry_radiant_lead=ev_result.lead,
+                                            entry_actual_event_type=ev_result.actual_event_type,
+                                            entry_derived_state_flags=list(ev_result.derived_state_flags),
+                                        ))
+                                        _entered_toks.add(str(ev_result.token_id))
+                                        print(
+                                            f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} "
+                                            f"event={ev_result.actual_event_type} entry≈{entry_px:.4f} edge={ev_result.edge:.4f} status={ev_attempt.order_status}"
+                                        )
+                                    else:
+                                        print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
+                                else:
+                                    # Paper path (PaperTrader simulated fills).
+                                    opposing_tok = mapping["no_token_id"] if ev_result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+                                    pos, reason = trader.enter(
+                                        signal=ev_result.to_signal_dict(),
+                                        token_id=ev_result.token_id,
+                                        side=ev_result.side,
+                                        book_store=book_store,
+                                        match_id=str(game.get("match_id") or ""),
+                                        market_name=mapping.get("name"),
+                                        opposing_token_id=opposing_tok,
+                                    )
+                                    if pos:
+                                        position_logger.log_entry(pos)
+                                        print(f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} event={ev_result.actual_event_type} price={pos.entry_price:.4f} edge={ev_result.edge:.4f}")
+
+                            # ── VALUE_EDGE ─────────────────────────────────────────────────
+                            elif _cand.strategy == "VALUE_EDGE":
+                                result = _sig
+                                # Confirmation gate: VALUE requires persistent edge across
+                                # polls before committing. Checked in collect phase.
+                                if not _cand.would_pass_confirmation:
                                     print(
                                         f"VALUE LIVE WAIT {mapping.get('name')} {result.side} "
-                                        f"reason={confirm_reason} edge={result.edge:.4f} ask={result.ask:.4f}"
+                                        f"edge={result.edge:.4f} ask={result.ask:.4f}"
                                     )
                                     continue
-
-                                # Guarded executor path. In paper mode
-                                # try_buy_value returns a paper_simulated fill
-                                # and logs to paper_attempts.csv; with real-live
-                                # enabled it routes through the CLOB client.
+                                opposing_tok = mapping["no_token_id"] if result.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
                                 if live_executor is not None and live_position_store is not None:
                                     v_attempt = await live_executor.try_buy_value(
                                         signal=result, mapping=mapping, game=game, book_store=book_store)
                                     if live_logger is not None:
                                         live_logger.log_attempt(v_attempt, phase="entry")
-                                    # Record delayed/live FAKs as pending only. Promote
-                                    # to OPEN after a terminal fill response so shares,
-                                    # price, and cost stay internally consistent.
                                     _landed = (v_attempt.filled_size_usd > 0
                                                or v_attempt.order_status in ("delayed", "live", "matched", "filled"))
                                     if _landed:
@@ -1174,23 +1255,10 @@ async def steam_loop(
                                         position_logger.log_entry(pos)
                                         print(f"VALUE ENTER {mapping.get('name')} {result.side} price={pos.entry_price:.4f} edge={result.edge:.4f}")
 
-                        # --- Decisive-Swing ML sniper ---
-                        if dswing_engine is not None:
-                            for ds_res in dswing_engine.evaluate(game, mapping, book_store):
-                                if not isinstance(ds_res, DSwingSignal):
-                                    if dswing_logger is not None:
-                                        dswing_logger.log_reject(ds_res, mapping=mapping)
-                                    continue
-                                if dswing_logger is not None:
-                                    dswing_logger.log_signal(ds_res, mapping=mapping)
-                                if not DSWING_ENABLED:
-                                    continue
+                            # ── DSWING ─────────────────────────────────────────────────────
+                            elif _cand.strategy == "DSWING":
+                                ds_res = _sig
                                 ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
-                                if live_position_store:
-                                    _act = {p.token_id for p in live_position_store.positions.values()
-                                            if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
-                                    if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
-                                        continue
                                 if live_executor is not None and live_position_store is not None:
                                     a = await live_executor.try_buy_value(signal=ds_res, mapping=mapping, game=game, book_store=book_store)
                                     if live_logger is not None:
@@ -1217,12 +1285,62 @@ async def steam_loop(
                                             hold_policy="map_end_convergence",
                                             entry_fair=ds_res.series_fair,
                                             entry_edge=ds_res.edge,
+                                            entry_ask=ds_res.ask,
                                             entry_backed_side=ds_res.direction,
-                                            entry_radiant_lead=ds_res.lead))
+                                            entry_radiant_lead=ds_res.lead,
+                                            entry_p_game=ds_res.p_game,
+                                            entry_series_fair=ds_res.series_fair,
+                                            entry_series_score_yes=mapping.get("series_score_yes"),
+                                            entry_series_score_no=mapping.get("series_score_no"),
+                                            entry_current_game_number=mapping.get("current_game_number") or mapping.get("game_number"),
+                                            entry_market_type=mapping.get("market_type"),
+                                            entry_book_age_ms=ds_res.book_age_ms))
                                         mode = "LIVE" if ENABLE_REAL_LIVE_TRADING else "PAPER"
                                         print(f"DSWING {mode} ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")
                                     else:
                                         print(f"DSWING REJECT {mapping.get('name')} {ds_res.side} reason={a.reason_if_rejected}")
+                                else:
+                                    # Paper path (PaperTrader simulated fills).
+                                    # Previously missing — now implemented so DSWING paper
+                                    # trades are recorded in paper_trades.csv / position_logger.
+                                    ds_signal_dict = {
+                                        "signal_id": ds_res.signal_id,
+                                        "match_id": ds_res.match_id,
+                                        "decision": "paper_buy_yes",
+                                        "reason": "dswing_edge",
+                                        "token_id": ds_res.token_id,
+                                        "side": ds_res.side,
+                                        "fair_price": ds_res.series_fair,
+                                        "executable_edge": ds_res.edge,
+                                        "expected_move": 0.0,
+                                        "target_size_usd": ds_res.sized_usd,
+                                        "size_multiplier": 1.0,
+                                        "event_type": "DSWING",
+                                        "event_tier": "A",
+                                        "event_is_primary": True,
+                                        "event_family": "DSWING",
+                                        "event_quality": 1.0,
+                                        "event_direction": ds_res.direction,
+                                        "strategy_kind": "DSWING",
+                                        "strategy_family": "DSWING",
+                                        "entry_engine": "decisive_swing",
+                                        "exit_engine": "dswing_map_end",
+                                        "hold_policy": "map_end_convergence",
+                                        "entry_is_reversal": False,
+                                        "entry_is_continuation": False,
+                                    }
+                                    pos, reason = trader.enter(
+                                        signal=ds_signal_dict,
+                                        token_id=ds_res.token_id,
+                                        side=ds_res.side,
+                                        book_store=book_store,
+                                        match_id=str(game.get("match_id") or ""),
+                                        market_name=mapping.get("name"),
+                                        opposing_token_id=ds_opp,
+                                    )
+                                    if pos:
+                                        position_logger.log_entry(pos)
+                                        print(f"DSWING PAPER ENTER {mapping.get('name')} {ds_res.side} price={pos.entry_price:.4f} edge={ds_res.edge:+.3f}")
 
                         # --- Event Detectors ---
                         if EVENT_DETECTORS_ENABLED:
@@ -2103,24 +2221,29 @@ async def main():
         value_logger = ValueAttemptLogger()
         value_engine = ValueEngine()
         print(f"VALUE_ENGINE mode ON")
-    dswing_engine: DecisiveSwingEngine | None = None
     dswing_logger: DSwingAttemptLogger | None = None
+    dswing_exit_quality_logger: DSwingExitQualityLogger | None = None
+    dswing_map_end_detected_ns: dict[str, int] = {}
     if DSWING_ENABLED:
         dswing_engine = DecisiveSwingEngine()
         dswing_logger = DSwingAttemptLogger()
+        dswing_exit_quality_logger = DSwingExitQualityLogger()
         mode = "paper" if not ENABLE_REAL_LIVE_TRADING else "armed"
         print(f"DECISIVE_SWING {mode} mode ON")
     event_value_engine: EventTriggeredValueEngine | None = None
     strategy_signal_logger: StrategySignalLogger | None = None
+    allocator_logger: AllocatorLogger | None = None
     if EVENT_TRIGGERED_VALUE_ENABLED:
         event_value_engine = EventTriggeredValueEngine()
         strategy_signal_logger = StrategySignalLogger()
+        allocator_logger = AllocatorLogger()
         print("EVENT_TRIGGERED_VALUE mode ON")
     latency_logger = LatencyLogger()
     rich_context_logger = RichContextLogger()
     source_delay_logger = SourceDelayLogger()
 
     run_live_infra = LIVE_TRADING
+    execution_path = "paper_trader"
     
     if run_live_infra:
         if ENABLE_REAL_LIVE_TRADING:
@@ -2141,6 +2264,8 @@ async def main():
             dswing_logger._execution_path = execution_path
         if value_logger:
             value_logger._execution_path = execution_path
+        if allocator_logger:
+            allocator_logger._execution_path = execution_path  # type: ignore[attr-defined]
 
         live_executor = LiveExecutor()
         live_executor.set_delayed_resolution_callback(
@@ -2449,6 +2574,15 @@ async def main():
                     reason=decision.reason,
                     mapping=mapping,
                 )
+
+                if dswing_exit_quality_logger and getattr(pos, "trader_kind", "") == "dswing":
+                    dswing_exit_quality_logger.log_dswing_exit_quality(
+                        position=pos,
+                        decision=decision,
+                        exit_attempt=attempt,
+                        map_end_detected_ns=dswing_map_end_detected_ns.get(pos.match_id),
+                        execution_path=execution_path,
+                    )
 
                 if live_exit_logger:
                     live_exit_logger.log_exit_attempt(attempt)
@@ -2848,6 +2982,7 @@ async def main():
                     actual_event_logger=actual_event_logger,
                     event_value_engine=event_value_engine,
                     strategy_signal_logger=strategy_signal_logger,
+                    allocator_logger=allocator_logger,
                 ),
                 proactive_refresh_loop(session),
             ]
