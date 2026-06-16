@@ -20,11 +20,11 @@ class FairValueResult:
 _SLOPE_WINDOW_NS = 300 * 1_000_000_000          # 5-minute window
 _lead_hist: dict[str, deque] = {}
 
-def _lead_slope(match_id: str, radiant_lead: int, now_ns: int) -> float:
+def _lead_slope(match_id: str, radiant_lead: int, now_ns: int, record_history: bool = True) -> float:
     """Change in radiant net-worth lead over the trailing ~5 min. 0.0 until enough
     history exists. A growing leader's lead → positive (in radiant perspective)."""
     dq = _lead_hist.setdefault(match_id, deque(maxlen=4000))
-    if not dq or dq[-1][0] != now_ns:
+    if record_history and (not dq or dq[-1][0] != now_ns):
         dq.append((now_ns, int(radiant_lead)))
     cutoff = now_ns - int(_SLOPE_WINDOW_NS * 1.5)
     while dq and dq[0][0] < cutoff:
@@ -46,6 +46,7 @@ def compute_side_fair(
     received_at_ns_override: int | None = None,
     include_slope: bool = True,
     include_draft: bool = True,
+    record_history: bool = True,
 ) -> FairValueResult:
     match_id = str(game.get("match_id") or game.get("lobby_id") or "")
     now_ns = received_at_ns_override if received_at_ns_override is not None else int(game.get("received_at_ns") or time.time_ns())
@@ -62,7 +63,7 @@ def compute_side_fair(
     rname, dname = game.get("radiant_team"), game.get("dire_team")
     game_time = int(float(game.get("game_time_sec") or 0))
 
-    slope_rad = _lead_slope(match_id, radiant_lead, now_ns) if include_slope else 0.0
+    slope_rad = _lead_slope(match_id, radiant_lead, now_ns, record_history) if include_slope else 0.0
     
     draft_rad = None
     if include_draft:

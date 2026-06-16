@@ -237,8 +237,8 @@ class EventTriggeredValueEngine:
         if abs(side_lead_after) > VALUE_FLIP_LEAD and ask < VALUE_FLIP_ASK_FLOOR:
             return [self._reject(event, match_id, cur_ns, "orientation_flip_suspected", direction=direction, side=side, token_id=token_id, ask=ask, lead=lead_after, book_age_ms=book_age_ms)]
 
-        res_before = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_before, received_at_ns_override=cur_ns)
-        res_after = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_after, received_at_ns_override=cur_ns)
+        res_before = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_before, received_at_ns_override=cur_ns, record_history=False)
+        res_after = compute_side_fair(game=game, side=direction, radiant_lead_override=lead_after, received_at_ns_override=cur_ns, record_history=False)
         
         fair_before = res_before.fair
         fair_after = res_after.fair

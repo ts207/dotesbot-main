@@ -240,7 +240,7 @@ def _current_fair_for_position(position, game: dict) -> float | None:
     except (TypeError, ValueError):
         return None
         
-    fair_res = compute_side_fair(game=game, side=backed)
+    fair_res = compute_side_fair(game=game, side=backed, record_history=False)
     return fair_res.fair
 
 

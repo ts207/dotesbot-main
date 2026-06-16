@@ -31,7 +31,7 @@ DSWING_MAX_BOOK_AGE_MS = int(os.getenv("DSWING_MAX_BOOK_AGE_MS", "15000"))
 DSWING_MIN_P_GAME = float(os.getenv("DSWING_MIN_P_GAME", "0.88"))
 
 _NS = uuid.UUID("11111111-2222-3333-4444-555555555557")
-_sniped: set[tuple[str, str]] = set()   # (match_id, direction) already fired
+_sniped: set[tuple[str, str, str, str]] = set()   # (match_id, direction, token_id, current_game_number) already fired
 
 import json
 _SNIPES_FILE = "logs/dswing_snipes.json"
@@ -42,12 +42,18 @@ def _load_snipes():
         try:
             with open(_SNIPES_FILE) as f:
                 data = json.load(f)
-                _sniped = {tuple(x) for x in data}
+                _new_sniped = set()
+                for x in data:
+                    if len(x) == 2:
+                        _new_sniped.add((str(x[0]), str(x[1]), "unknown", "unknown"))
+                    elif len(x) == 4:
+                        _new_sniped.add((str(x[0]), str(x[1]), str(x[2]), str(x[3])))
+                _sniped = _new_sniped
         except Exception:
             pass
 
-def _save_snipe(match_id, direction):
-    _sniped.add((match_id, direction))
+def _save_snipe(match_id, direction, token_id, current_game_number):
+    _sniped.add((str(match_id), str(direction), str(token_id), str(current_game_number)))
     try:
         os.makedirs(os.path.dirname(_SNIPES_FILE), exist_ok=True)
         with open(_SNIPES_FILE, "w") as f:
@@ -133,8 +139,6 @@ class DecisiveSwingEngine:
         if abs(lead) < DSWING_LEAD:
             return []                                   # not a decisive/game-ending swing
         direction = "radiant" if lead > 0 else "dire"
-        if (match_id, direction) in _sniped:
-            return []                                   # one snipe per match-side
 
         sm = mapping.get("steam_side_mapping", "normal")
         if sm == "normal":
@@ -146,6 +150,17 @@ class DecisiveSwingEngine:
         token_id = mapping.get("yes_token_id") if side == "YES" else mapping.get("no_token_id")
         if not token_id:
             return [DSwingReject(match_id, "missing_token_id")]
+            
+        def _i(x):
+            try:
+                return int(x)
+            except (TypeError, ValueError):
+                return None
+        gn = _i(mapping.get("current_game_number")) or _i(mapping.get("game_number"))
+
+        snipe_key = (str(match_id), str(direction), str(token_id), str(gn))
+        if snipe_key in _sniped:
+            return []                                   # one snipe per match-side-token-game
 
         book = book_store.get(token_id) if book_store else None
         ask = None
@@ -178,7 +193,7 @@ class DecisiveSwingEngine:
         if edge < DSWING_MIN_EDGE:
             return [DSwingReject(match_id, f"edge_too_small:{edge:.3f}")]
 
-        _save_snipe(match_id, direction)
+        _save_snipe(match_id, direction, token_id, gn)
         return [DSwingSignal(
             signal_id=str(uuid.uuid5(_NS, f"dswing|{match_id}|{direction}")),
             match_id=match_id, received_at_ns=int(game.get("received_at_ns") or 0),

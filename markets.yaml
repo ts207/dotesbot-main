@@ -11374,8 +11374,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 1
-  series_score_no: 0
-  current_game_number: 2
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Roar Gaming
   no_team: Cloud Rising
   yes_token_id: '16322333746911273088746398018421349741098602404187050287823176345438968444704'
@@ -11416,8 +11416,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 1
-  series_score_no: 0
-  current_game_number: 2
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Roar Gaming
   no_team: Cloud Rising
   yes_token_id: '38425401820980484653600719985068828914490626043971747855655185836386733803329'

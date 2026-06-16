@@ -394,7 +394,8 @@ class PositionLogger(CsvLogger):
     Exits have action='exit' with full P&L data.
     """
 
-    def __init__(self, filename: str = PAPER_TRADES_CSV_PATH):
+    def __init__(self, filename: str = PAPER_TRADES_CSV_PATH, execution_path: str = "paper_trader"):
+        self._execution_path = execution_path
         super().__init__(filename, [
             "timestamp_utc", "action",
             "token_id", "match_id", "market_name", "side",
@@ -405,13 +406,14 @@ class PositionLogger(CsvLogger):
             "entry_derived_state_flags",
             "entry_game_time_sec",
             "exit_price", "proceeds_usd", "pnl_usd", "roi",
-            "hold_sec", "exit_game_time_sec", "exit_reason",
+            "hold_sec", "exit_game_time_sec", "exit_reason", "execution_path",
         ])
 
     def log_entry(self, pos) -> None:
         d = pos.to_dict()
         d["timestamp_utc"] = utc_now_iso()
         d["action"] = "entry"
+        d["execution_path"] = self._execution_path
         if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
             d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
         self.append(d)
@@ -420,6 +422,7 @@ class PositionLogger(CsvLogger):
         d = cp.to_dict()
         d["timestamp_utc"] = ns_to_iso(cp.exit_time_ns) or utc_now_iso()
         d["action"] = "exit"
+        d["execution_path"] = self._execution_path
         if isinstance(d.get("entry_derived_state_flags"), (list, tuple, set)):
             d["entry_derived_state_flags"] = ",".join(str(v) for v in d["entry_derived_state_flags"])
         self.append(d)
@@ -821,12 +824,13 @@ class SourceDelayLogger(CsvLogger):
 
 
 class LiveAttemptLogger(CsvLogger):
-    def __init__(self, filename: str = LIVE_ATTEMPTS_CSV_PATH):
+    def __init__(self, filename: str = LIVE_ATTEMPTS_CSV_PATH, execution_path: str | None = None):
         # Trader kind is derived from the CSV filename: live_attempts → "live",
         # paper_attempts → "paper". The bot constructs separate logger instances
         # per mode via filename, so this is reliable.
         kind = "paper" if "paper_attempts" in os.path.basename(filename) else "live"
         self._trader_kind = kind
+        self._execution_path = execution_path or ("real_clob" if kind == "live" else "paper_trader")
         super().__init__(filename, [
             "timestamp_utc", "phase",
             "event_type", "event_direction", "token_id", "side",
@@ -838,7 +842,7 @@ class LiveAttemptLogger(CsvLogger):
             "order_status", "reason_if_rejected",
             "markout_3s", "markout_10s", "markout_30s",
             "raw_response_json",
-            "trader_kind", "exit_horizon_sec", "signal_id",
+            "trader_kind", "exit_horizon_sec", "signal_id", "execution_path",
         ], parquet_table="trade_attempts")
 
     def _to_parquet_row(self, row: dict) -> dict:
@@ -856,6 +860,7 @@ class LiveAttemptLogger(CsvLogger):
         d = attempt.to_dict() if hasattr(attempt, "to_dict") else dict(attempt)
         d["timestamp_utc"] = utc_now_iso()
         d["phase"] = phase
+        d["execution_path"] = self._execution_path
         markouts = markouts or {}
         d["markout_3s"] = markouts.get("markout_3s")
         d["markout_10s"] = markouts.get("markout_10s")
@@ -1043,14 +1048,15 @@ class ValueAttemptLogger(CsvLogger):
     """One row per value-engine scoring event. Records both signals
     and rejects for shadow-mode validation."""
 
-    def __init__(self, filename: str = "logs/value_attempts.csv"):
+    def __init__(self, filename: str = "logs/value_attempts.csv", execution_path: str = "paper_trader"):
+        self._execution_path = execution_path
         super().__init__(filename, [
             "timestamp_utc", "received_at_ns", "signal_id", "match_id",
             "would_trade", "reject_reason",
             "direction", "side", "token_id",
             "fair_price", "ask", "edge",
             "lead", "game_time_sec", "elo_diff",
-            "book_age_ms", "sized_usd"
+            "book_age_ms", "sized_usd", "execution_path",
         ], parquet_table="value_attempts")
 
     def log_signal(self, sig) -> None:
@@ -1072,6 +1078,7 @@ class ValueAttemptLogger(CsvLogger):
             "elo_diff": sig.elo_diff,
             "book_age_ms": sig.book_age_ms,
             "sized_usd": sig.sized_usd,
+            "execution_path": self._execution_path,
         })
 
     def log_reject(self, rej) -> None:
@@ -1093,19 +1100,21 @@ class ValueAttemptLogger(CsvLogger):
             "elo_diff": rej.elo_diff,
             "book_age_ms": rej.book_age_ms,
             "sized_usd": None,
+            "execution_path": self._execution_path,
         })
 
 
 class DSwingAttemptLogger(CsvLogger):
     """One row per decisive-swing scoring event."""
 
-    def __init__(self, filename: str = "logs/dswing_attempts.csv"):
+    def __init__(self, filename: str = "logs/dswing_attempts.csv", execution_path: str = "paper_trader"):
+        self._execution_path = execution_path
         super().__init__(filename, [
             "timestamp_utc", "received_at_ns", "signal_id", "match_id",
             "would_trade", "reject_reason",
             "market_name", "market_type", "direction", "side", "token_id",
             "lead", "game_time_sec", "p_game", "series_fair",
-            "ask", "edge", "book_age_ms", "sized_usd",
+            "ask", "edge", "book_age_ms", "sized_usd", "execution_path",
         ])
 
     def log_signal(self, sig, *, mapping: dict | None = None) -> None:
@@ -1129,6 +1138,7 @@ class DSwingAttemptLogger(CsvLogger):
             "edge": sig.edge,
             "book_age_ms": sig.book_age_ms,
             "sized_usd": sig.sized_usd,
+            "execution_path": self._execution_path,
         })
 
     def log_reject(self, rej, *, mapping: dict | None = None) -> None:
@@ -1141,13 +1151,15 @@ class DSwingAttemptLogger(CsvLogger):
             "reject_reason": getattr(rej, "reason", ""),
             "market_name": (mapping or {}).get("name"),
             "market_type": (mapping or {}).get("market_type"),
+            "execution_path": self._execution_path,
         })
 
 
 class StrategySignalLogger(CsvLogger):
     """Unified strategy-decision sidecar for new paper strategies."""
 
-    def __init__(self, filename: str = STRATEGY_SIGNALS_CSV_PATH):
+    def __init__(self, filename: str = STRATEGY_SIGNALS_CSV_PATH, execution_path: str | None = None):
+        self._execution_path = execution_path or "paper_trader"
         super().__init__(filename, [
             "timestamp_utc", "received_at_ns", "signal_id", "event_id",
             "strategy", "actual_event_type", "match_id",
@@ -1157,7 +1169,7 @@ class StrategySignalLogger(CsvLogger):
             "ask", "edge", "lead", "game_time_sec", "elo_diff",
             "book_age_ms", "sized_usd", "derived_state_flags",
             "is_continuation", "is_reversal",
-            "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
+            "would_pass_live_gates", "live_skip_reason", "paper_only_bypass", "execution_path",
         ])
 
     def log_signal(self, sig, *, strategy: str = "EVENT_TRIGGERED_VALUE") -> None:
@@ -1191,6 +1203,7 @@ class StrategySignalLogger(CsvLogger):
             "would_pass_live_gates": getattr(sig, "would_pass_live_gates", ""),
             "live_skip_reason": getattr(sig, "live_skip_reason", ""),
             "paper_only_bypass": getattr(sig, "paper_only_bypass", ""),
+            "execution_path": self._execution_path,
         })
 
     def log_reject(self, rej, *, strategy: str = "EVENT_TRIGGERED_VALUE") -> None:
@@ -1227,4 +1240,5 @@ class StrategySignalLogger(CsvLogger):
             "would_pass_live_gates": False,
             "live_skip_reason": "",
             "paper_only_bypass": False,
+            "execution_path": self._execution_path,
         })

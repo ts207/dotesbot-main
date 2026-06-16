@@ -2088,11 +2088,25 @@ async def main():
     run_live_infra = LIVE_TRADING
     
     if run_live_infra:
-        attempt_csv = LIVE_ATTEMPTS_CSV_PATH if ENABLE_REAL_LIVE_TRADING else PAPER_ATTEMPTS_CSV_PATH
-        exit_csv = "logs/live_exits.csv" if ENABLE_REAL_LIVE_TRADING else PAPER_EXITS_CSV_PATH
-        pos_json = "logs/live_positions.json" if ENABLE_REAL_LIVE_TRADING else PAPER_POSITIONS_PATH
-        
-        live_logger = LiveAttemptLogger(filename=attempt_csv)
+        if ENABLE_REAL_LIVE_TRADING:
+            attempt_csv = LIVE_ATTEMPTS_CSV_PATH
+            exit_csv = "logs/live_exits.csv"
+            pos_json = "logs/live_positions.json"
+            execution_path = "real_clob"
+        else:
+            attempt_csv = PAPER_ATTEMPTS_CSV_PATH
+            exit_csv = PAPER_EXITS_CSV_PATH
+            pos_json = PAPER_POSITIONS_PATH
+            execution_path = "guarded_executor_sim"
+
+        live_logger = LiveAttemptLogger(filename=attempt_csv, execution_path=execution_path)
+        if strategy_signal_logger:
+            strategy_signal_logger._execution_path = execution_path
+        if dswing_logger:
+            dswing_logger._execution_path = execution_path
+        if value_logger:
+            value_logger._execution_path = execution_path
+
         live_executor = LiveExecutor()
         live_executor.set_delayed_resolution_callback(
             lambda attempt: live_logger.log_attempt(attempt, phase="resolution")
