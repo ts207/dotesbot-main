@@ -35,6 +35,7 @@ class PolicyResult:
     policy_version: str = POLICY_VERSION
 
 
+
 def allow(
     *,
     reason: str = "allowed",

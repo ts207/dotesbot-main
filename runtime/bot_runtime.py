@@ -6,7 +6,10 @@ import aiohttp
 import time
 import os
 import json
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 from datetime import datetime, timezone
 
 from steam_client import fetch_all_live_games
@@ -64,6 +67,8 @@ from mapping_audit import audit_mappings, quarantine_critical_issues
 import team_id_cache  # 2026-05-27: backfills empty Steam team_names from team_ids
 from discover_markets import main as discover_markets_main
 from config import ENABLE_MATCH_WINNER_TRADING
+from config import PAPER_MODE
+from execution_policy import PolicyInput, evaluate_policy, signal_policy_fields
 
 MAPPING_REFRESH_SECONDS = 60
 # 2026-06-02 — WS subscription debounce: a token must be absent from the live
@@ -73,6 +78,58 @@ MAPPING_REFRESH_SECONDS = 60
 WS_SUB_REMOVE_GRACE_POLLS = int(os.getenv("WS_SUB_REMOVE_GRACE_POLLS", "3"))
 MARKET_DISCOVER_SECONDS = 600  # re-scrape Polymarket for new G3 markets every 10 min
 _LOCK_HANDLE = None
+
+
+def _annotate_signal_policy_for_paper(
+    *,
+    signal: dict,
+    token_id: str,
+    side: str,
+    mapping: dict,
+    game: dict,
+    book_store,
+    trader,
+) -> dict:
+    book = book_store.get(token_id) if token_id else None
+
+    mode = {
+        "research": "paper_research",
+        "live_parity": "paper_live_parity",
+        "shadow_live": "dry_live",
+    }.get(PAPER_MODE, "paper_research")
+
+    match_id = str(game.get("match_id") or game.get("lobby_id") or "")
+
+    result = evaluate_policy(
+        PolicyInput(
+            mode=mode,
+            strategy_kind=str(
+                signal.get("strategy_kind")
+                or signal.get("strategy_family")
+                or signal.get("event_family")
+                or signal.get("event_type")
+                or ""
+            ),
+            market_type=str(mapping.get("market_type") or ""),
+            token_id=token_id,
+            side=side,
+            signal=dict(signal),
+            game=dict(game),
+            mapping=dict(mapping),
+            book=dict(book) if book else None,
+            now_ns=time.time_ns(),
+            risk_state={
+                "open_positions": len(getattr(trader, "positions", {}) or {}),
+                "match_open_usd": getattr(trader, "_match_open_usd", {}).get(match_id, 0.0),
+                "total_submitted_usd": 0.0,
+                "daily_realized_pnl_usd": 0.0,
+            },
+        )
+    )
+
+    annotated = dict(signal)
+    annotated.update(signal_policy_fields(result))
+    return annotated
 
 
 def _audit_and_quarantine_mappings(
@@ -456,8 +513,17 @@ async def _handle_manual_order(
             "manual": True,
             "price_cap": float(order.get("price_cap") or 0) or None,
         }
-        pos, reason = trader.enter(
+        annotated_signal = _annotate_signal_policy_for_paper(
             signal=signal,
+            token_id=token_id,
+            side=side,
+            mapping=mapping,
+            game={"match_id": match_id or str(mapping.get("dota_match_id") or "")},
+            book_store=book_store,
+            trader=trader,
+        )
+        pos, reason = trader.enter(
+            signal=annotated_signal,
             token_id=token_id,
             side=side,
             book_store=book_store,
@@ -977,8 +1043,17 @@ async def steam_loop(
                                 "max_fill_price": 0.94,
                             }
                             
-                            pos, reason = trader.enter(
+                            annotated_signal = _annotate_signal_policy_for_paper(
                                 signal=trade_signal,
+                                token_id=exec_tok_id,
+                                side=exec_tok_side,
+                                mapping=m,
+                                game={"match_id": p_match_id},
+                                book_store=book_store,
+                                trader=trader,
+                            )
+                            pos, reason = trader.enter(
+                                signal=annotated_signal,
                                 token_id=exec_tok_id,
                                 side=exec_tok_side,
                                 book_store=book_store,
@@ -1327,8 +1402,17 @@ async def steam_loop(
                                         print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
                                 else:
                                     # Paper path (PaperTrader simulated fills).
-                                    pos, reason = trader.enter(
+                                    annotated_signal = _annotate_signal_policy_for_paper(
                                         signal=ev_result.to_signal_dict(),
+                                        token_id=ev_result.token_id,
+                                        side=ev_result.side,
+                                        mapping=mapping,
+                                        game={"match_id": str(game.get("match_id") or "")},
+                                        book_store=book_store,
+                                        trader=trader,
+                                    )
+                                    pos, reason = trader.enter(
+                                        signal=annotated_signal,
                                         token_id=ev_result.token_id,
                                         side=ev_result.side,
                                         book_store=book_store,
@@ -1421,8 +1505,17 @@ async def steam_loop(
                                         print(f"VALUE LIVE REJECT {mapping.get('name')} {result.side} reason={v_attempt.reason_if_rejected}")
                                 else:
                                     # Paper path (PaperTrader simulated fills).
-                                    pos, reason = trader.enter(
+                                    annotated_signal = _annotate_signal_policy_for_paper(
                                         signal=result.to_signal_dict(),
+                                        token_id=result.token_id,
+                                        side=result.side,
+                                        mapping=mapping,
+                                        game={"match_id": str(game.get("match_id") or "")},
+                                        book_store=book_store,
+                                        trader=trader,
+                                    )
+                                    pos, reason = trader.enter(
+                                        signal=annotated_signal,
                                         token_id=result.token_id,
                                         side=result.side,
                                         book_store=book_store,
@@ -1546,8 +1639,17 @@ async def steam_loop(
                                         "risk_tags": ds_res.risk_tags,
                                         "max_fill_price": ds_res.ask,
                                     }
-                                    pos, reason = trader.enter(
+                                    annotated_signal = _annotate_signal_policy_for_paper(
                                         signal=ds_signal_dict,
+                                        token_id=ds_res.token_id,
+                                        side=ds_res.side,
+                                        mapping=mapping,
+                                        game=game,
+                                        book_store=book_store,
+                                        trader=trader,
+                                    )
+                                    pos, reason = trader.enter(
+                                        signal=annotated_signal,
                                         token_id=ds_res.token_id,
                                         side=ds_res.side,
                                         book_store=book_store,
@@ -2166,8 +2268,17 @@ async def steam_loop(
                                     if PAPER_EXECUTION_DELAY_MS > 0:
                                         await asyncio.sleep(PAPER_EXECUTION_DELAY_MS / 1000.0)
 
-                                    pos, reason = trader.enter(
+                                    annotated_signal = _annotate_signal_policy_for_paper(
                                         signal=signal,
+                                        token_id=tok_id,
+                                        side=tok_side,
+                                        mapping=mapping,
+                                        game=game,
+                                        book_store=book_store,
+                                        trader=trader,
+                                    )
+                                    pos, reason = trader.enter(
+                                        signal=annotated_signal,
                                         token_id=tok_id,
                                         side=tok_side,
                                         book_store=book_store,
@@ -2926,8 +3037,17 @@ async def main():
                     asyncio.create_task(_exec_book_move())
                     sig["traded"] = True
                 else:
-                    pos, reason = trader.enter(
+                    annotated_signal = _annotate_signal_policy_for_paper(
                         signal=trade_signal,
+                        token_id=exec_tok_id,
+                        side=exec_tok_side,
+                        mapping=m,
+                        game={"match_id": match_id},
+                        book_store=store,
+                        trader=trader,
+                    )
+                    pos, reason = trader.enter(
+                        signal=annotated_signal,
                         token_id=exec_tok_id,
                         side=exec_tok_side,
                         book_store=store,
