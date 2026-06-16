@@ -4,6 +4,13 @@ import csv
 import pytest
 
 from paper_trader import PaperTrader, Position
+import storage_v2
+
+@pytest.fixture(autouse=True)
+def mock_storage_path(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "test_state.sqlite")
+    monkeypatch.setattr(storage_v2, "DEFAULT_DB_PATH", db_path)
+    return db_path
 
 
 class Store:
@@ -219,62 +226,35 @@ def test_latency_edge_timeout_exits_after_average_edge_window(monkeypatch):
     assert closed[0].exit_reason == "latency_edge_timeout"
 
 
-def test_load_open_positions_replays_trade_csv(tmp_path):
-    path = tmp_path / "paper_trades.csv"
-    headers = [
-        "timestamp_utc", "action", "token_id", "match_id", "market_name", "side",
-        "entry_price", "shares", "cost_usd", "event_type", "lag", "expected_move",
-        "entry_game_time_sec", "exit_price", "proceeds_usd", "pnl_usd", "roi",
-        "hold_sec", "exit_game_time_sec", "exit_reason",
-    ]
-    rows = [
-        {
-            "timestamp_utc": "2026-05-14T18:52:51.576+00:00",
-            "action": "entry",
-            "token_id": "OPEN",
-            "match_id": "M1",
-            "market_name": "Test",
-            "side": "NO",
-            "entry_price": "0.39",
-            "shares": "142.05128205128204",
-            "cost_usd": "55.4",
-            "event_type": "POLL_COMEBACK_RECOVERY",
-            "lag": "0.1258",
-            "expected_move": "0.1308",
-            "entry_game_time_sec": "1447",
-        },
-        {
-            "timestamp_utc": "2026-05-14T18:53:01.000+00:00",
-            "action": "entry",
-            "token_id": "CLOSED",
-            "match_id": "M2",
-            "market_name": "Other",
-            "side": "YES",
-            "entry_price": "0.50",
-            "shares": "20",
-            "cost_usd": "10",
-            "event_type": "POLL_FIGHT_SWING",
-            "lag": "0.1",
-            "expected_move": "0.2",
-            "entry_game_time_sec": "1200",
-        },
-        {"timestamp_utc": "2026-05-14T18:53:05.000+00:00", "action": "exit", "token_id": "CLOSED"},
-    ]
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
-        writer.writeheader()
-        writer.writerows(rows)
+def test_load_open_positions_from_db(mock_storage_path):
+    storage = storage_v2.StorageV2(path=mock_storage_path)
+    # Insert a dummy row directly
+    pos = {
+        "token_id": "OPEN",
+        "match_id": "M1",
+        "side": "NO",
+        "market_name": "Test",
+        "entry_price": 0.39,
+        "shares": 142.05128205128204,
+        "cost_usd": 55.4,
+        "entry_game_time_sec": 1447,
+        "entry_time_ns": 0,
+        "event_type": "POLL_COMEBACK_RECOVERY",
+        "lag": 0.1258,
+        "expected_move": 0.1308
+    }
+    storage.save_position(pos, mode="paper")
 
     trader = PaperTrader()
-    restored = trader.load_open_positions(str(path))
+    restored = trader.load_open_positions()
 
     assert restored == 1
     assert set(trader.positions) == {"OPEN"}
-    pos = trader.positions["OPEN"]
-    assert pos.match_id == "M1"
-    assert pos.side == "NO"
-    assert pos.entry_price == pytest.approx(0.39)
-    assert pos.entry_game_time_sec == 1447
+    recovered_pos = trader.positions["OPEN"]
+    assert recovered_pos.match_id == "M1"
+    assert recovered_pos.side == "NO"
+    assert recovered_pos.entry_price == pytest.approx(0.39)
+    assert recovered_pos.entry_game_time_sec == 1447
     assert trader._match_open_usd["M1"] == pytest.approx(55.4)
 
 

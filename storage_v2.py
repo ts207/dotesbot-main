@@ -8,15 +8,15 @@ DEFAULT_DB_PATH = "logs/state_v2.sqlite"
 
 class StorageV2:
     """SQLite backend for bot state, replacing live_positions.json and paper_trades.csv."""
-    def __init__(self, path: str = DEFAULT_DB_PATH):
-        self.path = path
-        parent = os.path.dirname(path)
+    def __init__(self, path: str = None):
+        self.path = path or DEFAULT_DB_PATH
+        parent = os.path.dirname(self.path)
         if parent:
             os.makedirs(parent, exist_ok=True)
         self.init_db()
 
     def connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.path)
+        conn = sqlite3.connect(self.path, timeout=10.0)
         conn.row_factory = sqlite3.Row
         return conn
 

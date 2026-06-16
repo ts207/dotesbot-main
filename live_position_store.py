@@ -83,7 +83,11 @@ class LivePositionStore:
     def __init__(self, path: str = None, state_db_path: str | None = None):
         # path and state_db_path are kept for backwards compatibility in signatures,
         # but the backend is strictly storage_v2 now.
-        self.storage = StorageV2()
+        if path and "positions.json" in path:
+            db_path = path.replace(".json", ".sqlite")
+            self.storage = StorageV2(path=db_path)
+        else:
+            self.storage = StorageV2()
         self.positions: dict[str, LivePosition] = {}
         self.load()
 
