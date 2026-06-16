@@ -102,12 +102,7 @@ async def test_live_executor_real_mode_instantiates_client_lazily(monkeypatch):
     executor = LiveExecutor(client=None)
     assert executor.client is None
     
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RuntimeError, match="Missing POLY_PRIVATE_KEY/PK for live trading"):
         await executor.try_buy(
             signal=_signal(), mapping=_mapping(), game=_game(), book_store=FakeBookStore()
         )
-    message = str(excinfo.value)
-    assert (
-        "Missing POLY_PRIVATE_KEY/PK for live trading" in message
-        or "Live trading requires py-clob-client-v2" in message
-    )

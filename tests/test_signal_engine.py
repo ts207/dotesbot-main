@@ -10,11 +10,6 @@ TOKEN_YES = "YES_TOKEN"
 TOKEN_NO = "NO_TOKEN"
 
 
-@pytest.fixture(autouse=True)
-def disable_s3_gate_for_unit_guards(monkeypatch):
-    monkeypatch.setattr("signal_engine.S3_ENABLED", False)
-
-
 def _engine_with_price(token_id: str, price: float) -> EventSignalEngine:
     engine = EventSignalEngine()
     engine.record_price(token_id, price)
@@ -57,9 +52,10 @@ def _book(now_ns: int, ask: float = 0.46, bid: float = 0.44, size: float = 100) 
     }
 
 
-def _event(event_type="POLL_VALUE_DISAGREEMENT", direction="radiant", delta=1500):
-    # Use a current winner-set event by default so gate tests exercise their
-    # intended guard instead of the blacklist/event-inactive path.
+def _event(event_type="POLL_FIGHT_SWING", direction="radiant", delta=1500):
+    # 2026-05-28 — Phase R rolled back the FIGHT_SWING demotion. The 118-match
+    # data_v2 validation showed NW-only signals are -$0.10/trade at 46% win;
+    # the kill_diff requirement on POLL_FIGHT_SWING was doing useful filtering.
     return {
         "event_type": event_type,
         "direction": direction,
@@ -84,7 +80,7 @@ def test_fires_on_sufficient_lag_and_logs_cadence_metadata():
     now_ns = time.time_ns()
     engine = _engine_with_price(TOKEN_YES, 0.45)
     result = engine.evaluate_cluster(
-        [_event("POLL_VALUE_DISAGREEMENT", delta=1800)],
+        [_event("POLL_FIGHT_SWING", delta=1800)],
         _game(now_ns),
         _mapping(),
         _book(now_ns, ask=0.42, bid=0.40),
@@ -119,14 +115,18 @@ def test_tactical_events_are_primary_for_clusters():
     assert event_is_primary("POLL_BUYBACK_CAPITULATION") is True
     assert event_tier("POLL_FIGHT_SWING") == "B"
     assert event_is_primary("POLL_FIGHT_SWING") is True
-    assert event_tier("POLL_DECISIVE_STOMP") == "B"
-    assert event_is_primary("POLL_DECISIVE_STOMP") is True
+    # 2026-05-28 Phase A.1 — POLL_DECISIVE_STOMP demoted to research after
+    # deep_data_study showed n=67, 40% win, -0.79% mean return at +30s.
+    assert event_tier("POLL_DECISIVE_STOMP") == "research"
+    assert event_is_primary("POLL_DECISIVE_STOMP") is False
     # OBJECTIVE_CONVERSION_T2 was promoted to TIER_B (event_taxonomy.py): 80% end
     # win, 54s reprice lag, mid-game tower kill — now a primary tradeable event.
     assert event_tier("OBJECTIVE_CONVERSION_T2") == "B"
     assert event_is_primary("OBJECTIVE_CONVERSION_T2") is True
+    # POLL_KILL_BURST_CONFIRMED + POLL_COMEBACK_RECOVERY promoted 2026-05-26 from
+    # research → TIER_B after full-dataset audit showed +2.09c/70% and +2.25c/75%.
     assert event_tier("POLL_KILL_BURST_CONFIRMED") == "B"
-    assert event_tier("POLL_COMEBACK_RECOVERY") == "research"
+    assert event_tier("POLL_COMEBACK_RECOVERY") == "B"
     assert event_tier("LEAD_SWING_30S") == "retired"
     assert event_is_primary("LEAD_SWING_30S") is False
 
@@ -141,7 +141,7 @@ def test_skip_team_side_unknown():
     assert result["reason"] == "team_side_unknown"
 
 
-def test_skip_fill_price_too_low(monkeypatch):
+def test_skip_fill_price_too_low():
     # The underdog-reversal carve-out (signal_engine ~line 522) lets events in
     # UNDERDOG_REVERSAL_EVENTS (e.g. POLL_FIGHT_SWING) bypass the
     # fill_price_too_low guard when ask is in [MIN_ENTRY, MAX_ENTRY]. To
@@ -149,14 +149,8 @@ def test_skip_fill_price_too_low(monkeypatch):
     # (default 0.08).
     now_ns = time.time_ns()
     engine = _engine_with_price(TOKEN_YES, 0.05)
-    import signal_engine
-    monkeypatch.setattr(
-        signal_engine,
-        "BLACKLISTED_EVENTS",
-        signal_engine.BLACKLISTED_EVENTS - {"OBJECTIVE_CONVERSION_T3"},
-    )
     result = engine.evaluate_cluster(
-        [_event("OBJECTIVE_CONVERSION_T3")],
+        [_event()],
         _game(now_ns),
         _mapping(),
         _book(now_ns, ask=0.05, bid=0.04),
@@ -251,9 +245,7 @@ def test_cooldown_blocks_second_signal():
     assert second["reason"] == "cooldown"
 
 
-def test_source_and_book_freshness_guards(monkeypatch):
-    monkeypatch.setattr("config.ENABLE_REAL_LIVE_TRADING", True)
-    monkeypatch.setattr("signal_engine.MAX_BOOK_AGE_MS", 1_000)
+def test_source_and_book_freshness_guards():
     now_ns = time.time_ns()
     engine = _engine_with_price(TOKEN_YES, 0.45)
     game = _game(now_ns)
@@ -312,15 +304,9 @@ def test_hybrid_fair_override_drives_edge_gate():
     assert result["fair_price"] >= 0.62
     assert result["fair_source"] == "hybrid"
 
-def test_structure_confidence_lowers_impact(monkeypatch):
+def test_structure_confidence_lowers_impact():
     now_ns = time.time_ns()
     engine = _engine_with_price(TOKEN_YES, 0.45)
-    import signal_engine
-    monkeypatch.setattr(
-        signal_engine,
-        "BLACKLISTED_EVENTS",
-        signal_engine.BLACKLISTED_EVENTS - {"OBJECTIVE_CONVERSION_T3"},
-    )
     
     event_high = _event("OBJECTIVE_CONVERSION_T3", delta=1)
     event_high["structure_confidence"] = 1.0
@@ -347,6 +333,7 @@ def test_structure_confidence_lowers_impact(monkeypatch):
     )
     
     assert res_low["expected_move"] < res_high["expected_move"]
-    # The low-confidence event has lower impact. It may skip before the final
-    # signal row fields are assembled, so the final penalty field is not always
-    # present on this reject path.
+    # Penalty should be logged
+    assert res_low["structure_uncertainty_penalty"] > res_high["structure_uncertainty_penalty"]
+    # Required edge should be higher
+    assert res_low["required_edge"] > res_high["required_edge"]

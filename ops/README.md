@@ -18,10 +18,9 @@ systemctl status dota-poly-live.service
 journalctl -u dota-poly-live.service -f
 ```
 
-The unit starts `supervisor.py`, which owns the bot, binder, settlement shadow,
-and monitor child processes. On every main bot process start, `main.py` cancels
-stale CLOB orders and runs startup reconciliation before normal live trading
-resumes.
+The unit uses `Restart=on-failure` and `RestartSec=10`. On every process start,
+`main.py` cancels stale CLOB orders and runs startup reconciliation before
+normal live trading resumes.
 
 Python now writes rotating application logs to `logs/bot.log`; do not launch
 the service with shell redirection to that file.
@@ -50,8 +49,8 @@ python3 scripts/telegram_ops.py daily --hours 24
 Example cron entries:
 
 ```cron
-0 * * * * cd /home/tstuv/dota/dotesbot-main/dotesbot-main && DREAMLEAGUE_ACTIVE=true /usr/bin/python3 scripts/telegram_ops.py liveness
-0 9 * * * cd /home/tstuv/dota/dotesbot-main/dotesbot-main && /usr/bin/python3 scripts/telegram_ops.py daily --hours 24
+0 * * * * cd /home/tstuv/dota-poly-signal-pnl-asd && DREAMLEAGUE_ACTIVE=true /usr/bin/python3 scripts/telegram_ops.py liveness
+0 9 * * * cd /home/tstuv/dota-poly-signal-pnl-asd && /usr/bin/python3 scripts/telegram_ops.py daily --hours 24
 ```
 
 ## Disk Guard

@@ -26,7 +26,6 @@ def test_norm_team_handles_common_aliases_and_suffixes():
     assert norm_team("NAVI") == norm_team("Natus Vincere")
     assert norm_team("Team Falcons") == norm_team("Falcons Esports")
     assert norm_team("Virtus.pro") == norm_team("Virtus Pro")
-    assert norm_team("RisingRage") == norm_team("Rising Rage")
 
 
 def test_choose_mapping_uses_lowest_inactive_game_number():

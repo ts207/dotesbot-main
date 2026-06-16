@@ -16,11 +16,7 @@ from datetime import datetime, timezone
 
 import aiohttp
 import cockpit
-try:
-    from py_clob_client_v2.clob_types import AssetType, BalanceAllowanceParams
-except ModuleNotFoundError:
-    AssetType = None
-    BalanceAllowanceParams = None
+from py_clob_client_v2.clob_types import AssetType, BalanceAllowanceParams
 
 HEARTBEAT_MAX_S = 240          # bot considered hung past this
 ERR_RATE_WARN = 0.5            # >50% of recent order attempts erroring
@@ -43,48 +39,40 @@ def _proc_alive(pat):
 
 async def run(halt_on_critical=False):
     alerts = []  # (level, msg)  level: WARN|CRIT
+    c = cockpit.make_client()
 
     # --- 1. NAV snapshot ---
-    real_live = os.getenv("ENABLE_REAL_LIVE_TRADING", "false").lower() in {"1", "true", "yes"}
-    live_nav_available = real_live and AssetType is not None and BalanceAllowanceParams is not None
-    cash = 0.0
+    cash = float((c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)).get("balance") or 0)) / 1e6
     token_val = 0.0
     over = {}   # match_id -> exposure
     stuck = []  # settled-but-held
-    position_path = "logs/live_positions.json" if real_live else "logs/paper_positions_v2.json"
     try:
-        raw_positions = json.load(open(position_path))
-        positions = raw_positions.get("positions", raw_positions if isinstance(raw_positions, list) else [])
+        positions = json.load(open("logs/live_positions.json")).get("positions", [])
     except Exception:
         positions = []
     openp = [p for p in positions if p.get("state") == "OPEN"]
-    if live_nav_available:
-        c = cockpit.make_client()
-        cash = float((c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)).get("balance") or 0)) / 1e6
-        async with aiohttp.ClientSession() as s:
-            seen = set()
-            for p in openp:
-                tok = str(p.get("token_id") or "")
-                if not tok or tok in seen:
-                    continue
-                seen.add(tok)
-                try:
-                    sh = cockpit.get_shares(c, tok)
-                except Exception:
-                    sh = 0.0
-                if sh < 0.1:
-                    continue
-                b = await cockpit.fetch_depth(s, tok)
-                bid = (b.get("best_bid") if b else None)
-                mid = str(p.get("match_id") or "")
-                if bid is None:
-                    stuck.append((p.get("market_name", "")[:36], sh))   # no book = settled/illiquid
-                    continue
-                v = sh * float(bid)
-                token_val += v
-                over[mid] = over.get(mid, 0.0) + v
-    elif real_live:
-        alerts.append(("WARN", "live NAV unavailable; install requirements-live.txt for wallet monitoring"))
+    async with aiohttp.ClientSession() as s:
+        seen = set()
+        for p in openp:
+            tok = str(p.get("token_id") or "")
+            if not tok or tok in seen:
+                continue
+            seen.add(tok)
+            try:
+                sh = cockpit.get_shares(c, tok)
+            except Exception:
+                sh = 0.0
+            if sh < 0.1:
+                continue
+            b = await cockpit.fetch_depth(s, tok)
+            bid = (b.get("best_bid") if b else None)
+            mid = str(p.get("match_id") or "")
+            if bid is None:
+                stuck.append((p.get("market_name", "")[:36], sh))   # no book = settled/illiquid
+                continue
+            v = sh * float(bid)
+            token_val += v
+            over[mid] = over.get(mid, 0.0) + v
     nav = cash + token_val
 
     # append equity curve
@@ -108,7 +96,7 @@ async def run(halt_on_critical=False):
     hb = _heartbeat_age()
     if hb is None or hb > HEARTBEAT_MAX_S:
         alerts.append(("CRIT", f"bot heartbeat {hb if hb is None else round(hb)}s (>{HEARTBEAT_MAX_S}s or missing) — hung/dead"))
-    if not _proc_alive("main.py"):
+    if not _proc_alive("python3 main.py"):
         alerts.append(("CRIT", "main.py process not running"))
     if not _proc_alive("supervisor.py"):
         alerts.append(("CRIT", "supervisor not running — no auto-restart"))
@@ -167,7 +155,22 @@ async def run(halt_on_critical=False):
             f.write(f"   !! {lv}: {m}\n")
 
     if crit and halt_on_critical:
-        print("   >>> CRITICAL + --halt-on-critical: would set ENABLE_REAL_LIVE_TRADING=false (manual confirm recommended)")
+        print("   >>> CRITICAL + --halt-on-critical: setting ENABLE_REAL_LIVE_TRADING=false")
+        try:
+            with open(".env", "r") as f:
+                lines = f.readlines()
+            found = False
+            with open(".env", "w") as f:
+                for line in lines:
+                    if line.startswith("ENABLE_REAL_LIVE_TRADING="):
+                        f.write("ENABLE_REAL_LIVE_TRADING=false\n")
+                        found = True
+                    else:
+                        f.write(line)
+                if not found:
+                    f.write("\nENABLE_REAL_LIVE_TRADING=false\n")
+        except Exception as e:
+            print(f"   !! Failed to write .env: {e}")
 
     return 2 if crit else (1 if warn else 0)
 

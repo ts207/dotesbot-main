@@ -13,9 +13,9 @@ from steam_client import fetch_all_live_games
 from poly_ws import listen_books, BookStore
 from signal_engine import EventSignalEngine, apply_probability_move
 from paper_trader import PaperTrader
-from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, ShadowTradeLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger
+from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, ShadowTradeLogger, BookMoveLogger, ValueAttemptLogger
 from value_engine import ValueEngine, ValueSignal, VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
-from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED, DSWING_SHADOW_ENABLED
+from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED
 from config import EVENT_DETECTORS_ENABLED
 from book_move_detector import BookMoveDetector
 from mapping import load_valid_mappings
@@ -26,7 +26,6 @@ from live_reconciliation import reconcile_live_positions
 from live_exit_engine import decide_live_exit
 from disk_guard import DiskGuard
 from market_scope import is_active_strategy_mapping, is_game3_match_proxy
-from shadow_trader import build_shadow_trade, log_shadow_markouts
 from mapping_validator import validate_mapping_identity
 from hybrid_nowcast import compute_hybrid_nowcast
 from realtime_enrichment import maybe_enrich_realtime
@@ -1547,30 +1546,6 @@ async def steam_loop(
                                 # Shadow trade logging for MAP_WINNER, BO1 MATCH_WINNER (the
                                 # whole series IS one game), and Game3 MATCH_WINNER proxies.
                                 # Without the BO1 case shadow_trades.csv stayed empty for all
-                                # BLAST Slam matches (every one is a BO1) — 2026-05-26 fix.
-                                if tok_id and shadow_logger and mapping.get("market_type") in {"MAP_WINNER", "MATCH_WINNER"}:
-                                    _is_bo1_match_winner = (
-                                        mapping.get("market_type") == "MATCH_WINNER"
-                                        and str(mapping.get("series_type") or "") == "1"
-                                    )
-                                    if (
-                                        mapping.get("market_type") == "MAP_WINNER"
-                                        or is_game3_match_proxy(mapping)
-                                        or _is_bo1_match_winner
-                                    ):
-                                        shadow = build_shadow_trade(
-                                            signal=signal,
-                                            mapping=mapping,
-                                            game=game,
-                                            token_id=tok_id,
-                                            side=tok_side,
-                                        )
-                                        asyncio.create_task(log_shadow_markouts(
-                                            shadow,
-                                            book_store=book_store,
-                                            logger=shadow_logger,
-                                        ))
-
                                 if ENABLE_EVENT_ENTRY_STRATEGY and signal["decision"] == "paper_buy_yes":
                                     candidates.append({
                                         "signal": signal,

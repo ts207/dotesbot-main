@@ -19,6 +19,7 @@ scalping (that was tested and is dead: price LEADS the Steam feed).
   $115.98 — **the loss was MANUAL cockpit trading, not the bot** (the bot went 5/5
   on its own settled trades). See §8.
 - Strategies built + validated; **value bot live-ready, decisive-swing armed-but-off**.
+- **P0 Safety Patch Complete**: The bot has been fully fortified. State writes are atomic, supervisor process management is robust, manual cockpit trades are routed via IPC through the LiveExecutor to enforce risk limits, catastrophe-salvage has strict net-worth validation, and startup reconciliation blocks on fetch failures.
 - Activation needs two things YOU own: **fund (~$200-300) + commit to bot-only.**
 
 ## 2. How to run it
@@ -92,7 +93,7 @@ matches** (`winprob_full_v2`, AUC 0.86, calibrated on 3268 real matches).
 fair+edge**, account panel (cash + positions + P&L), an **orientation-flip warning**,
 and MAP/SERIES/decider labels. `d` toggles decider-mode. Query is word-based.
 ⚠️ **Manual cockpit trading drained the account** — every position decision should
-use the Dota match state, not vibes.
+use the Dota match state, not vibes. **Fix applied:** Cockpit live trades are now routed via IPC into `live_executor.py` and are subject to the same strict per-match limits, budget caps, and orientation checks as the bot's autonomous orders.
 
 ## 7. The operating model (bot / Codex / user)
 - **Bot = hands (reflex timescale):** entries, sizing, hard caps, catastrophe exit.

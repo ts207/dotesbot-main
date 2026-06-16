@@ -55,5 +55,5 @@ def save_live_state(
         "submitted_match_usd": submitted_match_usd or {},
         "updated_at_ns": time.time_ns()
     }
-    with open(LIVE_STATE_PATH, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    from atomic_writes import atomic_json_write
+    atomic_json_write(LIVE_STATE_PATH, state, indent=2)

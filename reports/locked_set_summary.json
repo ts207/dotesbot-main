@@ -1,7 +1,0 @@
-{
-  "locked_execution_audit_expected": 103,
-  "locked_execution_audit_materialized": 91,
-  "locked_missing_or_unresolved": 12,
-  "locked_reconciliation_duplicate_removed": 12,
-  "locked_reconciliation_materialized": 91
-}

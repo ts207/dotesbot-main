@@ -261,9 +261,20 @@ def bind_event_to_steam(market: dict, event: dict, steam_match: dict,
     _yt, _nt = norm_team(outcomes[0]), norm_team(outcomes[1])
     for x in markets_yaml.get("markets", []):
         xmid = str(x.get("dota_match_id") or "")
-        # (1) this MARKET (condition) is already bound to a real game -> never rebind it.
-        if x.get("condition_id") == market["conditionId"] and xmid.isdigit():
-            return False
+        # (1) this MARKET (condition) is already bound to a real game or is quarantined -> never rebind it.
+        if x.get("condition_id") == market["conditionId"]:
+            if xmid.isdigit():
+                return False
+            if x.get("mapping_state") == "quarantined":
+                q_until = x.get("quarantined_until")
+                if not q_until:
+                    return False
+                try:
+                    dt = datetime.fromisoformat(str(q_until).replace("Z", "+00:00"))
+                    if dt > datetime.now(timezone.utc):
+                        return False
+                except Exception:
+                    return False
         # (2) this live MATCH is already bound to another game of the SAME series ->
         # don't let one live game land on multiple game markets (the Grind-G2 duplicate).
         if (xmid == steam_mid and x.get("market_type") == "MAP_WINNER"
@@ -393,8 +404,8 @@ def run_once(verbose: bool = True) -> int:
                 updated += 1
 
     if added or updated:
-        with open("markets.yaml", "w") as fp:
-            yaml.safe_dump(md, fp, sort_keys=False, default_flow_style=False)
+        from atomic_writes import atomic_yaml_write
+        atomic_yaml_write("markets.yaml", md)
     if verbose:
         print(f"  Added {added} new bindings, refreshed {updated} series states.", flush=True)
     return added

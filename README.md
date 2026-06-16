@@ -58,12 +58,8 @@ Only use `MAP_WINNER` until you add a proper series model. Do not treat current-
 ## Run
 
 ```bash
-python3 supervisor.py
+python main.py
 ```
-
-`supervisor.py` is the production entrypoint. It starts and watches the main bot,
-market binder, settlement shadow, and monitor processes. Use `python3 main.py`
-only for direct debugging.
 
 The bot now writes six main logs after you run the analysis scripts:
 
@@ -190,7 +186,7 @@ DEFAULT_MAX_FILL_PRICE=0.80 \
 PRICE_LOOKBACK_SEC=10 \
 MAX_BOOK_AGE_MS=1000 \
 MAX_STEAM_AGE_MS=1500 \
-python3 supervisor.py
+python main.py
 ```
 
 Keep `ENABLE_REAL_LIVE_TRADING=false` for the first live-path rehearsal. This

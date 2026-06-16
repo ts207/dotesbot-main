@@ -30,7 +30,7 @@ async def test_match_winner_sidecar_integration(tmp_path):
     rescue_logger = MagicMock(spec=BookRefreshRescueLogger)
     
     match_winner_logger = MatchWinnerSignalLogger(log_dir=str(tmp_path))
-    match_winner_logger.log_match_signal = MagicMock()
+    match_winner_logger.append = MagicMock()
     
     # Mock store and engine
     book_store = BookStore()
@@ -56,7 +56,6 @@ async def test_match_winner_sidecar_integration(tmp_path):
             "no_token_id": "match_no",
             "yes_team": "Team A",
             "no_team": "Team B",
-            "confidence": 1.0,
         },
         {
             "dota_match_id": "123",
@@ -66,7 +65,6 @@ async def test_match_winner_sidecar_integration(tmp_path):
             "no_token_id": "map_no",
             "yes_team": "Team A",
             "no_team": "Team B",
-            "confidence": 1.0,
         }
     ]
     
@@ -87,9 +85,6 @@ async def test_match_winner_sidecar_integration(tmp_path):
                 "received_at_ns": time.time_ns(),
             }
         ]
-
-    async def mock_discover(*args, **kwargs):
-        return None
         
     # Mock event detector to force an event
     event_detector = MagicMock(spec=EventDetector)
@@ -120,10 +115,7 @@ async def test_match_winner_sidecar_integration(tmp_path):
     signal_markout_logger = MagicMock(spec=SignalMarkoutLogger)
     
     with patch('main.ENABLE_MATCH_WINNER_RESEARCH', True), \
-         patch('main.ENABLE_MATCH_WINNER_TRADING', True), \
-         patch('main.EVENT_DETECTORS_ENABLED', True), \
          patch('signal_engine.ENABLE_MATCH_WINNER_TRADING', True), \
-         patch('signal_engine.S3_ENABLED', False), \
          patch('signal_engine.MAX_BOOK_AGE_MS', 99999999):
 
         # Mock asyncio.sleep to break the loop after first iteration
@@ -132,7 +124,6 @@ async def test_match_winner_sidecar_integration(tmp_path):
 
         with patch('main.fetch_all_live_games', new=mock_fetch), \
              patch('main.sync_markets_to_games', return_value=[]), \
-             patch('main.discover_markets_main', new=mock_discover), \
              patch('main.load_valid_mappings', return_value=(mappings, [])), \
              patch('asyncio.sleep', new=mock_sleep):
             try:
@@ -160,16 +151,16 @@ async def test_match_winner_sidecar_integration(tmp_path):
                 pass
             
     # Check that match_winner_logger.append was called
-    assert match_winner_logger.log_match_signal.call_count >= 1
+    assert match_winner_logger.append.call_count >= 1
     
     # Check arguments
     found = False
-    for call in match_winner_logger.log_match_signal.call_args_list:
+    for call in match_winner_logger.append.call_args_list:
         args = call[0][0]
         if args.get("decision") == "skip" and args.get("skip_reason") == "research_mode_match_winner":
             found = True
             assert args["match_id"] == "123"
             assert args["event_type"] == "POLL_VALUE_DISAGREEMENT"
-            assert "match_fair_after" in args
+            assert args.get("match_fair_after") is not None, f"Args: {args}"
             assert args["map_bid"] == 0.40 or args["map_bid"] == 0.50
     assert found

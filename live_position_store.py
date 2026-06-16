@@ -43,6 +43,10 @@ class LivePosition:
     # which Dota side we backed ("radiant"/"dire") — lets the exit logic confirm a
     # catastrophe cut against the LIVE net-worth state, not just the token price.
     backed_direction: str | None = None
+    # 2026-06-16 — PnL separation tags
+    strategy_kind: str | None = None
+    entry_engine: str | None = None
+    exit_engine: str | None = None
 
 
 class LivePositionStore:
@@ -64,7 +68,14 @@ class LivePositionStore:
                 row["position_id"]: LivePosition(**row)
                 for row in data.get("positions", [])
             }
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            import logging
+            import shutil
+            logging.getLogger(__name__).critical(f"FATAL: {self.path} is corrupt ({e}). Backing up and resetting positions to empty!")
+            try:
+                shutil.copy2(self.path, f"{self.path}.corrupt.{int(time.time())}")
+            except OSError:
+                pass
             self.positions = {}
 
     def save(self) -> None:
@@ -76,8 +87,8 @@ class LivePositionStore:
             "updated_at_ns": time.time_ns(),
             "positions": [asdict(p) for p in self.positions.values()],
         }
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, sort_keys=True)
+        from atomic_writes import atomic_json_write
+        atomic_json_write(self.path, data, indent=2)
 
     def add(self, pos: LivePosition) -> None:
         self.positions[pos.position_id] = pos

@@ -102,7 +102,7 @@ async def test_reconcile_adjusts_existing_positive_balance(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_reconcile_does_not_scan_every_mapping_token(tmp_path):
+async def test_reconcile_recovers_missing_mapped_balance(tmp_path):
     store = LivePositionStore(str(tmp_path / "positions.json"))
 
     result = await reconcile_live_positions(
@@ -112,10 +112,12 @@ async def test_reconcile_does_not_scan_every_mapping_token(tmp_path):
     )
 
     recovered = store.open_positions()
-    assert result.checked_tokens == 0
-    assert result.reopened_missing == 0
-    assert result.active_after == 0
-    assert recovered == []
+    assert result.reopened_missing == 1
+    assert result.active_after == 1
+    assert len(recovered) == 1
+    assert recovered[0].token_id == "TOK2"
+    assert recovered[0].event_type == "STARTUP_RECONCILE"
+    assert recovered[0].shares == 3.5
 
 
 def test_store_summarize_and_active_count(tmp_path):

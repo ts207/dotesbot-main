@@ -92,11 +92,15 @@ async def reconcile_live_positions(
     for token_id, shares in found_balances.items():
         existing = active_by_token.get(token_id)
         if existing is not None:
+            # 2026-06-16 — Unconditionally clear stale pending order IDs. The background
+            # tasks that were polling them died with the previous process.
+            if existing.pending_exit_order_id or existing.pending_entry_order_id:
+                existing.pending_exit_order_id = None
+                existing.pending_entry_order_id = None
+                
             if abs((existing.shares or 0.0) - shares) > 1e-6 or existing.state != "OPEN":
                 existing.shares = shares
                 existing.state = "OPEN"
-                existing.pending_exit_order_id = None
-                existing.pending_entry_order_id = None
                 result.adjusted_existing += 1
                 if live_exit_logger:
                     live_exit_logger.log_lifecycle(

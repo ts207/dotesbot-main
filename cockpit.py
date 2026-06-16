@@ -29,7 +29,10 @@ are SIMULATED (printed, not sent). Otherwise REAL CLOB orders are placed.
 from __future__ import annotations
 
 import asyncio
-import curses
+try:
+    import curses
+except ImportError:
+    curses = None  # UI will fail, but API wrapper functions can still be imported
 import os
 import sys
 import threading
@@ -423,15 +426,16 @@ def worker(match_id: str, market: dict, yes_token: str, no_token: str, tick, neg
                                 with LOCK:
                                     STATE[_ckey] += amt
                             else:
-                                try:
-                                    resp = await asyncio.to_thread(place_order, client, tok, amt, cap, tick, neg_risk)
-                                    st = resp.get("status") or resp.get("errorMsg") or "?"
-                                    logmsg(f"{line} -> {st}")
-                                    record_order("buy", side, tok, amt, cap, resp)
-                                    with LOCK:
-                                        STATE[_ckey] += amt   # session cost basis
-                                except Exception as e:
-                                    logmsg(f"BUY ERROR: {str(e)[:60]}")
+                                import manual_orders
+                                manual_orders.enqueue({
+                                    "action": "buy",
+                                    "match_id": str(match_id),
+                                    "token_id": str(tok),
+                                    "side": "yes" if side == "yes" else "no",
+                                    "size_usd": float(amt),
+                                    "price_cap": float(cap)
+                                })
+                                logmsg(f"{line} -> ENQUEUED TO BOT")
                     else:  # sell — depth-aware dump of the whole position
                         shares = (await asyncio.to_thread(get_shares, client, tok)) if REAL else 0.0
                         shares = int(shares * 100) / 100.0  # floor 2dp, never oversell

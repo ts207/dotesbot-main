@@ -60,7 +60,10 @@ _ALLOWED_ORDER_TYPES = {"FAK", "FOK", "GTC"}
 
 _USDC_BALANCE_PATH = os.path.join("logs", "usdc_balance.json")
 
-VALUE_REENTRY_COOLDOWN_SEC = float(os.getenv("VALUE_REENTRY_COOLDOWN_SEC", "60"))
+# Continuous-engine entry gates (not in the scorer because they depend on the
+# live book at submit time, not on the snapshot pair).
+CONTINUOUS_MAX_SPREAD = float(os.getenv("CONTINUOUS_MAX_SPREAD", "0.03"))
+CONTINUOUS_REENTRY_COOLDOWN_SEC = float(os.getenv("CONTINUOUS_REENTRY_COOLDOWN_SEC", "60"))
 
 # B2: edge-weighted sizing cap. order_usd is multiplied by min(EDGE_SIZE_MAX_MULT,
 # edge / MIN_EXECUTABLE_EDGE), floored at 1.0. Set to 1.0 to disable scaling.
@@ -79,11 +82,8 @@ def _persist_usdc_balance_snapshot(balance: float, at_ns: int) -> None:
     dashboard runs separately, so we mirror the value to a tiny JSON file.
     """
     try:
-        parent = os.path.dirname(_USDC_BALANCE_PATH)
-        if parent:
-            os.makedirs(parent, exist_ok=True)
-        with open(_USDC_BALANCE_PATH, "w", encoding="utf-8") as f:
-            json.dump({"usdc_balance": float(balance), "checked_at_ns": int(at_ns)}, f)
+        from atomic_writes import atomic_json_write
+        atomic_json_write(_USDC_BALANCE_PATH, {"usdc_balance": float(balance), "checked_at_ns": int(at_ns)})
     except OSError as exc:
         logger.warning("[balance_gate] persist failed: %s", exc)
 
@@ -262,11 +262,14 @@ class LiveOrderAttempt:
     submit_start_ns: int | None = None
     response_received_ns: int | None = None
     submit_latency_ms: float | None = None
-    # trader_kind distinguishes the retained paper/live entry paths.
-    # "event" remains for historical logs; current paper entries use "value" or "dswing".
+    # 2026-05-29 Phase CS-3 — trader_kind distinguishes the three strategy paths.
+    # "event" = legacy event-detector path (default, kept for back-compat).
+    # "continuous" = continuous_engine.
+    # "scalp"  = scalp_executor.
+    # "arb"    = arb scanner (Phase AR).
     trader_kind: str = "event"
-    # Value and DSWING hold to settlement; event path leaves this None and falls
-    # back to the legacy exit-engine logic for historical positions.
+    # Continuous (and arb) positions carry their own fixed-horizon exit timer.
+    # Event path leaves this None and falls back to the legacy exit-engine logic.
     exit_horizon_sec: int | None = None
     signal_id: str | None = None
 
@@ -677,8 +680,9 @@ class LiveExecutor:
             self._submitted_match_sides = state.get("submitted_match_sides", {})
             self._submitted_match_usd = state.get("submitted_match_usd", {})
 
-        # In-memory only — per-match/direction re-entry cooldown for value-style entries.
-        self._value_last_entry_ns: dict[str, int] = {}
+        # In-memory only — per-direction re-entry cooldown for continuous engine.
+        # Key: "<match_id>|<direction>". Value: last_entry_time_ns.
+        self._continuous_last_entry_ns: dict[str, int] = {}
 
         # USDC balance gate cache. Refreshed every BALANCE_CACHE_TTL_SEC; stale
         # values up to BALANCE_CACHE_STALE_MAX_SEC are accepted if the fresh
@@ -714,21 +718,40 @@ class LiveExecutor:
             return self._balance_cache_usd
         if self.client is None:
             self.client = LiveCLOBClient()
-        try:
-            balance = await self.client.get_usdc_balance()
-        except Exception as exc:
+            
+        # 2026-06-16 — REQUIRE STABILITY. The balance API lies. It returns
+        # transient values ($102, $5.45) when the real balance is different.
+        # Always read cash 3-6x and require stability before believing it.
+        balances = []
+        last_exc = None
+        for _ in range(4):
+            try:
+                b = await self.client.get_usdc_balance()
+                if b is not None:
+                    balances.append(b)
+            except Exception as exc:
+                last_exc = exc
+            if len(balances) >= 3 and max(balances[-3:]) - min(balances[-3:]) < 0.01:
+                break
+            await asyncio.sleep(0.5)
+            
+        balance = None
+        if len(balances) >= 3 and max(balances[-3:]) - min(balances[-3:]) < 0.01:
+            balance = balances[-1]
+            
+        if balance is None:
             if age_sec <= self.BALANCE_CACHE_STALE_MAX_SEC and self._balance_cache_usd is not None:
                 logger.warning(
-                    "[balance_gate] fetch failed: %s — using stale cache (age=%.1fs, bal=%.4f)",
-                    exc, age_sec, self._balance_cache_usd,
+                    "[balance_gate] fetch failed or unstable (reads=%s): %s — using stale cache (age=%.1fs, bal=%.4f)",
+                    balances, last_exc, age_sec, self._balance_cache_usd,
                 )
                 return self._balance_cache_usd
-            logger.warning("[balance_gate] fetch failed: %s — no usable cache", exc)
+            logger.warning("[balance_gate] fetch failed or unstable (reads=%s): %s — no usable cache", balances, last_exc)
             return None
-        if balance is not None:
-            self._balance_cache_usd = balance
-            self._balance_cache_at_ns = now
-            _persist_usdc_balance_snapshot(balance, now)
+            
+        self._balance_cache_usd = balance
+        self._balance_cache_at_ns = now
+        _persist_usdc_balance_snapshot(balance, now)
         return balance
 
     def set_session(self, session: aiohttp.ClientSession) -> None:
@@ -749,14 +772,15 @@ class LiveExecutor:
         self.daily_realized_pnl_usd += pnl_usd
         self._save()
 
-    def decrement_open_positions(self, match_id: str | None = None):
+    def decrement_open_positions(self, match_id: str | None = None, full_exit: bool = True):
         if self.open_positions > 0:
             self.open_positions -= 1
             self._save()
-        if match_id and match_id in self._submitted_match_sides:
-            del self._submitted_match_sides[match_id]
-        if match_id and match_id in self._submitted_match_usd:
-            del self._submitted_match_usd[match_id]
+        if full_exit and match_id:
+            if match_id in self._submitted_match_sides:
+                del self._submitted_match_sides[match_id]
+            if match_id in self._submitted_match_usd:
+                del self._submitted_match_usd[match_id]
 
     def release_submitted_budget(self, order_usd: float, match_id: str | None = None) -> None:
         """Refund a submitted-but-unfilled order back to the available budget."""
@@ -1057,7 +1081,13 @@ class LiveExecutor:
         # let the would_be_live_skipped branch below produce the attempt.
         if ENABLE_REAL_LIVE_TRADING:
             cached_balance = await self._get_cached_usdc_balance()
-            if cached_balance is not None and cached_balance + 1e-6 < order_usd:
+            if cached_balance is None:
+                return self._reject(
+                    signal, mapping, game,
+                    "balance_fetch_failed_or_unstable",
+                    price_cap=price_cap,
+                )
+            if cached_balance + 1e-6 < order_usd:
                 return self._reject(
                     signal, mapping, game,
                     f"insufficient_balance_cached:bal={cached_balance:.4f}_need={order_usd:.4f}",
@@ -1185,11 +1215,193 @@ class LiveExecutor:
 
         return attempt
 
+    async def try_buy_continuous(
+        self,
+        *,
+        signal: Any,            # continuous_scorer.ContinuousSignal
+        mapping: dict,
+        game: dict,
+        book_store,
+    ) -> LiveOrderAttempt:
+        """Submit a FAK buy from a ContinuousSignal.
+
+        Deliberately bypasses the event-detector concepts (event_type,
+        cluster_event_types, event_quality, etc.). The continuous strategy
+        carries its own gates upstream; here we just check budget,
+        compute price_cap, and submit.
+
+        Position metadata `exit_horizon_sec` flows through to the exit
+        engine via the persisted live_position record.
+        """
+        signal_match_id = str(game.get("match_id") or game.get("lobby_id") or "")
+        # Pick the YES or NO token depending on which side the signal favors.
+        token_id = mapping.get("yes_token_id") if signal.side == "YES" else mapping.get("no_token_id")
+        if not token_id:
+            return LiveOrderAttempt(
+                event_type="CONTINUOUS",
+                event_direction="radiant" if signal.direction > 0 else "dire",
+                token_id="",
+                side=signal.side,
+                fair_price=signal.ref_mid_blended,
+                best_ask=None, price_cap=None, edge=None, lag=None, spread=None,
+                book_age_ms=None, steam_age_ms=None,
+                order_type="FAK",
+                submitted_size_usd=0.0,
+                order_status="rejected_precheck",
+                reason_if_rejected="missing_token_id",
+                match_id=signal_match_id,
+                game_time_sec=game.get("game_time_sec"),
+                created_at_ns=time.time_ns(),
+                trader_kind="continuous",
+                exit_horizon_sec=signal.exit_horizon_sec,
+                signal_id=signal.signal_id,
+            )
+
+        # --- budget gates ---
+        value_live_max_usd = float(os.getenv("VALUE_LIVE_MAX_USD", "20.0"))
+        size_usd = min(float(signal.sized_usd), MAX_TRADE_USD, value_live_max_usd)
+        if not ALLOW_EVENT_TRADES:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd, "event_trades_disabled")
+        if self.total_submitted_usd + size_usd > MAX_TOTAL_LIVE_USD:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd, "max_total_live_usd_reached")
+        if self.open_positions >= MAX_OPEN_POSITIONS:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd, "max_open_positions_reached")
+        if self.daily_realized_pnl_usd <= -MAX_DAILY_DRAWDOWN_USD:
+            return self._reject_continuous(
+                signal, mapping, game, token_id, size_usd,
+                f"daily_drawdown_circuit_breaker:{self.daily_realized_pnl_usd:.2f}",
+            )
+        disk_reason = self.disk_guard.reject_reason()
+        if disk_reason:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd, disk_reason)
+
+        # --- book lookup ---
+        book = book_store.get(token_id) if book_store is not None else None
+        ask = _to_float(book.get("best_ask")) if book else None
+        bid = _to_float(book.get("best_bid")) if book else None
+        if ask is None:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd, "missing_ask")
+
+        # Spread gate: if (ask - bid) > CONTINUOUS_MAX_SPREAD, the position is
+        # condemned at entry — adverse_stop fires at entry-4c. Reject before submit.
+        if bid is not None and (ask - bid) > CONTINUOUS_MAX_SPREAD:
+            return self._reject_continuous(signal, mapping, game, token_id, size_usd,
+                f"spread_too_wide:spread={ask-bid:.3f}_max={CONTINUOUS_MAX_SPREAD:.3f}")
+
+        # Re-entry cooldown: block the same (match, direction) for N seconds.
+        # Prevents the engine from immediately re-entering after an adverse_stop.
+        if CONTINUOUS_REENTRY_COOLDOWN_SEC > 0:
+            cd_key = f"{signal_match_id}|{signal.direction}"
+            last_entry_ns = self._continuous_last_entry_ns.get(cd_key, 0)
+            age = (time.time_ns() - last_entry_ns) / 1e9
+            if last_entry_ns > 0 and age < CONTINUOUS_REENTRY_COOLDOWN_SEC:
+                return self._reject_continuous(signal, mapping, game, token_id, size_usd,
+                    f"continuous_cooldown:age={age:.1f}s_min={CONTINUOUS_REENTRY_COOLDOWN_SEC:.0f}s")
+
+        tick_size = str(mapping.get("tick_size") or LIVE_TICK_SIZE)
+        try:
+            _tick = float(tick_size)
+        except ValueError:
+            _tick = 0.01
+        # FAK price cap: 2 ticks above current ask. Accepts mild slippage.
+        price_cap = round(ask + 2 * _tick, 4)
+        neg_risk = bool(mapping.get("neg_risk", False))
+
+        spread = (ask - bid) if (ask is not None and bid is not None) else None
+
+        attempt = LiveOrderAttempt(
+            event_type="CONTINUOUS",
+            event_direction="radiant" if signal.direction > 0 else "dire",
+            token_id=str(token_id),
+            side=signal.side,
+            fair_price=signal.ref_mid_blended,
+            best_ask=ask,
+            price_cap=price_cap,
+            edge=None,                          # continuous doesn't define a single edge
+            lag=None,
+            spread=round(spread, 4) if spread is not None else None,
+            book_age_ms=None,
+            steam_age_ms=None,
+            order_type="FAK",
+            submitted_size_usd=size_usd,
+            market_name=mapping.get("name"),
+            match_id=signal_match_id,
+            game_time_sec=signal.game_time_sec,
+            created_at_ns=time.time_ns(),
+            trader_kind="continuous",
+            exit_horizon_sec=signal.exit_horizon_sec,
+            signal_id=signal.signal_id,
+        )
+
+        attempt.submit_start_ns = time.time_ns()
+        if not ENABLE_REAL_LIVE_TRADING:
+            attempt.response_received_ns = time.time_ns()
+            attempt.order_status = "filled"
+            attempt.reason_if_rejected = "paper_simulated"
+            attempt.order_id = f"paper_entry_{time.time_ns()}"
+            attempt.filled_size_usd = round(size_usd, 6)
+            attempt.avg_fill_price = attempt.best_ask
+            self.total_submitted_usd += size_usd
+            self.total_filled_usd += attempt.filled_size_usd
+            self.open_positions += 1
+            self._continuous_last_entry_ns[f"{signal_match_id}|{signal.direction}"] = time.time_ns()
+            self._save()
+            return attempt
+
+        if self.client is None:
+            self.client = LiveCLOBClient()
+
+        try:
+            resp = await self.client.buy_fak_market(
+                token_id=str(token_id),
+                amount_usd=size_usd,
+                price_cap=price_cap,
+                tick_size=tick_size,
+                neg_risk=neg_risk,
+            )
+            attempt.response_received_ns = time.time_ns()
+        except Exception as exc:
+            attempt.response_received_ns = time.time_ns()
+            attempt.order_status = "exception"
+            attempt.reason_if_rejected = repr(exc)
+            if attempt.submit_start_ns and attempt.response_received_ns:
+                attempt.submit_latency_ms = round(
+                    (attempt.response_received_ns - attempt.submit_start_ns) / 1_000_000, 2)
+            return attempt
+
+        if attempt.submit_start_ns and attempt.response_received_ns:
+            attempt.submit_latency_ms = round(
+                (attempt.response_received_ns - attempt.submit_start_ns) / 1_000_000, 2)
+
+        attempt.raw_response_json = json.dumps(_jsonable(resp), sort_keys=True)[:4000]
+        attempt.order_status = _status_from_response(resp)
+        attempt.reason_if_rejected = _error_from_response(resp)
+        attempt.order_id = _order_id_from_response(resp)
+        attempt.filled_size_usd = round(_filled_usd_from_response(resp, size_usd), 6)
+        attempt.avg_fill_price = _avg_fill_price(resp, price_cap, attempt.filled_size_usd)
+        # 2026-06-02 — fill-price capture fix. A FAK that lands in the sequencer
+        # comes back "delayed"/"live" with filled_size=0, so _avg_fill_price
+        # returns None and the entry price was lost (logged empty) even though the
+        # order WILL fill at <= price_cap. Record price_cap as the entry price for
+        # any working/filled FAK so live P&L and the shadow validation have a real
+        # number instead of a blank. (FAK can only fill at or below price_cap.)
+        if attempt.avg_fill_price is None and attempt.order_status in ("delayed", "live", "filled", "matched"):
+            attempt.avg_fill_price = price_cap
+
+        # Update budget on a successful submission. FAK is fill-or-kill so
+        # any non-zero filled_size_usd or pending/live state consumes budget.
+        if attempt.filled_size_usd > 0 or attempt.order_status in ("delayed", "live"):
+            self.total_submitted_usd += size_usd
+            self.total_filled_usd += attempt.filled_size_usd
+            self.open_positions += 1
+            self._continuous_last_entry_ns[f"{signal_match_id}|{signal.direction}"] = time.time_ns()
+            self._save()
+
+        return attempt
+
     def _reject_value(self, signal, mapping, game, token_id, size_usd, reason) -> LiveOrderAttempt:
-        trader_kind = "dswing" if signal.__class__.__name__ == "DSwingSignal" else "value"
-        event_type = "DSWING" if trader_kind == "dswing" else "VALUE"
         return LiveOrderAttempt(
-            event_type=event_type,
+            event_type="VALUE",
             event_direction=str(signal.direction),
             token_id=str(token_id or ""),
             side=signal.side,
@@ -1204,10 +1416,104 @@ class LiveExecutor:
             match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
             game_time_sec=signal.game_time_sec,
             created_at_ns=time.time_ns(),
-            trader_kind=trader_kind,
+            trader_kind="value",
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
         )
+
+    async def try_buy_manual(
+        self,
+        *,
+        signal: dict,
+        mapping: dict,
+        token_id: str,
+        match_id: str,
+        book_store,
+    ) -> LiveOrderAttempt:
+        """Submit a FAK buy from a dashboard manual order."""
+        def _reject(reason: str) -> LiveOrderAttempt:
+            return LiveOrderAttempt(
+                event_type="MANUAL",
+                event_direction="manual",
+                token_id=str(token_id),
+                side=signal.get("side", "YES"),
+                fair_price=0.0, best_ask=None, price_cap=None, edge=0.0, lag=None, spread=None,
+                book_age_ms=0, steam_age_ms=None,
+                order_type="FAK", submitted_size_usd=0.0,
+                order_status="rejected_precheck", reason_if_rejected=reason,
+                market_name=mapping.get("name"), match_id=str(match_id),
+                game_time_sec=0, created_at_ns=time.time_ns(),
+                trader_kind="manual", exit_horizon_sec=None,
+            )
+
+        from config import ENABLE_REAL_LIVE_TRADING
+        if not ENABLE_REAL_LIVE_TRADING:
+            return _reject("ENABLE_REAL_LIVE_TRADING=false")
+
+        size_usd = float(signal.get("size_usd", 0.0))
+        if size_usd <= 0: return _reject("size <= 0")
+        if self.total_submitted_usd + size_usd > MAX_TOTAL_LIVE_USD: return _reject("MAX_TOTAL_LIVE_USD exceeded")
+        if self.open_positions >= MAX_OPEN_POSITIONS: return _reject("MAX_OPEN_POSITIONS exceeded")
+        if self.daily_realized_pnl_usd < -MAX_DAILY_DRAWDOWN_USD: return _reject("MAX_DAILY_DRAWDOWN_USD exceeded")
+        if size_usd > MAX_TRADE_USD: return _reject("MAX_TRADE_USD exceeded")
+
+        book = book_store.get_book(token_id)
+        if not book: return _reject("no_book")
+        ask = book.get("best_ask")
+        if ask is None: return _reject("no_ask")
+
+        price_cap = signal.get("price_cap")
+        if price_cap is None:
+            price_cap = round(min(ask + 0.04, 0.99), 4)
+
+        usdc = await self._get_cached_usdc_balance()
+        if usdc is None:
+            return _reject("balance_fetch_failed_or_unstable")
+        if usdc < size_usd:
+            return _reject("insufficient_balance")
+
+        attempt = _reject(None)
+        attempt.order_status = "submitting"
+        attempt.submitted_size_usd = size_usd
+        attempt.best_ask = ask
+        attempt.price_cap = price_cap
+
+        tick = mapping.get("tick_size") or str(LIVE_TICK_SIZE)
+        neg_risk = bool(mapping.get("neg_risk", False))
+
+        try:
+            if self.client is None:
+                self.client = LiveCLOBClient()
+            resp = await self.client.buy_fak_market(
+                token_id=token_id, amount_usd=size_usd, price_cap=price_cap, tick_size=tick, neg_risk=neg_risk
+            )
+            attempt.order_id = _order_id_from_response(resp)
+            attempt.order_status = _status_from_response(resp)
+            attempt.reason_if_rejected = _error_from_response(resp) if attempt.order_status in ("exception", "error", "rejected") else None
+            
+            filled_usd = _filled_usd_from_response(resp, size_usd)
+            attempt.filled_size_usd = filled_usd if filled_usd > 0 else None
+            attempt.avg_fill_price = _avg_fill_price(resp, price_cap, filled_usd)
+            
+            if attempt.order_status in ("delayed", "live"):
+                self.total_submitted_usd += size_usd
+                self._submitted_match_usd[match_id] = self._submitted_match_usd.get(match_id, 0.0) + size_usd
+                asyncio.create_task(self._poll_and_cancel_delayed(
+                    order_id=attempt.order_id, token_id=token_id, match_id=match_id,
+                    submitted_usd=size_usd, attempt=attempt
+                ))
+            elif attempt.order_status == "filled" or (attempt.order_status in ("partial", "killed") and filled_usd > 0.01):
+                self.total_submitted_usd += size_usd
+                self.total_filled_usd += filled_usd
+                self._submitted_match_usd[match_id] = self._submitted_match_usd.get(match_id, 0.0) + size_usd
+                self.open_positions += 1
+            
+            self._save()
+        except Exception as exc:
+            attempt.order_status = "exception"
+            attempt.reason_if_rejected = str(exc)[:80]
+            
+        return attempt
 
     async def try_buy_value(
         self,
@@ -1233,8 +1539,6 @@ class LiveExecutor:
             return self._reject_value(signal, mapping, game, "", 0.0, "missing_token_id")
 
         # --- budget gates ---
-        trader_kind = "dswing" if signal.__class__.__name__ == "DSwingSignal" else "value"
-        event_type = "DSWING" if trader_kind == "dswing" else "VALUE"
         size_usd = min(float(signal.sized_usd), MAX_TRADE_USD)
         if not ALLOW_EVENT_TRADES:
             return self._reject_value(signal, mapping, game, token_id, size_usd, "event_trades_disabled")
@@ -1264,8 +1568,8 @@ class LiveExecutor:
         # per match-side; the cooldown plus the caller's open-position check guard
         # against re-buying every poll.
         cd_key = f"value|{signal_match_id}|{signal.direction}"
-        _cool = max(VALUE_REENTRY_COOLDOWN_SEC, 60)
-        last_ns = self._value_last_entry_ns.get(cd_key, 0)
+        _cool = max(CONTINUOUS_REENTRY_COOLDOWN_SEC, 60)
+        last_ns = self._continuous_last_entry_ns.get(cd_key, 0)
         if last_ns and (time.time_ns() - last_ns) / 1e9 < _cool:
             return self._reject_value(signal, mapping, game, token_id, size_usd, "value_cooldown")
 
@@ -1284,12 +1588,12 @@ class LiveExecutor:
         # rises as the leader's signal fires -> cap below the live ask -> 0 fill; that's
         # why VALUE was 0/16 while the event path, already on 4 ticks, fills ~54%). Match
         # the event path's proven buffer. Bounded below by fair (never pay past fair).
-        _fak_ticks = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "2"))
+        _fak_ticks = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "4"))
         price_cap = round(min(ask + _fak_ticks * _tick, signal.fair_price), 4)
         neg_risk = bool(mapping.get("neg_risk", False))
 
         attempt = LiveOrderAttempt(
-            event_type=event_type,
+            event_type="VALUE",
             event_direction=str(signal.direction),
             token_id=str(token_id),
             side=signal.side,
@@ -1307,7 +1611,7 @@ class LiveExecutor:
             match_id=signal_match_id,
             game_time_sec=signal.game_time_sec,
             created_at_ns=time.time_ns(),
-            trader_kind=trader_kind,
+            trader_kind="value",
             exit_horizon_sec=None,
             signal_id=signal.signal_id,
         )
@@ -1317,14 +1621,14 @@ class LiveExecutor:
             attempt.response_received_ns = time.time_ns()
             attempt.order_status = "filled"
             attempt.reason_if_rejected = "paper_simulated"
-            attempt.order_id = f"paper_{trader_kind}_{time.time_ns()}"
+            attempt.order_id = f"paper_value_{time.time_ns()}"
             attempt.filled_size_usd = round(size_usd, 6)
             attempt.avg_fill_price = attempt.best_ask
             self.total_submitted_usd += size_usd
             self.total_filled_usd += attempt.filled_size_usd
             self.open_positions += 1
             self._submitted_match_usd[signal_match_id] = self._submitted_match_usd.get(signal_match_id, 0.0) + size_usd
-            self._value_last_entry_ns[cd_key] = time.time_ns()
+            self._continuous_last_entry_ns[cd_key] = time.time_ns()
             self._save()
             return attempt
 
@@ -1367,7 +1671,7 @@ class LiveExecutor:
             self.total_filled_usd += attempt.filled_size_usd
             self.open_positions += 1
             self._submitted_match_usd[signal_match_id] = self._submitted_match_usd.get(signal_match_id, 0.0) + size_usd
-            self._value_last_entry_ns[cd_key] = time.time_ns()
+            self._continuous_last_entry_ns[cd_key] = time.time_ns()
             self._save()
 
         # Marketable GTC rests after Polymarket's ~1s delay — poll for fill; cancel + release at 30s.
@@ -1380,6 +1684,187 @@ class LiveExecutor:
             )
 
         return attempt
+
+    async def try_buy_arb(
+        self,
+        *,
+        opportunity: Any,        # arb_scanner.ArbOpportunity
+        mapping: dict,
+        game: dict,
+    ) -> tuple[LiveOrderAttempt, LiveOrderAttempt]:
+        """Submit both YES and NO FAK legs for one ArbOpportunity.
+
+        Returns (yes_attempt, no_attempt). Either or both may be rejected;
+        when only one leg fills, the caller is responsible for force-exit
+        of the unmatched leg via the existing exit machinery.
+        """
+        tick_size = str(mapping.get("tick_size") or LIVE_TICK_SIZE)
+        try:
+            _tick = float(tick_size)
+        except ValueError:
+            _tick = 0.01
+        neg_risk = bool(mapping.get("neg_risk", False))
+
+        # 2026-05-29 Phase AR-3 — matched-shares split. yes_usd and no_usd are
+        # different dollar amounts that buy IDENTICAL share counts at each
+        # side's ask. Guarantees $1 payout per share at settle regardless of
+        # which side wins.
+        yes_attempt = await self._submit_arb_leg(
+            token_id=opportunity.yes_token_id,
+            side="YES",
+            ask=opportunity.yes_ask,
+            leg_size_usd=opportunity.yes_usd,
+            tick_size=tick_size, neg_risk=neg_risk,
+            mapping=mapping, game=game, arb_id=opportunity.arb_id,
+        )
+        no_attempt = await self._submit_arb_leg(
+            token_id=opportunity.no_token_id,
+            side="NO",
+            ask=opportunity.no_ask,
+            leg_size_usd=opportunity.no_usd,
+            tick_size=tick_size, neg_risk=neg_risk,
+            mapping=mapping, game=game, arb_id=opportunity.arb_id,
+        )
+        return yes_attempt, no_attempt
+
+    async def _submit_arb_leg(
+        self, *, token_id: str, side: str, ask: float, leg_size_usd: float,
+        tick_size: str, neg_risk: bool,
+        mapping: dict, game: dict, arb_id: str,
+    ) -> LiveOrderAttempt:
+        # Pre-trade budget check applies per-leg.
+        if self.total_submitted_usd + leg_size_usd > MAX_TOTAL_LIVE_USD:
+            return self._reject_arb_leg(
+                token_id=token_id, side=side, ask=ask,
+                leg_size_usd=leg_size_usd, mapping=mapping, game=game,
+                arb_id=arb_id, reason="max_total_live_usd_reached",
+            )
+        if self.open_positions >= MAX_OPEN_POSITIONS:
+            return self._reject_arb_leg(
+                token_id=token_id, side=side, ask=ask,
+                leg_size_usd=leg_size_usd, mapping=mapping, game=game,
+                arb_id=arb_id, reason="max_open_positions_reached",
+            )
+
+        try:
+            _tick = float(tick_size)
+        except ValueError:
+            _tick = 0.01
+        price_cap = round(ask + 2 * _tick, 4)
+
+        attempt = LiveOrderAttempt(
+            event_type="ARB",
+            event_direction="",
+            token_id=token_id,
+            side=side,
+            fair_price=None,
+            best_ask=ask,
+            price_cap=price_cap,
+            edge=None, lag=None, spread=None,
+            book_age_ms=None, steam_age_ms=None,
+            order_type="FAK",
+            submitted_size_usd=leg_size_usd,
+            market_name=mapping.get("name"),
+            match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
+            game_time_sec=game.get("game_time_sec"),
+            created_at_ns=time.time_ns(),
+            trader_kind="arb",
+            exit_horizon_sec=None,    # hold to settlement
+            signal_id=arb_id,
+        )
+
+        attempt.submit_start_ns = time.time_ns()
+        if not ENABLE_REAL_LIVE_TRADING:
+            attempt.response_received_ns = time.time_ns()
+            attempt.order_status = "filled"
+            attempt.reason_if_rejected = "paper_simulated"
+            attempt.order_id = f"paper_arb_{time.time_ns()}"
+            attempt.filled_size_usd = round(leg_size_usd, 6)
+            attempt.avg_fill_price = attempt.best_ask
+            self.total_submitted_usd += leg_size_usd
+            self.total_filled_usd += attempt.filled_size_usd
+            self.open_positions += 1
+            self._save()
+            return attempt
+
+        if self.client is None:
+            self.client = LiveCLOBClient()
+
+        try:
+            resp = await self.client.buy_fak_market(
+                token_id=token_id, amount_usd=leg_size_usd,
+                price_cap=price_cap, tick_size=tick_size, neg_risk=neg_risk,
+            )
+            attempt.response_received_ns = time.time_ns()
+        except Exception as exc:
+            attempt.response_received_ns = time.time_ns()
+            attempt.order_status = "exception"
+            attempt.reason_if_rejected = repr(exc)
+            return attempt
+
+        if attempt.submit_start_ns and attempt.response_received_ns:
+            attempt.submit_latency_ms = round(
+                (attempt.response_received_ns - attempt.submit_start_ns) / 1_000_000, 2)
+
+        attempt.raw_response_json = json.dumps(_jsonable(resp), sort_keys=True)[:4000]
+        attempt.order_status = _status_from_response(resp)
+        attempt.reason_if_rejected = _error_from_response(resp)
+        attempt.order_id = _order_id_from_response(resp)
+        attempt.filled_size_usd = round(_filled_usd_from_response(resp, leg_size_usd), 6)
+        attempt.avg_fill_price = _avg_fill_price(resp, price_cap, attempt.filled_size_usd)
+
+        if attempt.filled_size_usd > 0 or attempt.order_status in ("delayed", "live"):
+            self.total_submitted_usd += leg_size_usd
+            self.total_filled_usd += attempt.filled_size_usd
+            self.open_positions += 1
+            self._save()
+        return attempt
+
+    def _reject_arb_leg(self, *, token_id, side, ask, leg_size_usd, mapping, game, arb_id, reason) -> LiveOrderAttempt:
+        return LiveOrderAttempt(
+            event_type="ARB",
+            event_direction="",
+            token_id=str(token_id or ""),
+            side=side,
+            fair_price=None,
+            best_ask=ask,
+            price_cap=None,
+            edge=None, lag=None, spread=None,
+            book_age_ms=None, steam_age_ms=None,
+            order_type="FAK",
+            submitted_size_usd=0.0,
+            order_status="rejected_precheck",
+            reason_if_rejected=reason,
+            market_name=mapping.get("name"),
+            match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
+            game_time_sec=game.get("game_time_sec"),
+            created_at_ns=time.time_ns(),
+            trader_kind="arb",
+            exit_horizon_sec=None,
+            signal_id=arb_id,
+        )
+
+    def _reject_continuous(self, signal, mapping, game, token_id, size_usd, reason) -> LiveOrderAttempt:
+        return LiveOrderAttempt(
+            event_type="CONTINUOUS",
+            event_direction="radiant" if signal.direction > 0 else "dire",
+            token_id=str(token_id or ""),
+            side=signal.side,
+            fair_price=signal.ref_mid_blended,
+            best_ask=None, price_cap=None, edge=None, lag=None, spread=None,
+            book_age_ms=None, steam_age_ms=None,
+            order_type="FAK",
+            submitted_size_usd=0.0,
+            order_status="rejected_precheck",
+            reason_if_rejected=reason,
+            market_name=mapping.get("name"),
+            match_id=str(game.get("match_id") or game.get("lobby_id") or ""),
+            game_time_sec=signal.game_time_sec,
+            created_at_ns=time.time_ns(),
+            trader_kind="continuous",
+            exit_horizon_sec=signal.exit_horizon_sec,
+            signal_id=signal.signal_id,
+        )
 
     async def _poll_and_cancel_delayed(
         self,
@@ -1432,7 +1917,7 @@ class LiveExecutor:
                     attempt.reason_if_rejected = f"delayed_order_{order_status}"
                     attempt.raw_response_json = json.dumps(_jsonable(status), sort_keys=True)[:4000]
                 self.release_submitted_budget(order_usd, match_id=match_id)
-                self.decrement_open_positions(match_id)
+                self.decrement_open_positions(match_id, full_exit=False)
                 await self._emit_delayed_resolution(attempt)
                 return
 
@@ -1448,7 +1933,7 @@ class LiveExecutor:
             attempt.order_status = "cancelled"
             attempt.reason_if_rejected = "delayed_order_timeout_cancelled"
         self.release_submitted_budget(order_usd, match_id=match_id)
-        self.decrement_open_positions(match_id)
+        self.decrement_open_positions(match_id, full_exit=False)
         await self._emit_delayed_resolution(attempt)
 
     async def _poll_order_status(self, order_id: str) -> dict:

@@ -16,9 +16,9 @@ When either team's Elo is unknown, elo_diff defaults to 0 (gold-only fair).
 """
 import json, math, os, re
 
-_MODEL_PATH = "logs/winprob_model.json"
-_ELO_PATH = "logs/team_elo.json"
-_ELO_NAME_PATH = "logs/team_elo_by_name.json"
+_MODEL_PATH = "models/winprob/winprob_model.json"
+_ELO_PATH = "models/winprob/team_elo.json"
+_ELO_NAME_PATH = "models/winprob/team_elo_by_name.json"
 
 ELO_CLAMP = float(os.getenv("WINPROB_ELO_CLAMP", "150"))   # cap |elo_diff| fed to model
 ELO_SHRINK = float(os.getenv("WINPROB_ELO_SHRINK", "0.7")) # shade pro Elo effect
@@ -63,6 +63,9 @@ def _load_model():
             _model_mtime = mt
     except Exception:
         if _model is None:
+            from config import ENABLE_REAL_LIVE_TRADING
+            if ENABLE_REAL_LIVE_TRADING and os.getenv("LIVE_REQUIRE_MODEL_ARTIFACTS", "true").lower() == "true":
+                raise RuntimeError(f"FATAL: winprob model missing at {_MODEL_PATH} and LIVE_REQUIRE_MODEL_ARTIFACTS=true")
             # safe fallback coefficients (symmetric fit) if file missing
             # [gk, gk*m, gk/sqrt(m+1), sign*gk^2, elo/100, slope/1000, draft*10]
             _model = {"coef": [-0.055, 0.0, 1.15, 0.0, 0.70, 0.073, 4.92], "intercept": 0.0}
@@ -77,7 +80,10 @@ def _load_elo():
             _elo = {str(k): float(v) for k, v in json.load(open(_ELO_PATH)).items()}
             _elo_mtime = mt
     except Exception:
-        pass
+        if not _elo:
+            from config import ENABLE_REAL_LIVE_TRADING
+            if ENABLE_REAL_LIVE_TRADING and os.getenv("LIVE_ALLOW_ELO_NEUTRAL", "false").lower() != "true":
+                raise RuntimeError(f"FATAL: team_elo missing at {_ELO_PATH} and LIVE_ALLOW_ELO_NEUTRAL=false")
     return _elo
 
 
@@ -94,7 +100,10 @@ def _load_elo_name():
             _elo_name = idx
             _elo_name_mtime = mt
     except Exception:
-        pass
+        if not _elo_name:
+            from config import ENABLE_REAL_LIVE_TRADING
+            if ENABLE_REAL_LIVE_TRADING and os.getenv("LIVE_ALLOW_ELO_NEUTRAL", "false").lower() != "true":
+                raise RuntimeError(f"FATAL: team_elo_by_name missing at {_ELO_NAME_PATH} and LIVE_ALLOW_ELO_NEUTRAL=false")
     return _elo_name
 
 
@@ -151,7 +160,7 @@ def fair(lead, game_time_sec, elo_diff=None, lead_slope=None, draft_h2h=None) ->
 
 
 # ---- draft head-to-head (hero matchup) ----
-_MATCHUP_PATH = "logs/opendota_hero_matchups.json"
+_MATCHUP_PATH = "models/winprob/opendota_hero_matchups.json"
 _matchups = {}
 _matchups_mtime = 0.0
 _DRAFT_K = 40.0

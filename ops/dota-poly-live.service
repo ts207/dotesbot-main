@@ -5,10 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/tstuv/dota/dotesbot-main/dotesbot-main
-EnvironmentFile=-/home/tstuv/dota/dotesbot-main/dotesbot-main/.env
+WorkingDirectory=/home/tstuv/dota-poly-signal-pnl-asd
+EnvironmentFile=-/home/tstuv/dota-poly-signal-pnl-asd/.env
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /home/tstuv/dota/dotesbot-main/dotesbot-main/supervisor.py
+ExecStart=/usr/bin/python3 /home/tstuv/dota-poly-signal-pnl-asd/main.py
 Restart=on-failure
 RestartSec=10
 KillSignal=SIGINT

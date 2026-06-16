@@ -1,9 +1,0 @@
-{
-  "candidate_rows": 518,
-  "series_count": 512,
-  "series_overlap": 0,
-  "train_rows": 386,
-  "train_series": 384,
-  "validation_rows": 132,
-  "validation_series": 128
-}

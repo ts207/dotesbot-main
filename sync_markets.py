@@ -93,9 +93,22 @@ def choose_mapping_for_live_game(markets: list[dict], game: dict) -> tuple[dict 
     if existing_same_match:
         return None, "already_mapped_current_match"
 
+    def _is_quarantined(mapping: dict) -> bool:
+        if mapping.get("mapping_state") != "quarantined":
+            return False
+        q_until = mapping.get("quarantined_until")
+        if not q_until:
+            return True
+        try:
+            from datetime import datetime as _dt, timezone as _tz
+            dt = _dt.fromisoformat(str(q_until).replace("Z", "+00:00"))
+            return dt > _dt.now(_tz.utc)
+        except Exception:
+            return True
+
     candidates = [
         m for m in matching
-        if is_placeholder_match_id(m.get("dota_match_id")) or not is_active_mapping(m)
+        if not _is_quarantined(m) and (is_placeholder_match_id(m.get("dota_match_id")) or not is_active_mapping(m))
     ]
     if not candidates:
         return None, "no_inactive_candidate"

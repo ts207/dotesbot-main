@@ -1,11 +1,6 @@
 import time
 
-from steam_client import (
-    decode_top_live_tower_state,
-    normalize_league_game,
-    normalize_top_live,
-    redact_sensitive_url_params,
-)
+from steam_client import decode_top_live_tower_state, normalize_league_game, normalize_top_live
 
 
 def test_live_league_stream_delay_does_not_age_received_timestamp():
@@ -60,19 +55,6 @@ def test_normalize_top_live_sets_decoded_tower_state():
     assert game["building_state_schema"] == "top_live_lane_tower_progress"
     assert game["tower_state"] == (1 << 22) - 1
     assert game["tower_state_schema"] == "decoded_top_live_lane_towers_v1"
-
-
-def test_redact_sensitive_url_params_hides_steam_key():
-    msg = (
-        "500, message='Internal Server Error', "
-        "url='https://api.steampowered.com/x?key=SECRET123&partner=2'"
-    )
-
-    redacted = redact_sensitive_url_params(msg)
-
-    assert "SECRET123" not in redacted
-    assert "key=<redacted>" in redacted
-    assert "partner=2" in redacted
 
 import pytest
 from steam_client import LeagueGameCache

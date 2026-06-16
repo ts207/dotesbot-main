@@ -156,5 +156,38 @@ async def test_concurrent_check_live_exits_calls_submit_only_one_sell(monkeypatc
     assert sell_count == 1
     assert len(client.sell_calls) == 1
 
+def test_catastrophe_salvage(monkeypatch):
+    monkeypatch.setattr("live_exit_engine.CATASTROPHE_FLOOR", 0.12)
+    monkeypatch.setattr("live_exit_engine.CATASTROPHE_NW_CONFIRM", 5000)
+    
+    from live_exit_engine import decide_live_exit
+    
+    pos = MockPosition()
+    pos.trader_kind = "value"
+    pos.backed_direction = "radiant"
+    pos.entry_time_ns = time.time_ns() - int(3600 * 1e9)  # 1 hr old
+    pos.match_id = "test_match_id"
+    pos.event_type = "VALUE"
+    pos.fair_price = 0.5
+    pos.entry_price = 0.5
+    pos.expected_move = 0.0
+    
+    # 1. Price is low, but game state indicates we're winning (glitch / flip). Hold.
+    book = {"best_bid": 0.05, "best_ask": 0.06}
+    game_winning = {"radiant_lead": 10000}
+    dec1 = decide_live_exit(position=pos, book=book, game_over_match_ids=set(), game=game_winning, now_ns=time.time_ns())
+    assert dec1.should_exit is False
+    
+    # 2. Price is low, and game state indicates we're losing (catastrophe). Salvage.
+    game_losing = {"radiant_lead": -6000}
+    dec2 = decide_live_exit(position=pos, book=book, game_over_match_ids=set(), game=game_losing, now_ns=time.time_ns())
+    assert dec2.should_exit is True
+    assert dec2.reason == "catastrophe_salvage"
+    
+    # 3. Price is low, no game state. Salvage.
+    dec3 = decide_live_exit(position=pos, book=book, game_over_match_ids=set(), game=None, now_ns=time.time_ns())
+    assert dec3.should_exit is True
+    assert dec3.reason == "catastrophe_salvage"
+
 if __name__ == "__main__":
     pytest.main([__file__])

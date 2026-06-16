@@ -7,7 +7,6 @@ import pytest
 
 from live_executor import LiveExecutor, LiveExitExecutor, round_down_to_tick
 from poly_ws import BookStore
-from decisive_swing_engine import DSwingSignal
 
 
 class FakeLiveClient:
@@ -83,47 +82,9 @@ def _book_store(ask=0.61, bid=0.58):
     return store
 
 
-def _dswing_signal():
-    return DSwingSignal(
-        signal_id="ds1",
-        match_id="M1",
-        received_at_ns=time.time_ns(),
-        direction="radiant",
-        side="YES",
-        token_id="TOKYES",
-        lead=9000,
-        game_time_sec=900,
-        p_game=0.95,
-        series_fair=0.72,
-        ask=0.55,
-        edge=0.17,
-        sized_usd=1.0,
-        fair_price=0.72,
-        book_age_ms=100,
-    )
-
-
 def test_round_down_to_tick():
     assert round_down_to_tick(0.6789, "0.01") == 0.67
     assert round_down_to_tick(0.6789, "0.001") == 0.678
-
-
-@pytest.mark.asyncio
-async def test_dswing_signal_is_tagged_as_dswing_paper_attempt(monkeypatch):
-    monkeypatch.setattr("live_executor.ENABLE_REAL_LIVE_TRADING", False)
-    executor = LiveExecutor()
-
-    attempt = await executor.try_buy_value(
-        signal=_dswing_signal(),
-        mapping=_mapping(market_type="MATCH_WINNER"),
-        game=_game(),
-        book_store=_book_store(ask=0.55, bid=0.54),
-    )
-
-    assert attempt.order_status == "filled"
-    assert attempt.event_type == "DSWING"
-    assert attempt.trader_kind == "dswing"
-    assert attempt.order_id.startswith("paper_dswing_")
 
 
 @pytest.mark.asyncio
@@ -185,9 +146,9 @@ async def test_live_executor_sends_capped_fak_buy(monkeypatch):
     assert attempt.submitted_size_usd == 1
     assert attempt.filled_size_usd == 1
     assert client.calls[0]["amount_usd"] == 1
-    # price_cap formula: ask + LIVE_FAK_BUFFER_TICKS*tick. Default buffer is 4
-    # ticks so thin/moving books do not miss otherwise valid FAK fills.
-    assert client.calls[0]["price_cap"] == 0.65
+    # price_cap formula: ask + 2*tick = 0.61 + 0.02 = 0.63 (never pay more than
+    # 2 ticks above current ask, regardless of fair_price headroom).
+    assert client.calls[0]["price_cap"] == 0.63
     assert client.calls[0]["tick_size"] == "0.01"
 
 
@@ -259,14 +220,18 @@ async def test_live_executor_rejects_low_quality_event(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_live_executor_rejects_if_ask_above_event_max_fill(monkeypatch):
+async def test_live_executor_rejects_if_ask_above_price_cap():
     executor = LiveExecutor(client=FakeLiveClient())
+    # price cap is 0.70; ask 0.705 rounds outside acceptable cap
     attempt = await executor.try_buy(
-        signal=_signal(fair_price=0.72, executable_edge=0.09, lag=0.09, max_fill_price=0.70),
+        signal=_signal(fair_price=0.72, executable_edge=0.09, lag=0.09),
         mapping=_mapping(), game=_game(), book_store=_book_store(ask=0.71, bid=0.69),
     )
     assert attempt.order_status == "rejected_precheck"
-    assert attempt.reason_if_rejected.startswith("ask_above_event_max_fill")
+    assert any(
+        attempt.reason_if_rejected.startswith(prefix)
+        for prefix in ("best_ask_above_price_cap", "fresh_edge_too_small")
+    )
 
 
 @pytest.mark.asyncio
@@ -309,10 +274,10 @@ async def test_live_executor_uses_event_specific_max_fill_above_default(monkeypa
         signal=sig, mapping=_mapping(), game=_game(), book_store=_book_store(ask=0.82, bid=0.80)
     )
     assert attempt.order_status == "matched"
-    # price_cap formula: min(ask + 4*tick, event_max_fill) — for ask=0.82 with
-    # tick=0.01 that's 0.86; OBJECTIVE_CONVERSION_T3's higher event_max_fill
+    # price_cap formula: min(ask + 2*tick, event_max_fill) — for ask=0.82 with
+    # tick=0.01 that's 0.84; OBJECTIVE_CONVERSION_T3's higher event_max_fill
     # doesn't override the ask-based ceiling.
-    assert client.calls[0]["price_cap"] == 0.86
+    assert client.calls[0]["price_cap"] == 0.84
 
 
 @pytest.mark.asyncio
@@ -344,11 +309,10 @@ async def test_live_executor_rejects_mapping_confidence_below_one():
 
 
 @pytest.mark.asyncio
-async def test_live_executor_operator_allowlist_overrides_tier_c(monkeypatch):
+async def test_live_executor_rejects_tier_c_by_default(monkeypatch):
     monkeypatch.setattr("live_executor.TRADE_EVENTS", {"OBJECTIVE_CONVERSION_T2"})
     monkeypatch.setattr("live_executor.ALLOW_CONFIRMATION_ONLY_LIVE_TRADES", False)
     monkeypatch.setattr("live_executor.DISABLE_STRUCTURE_TRADES", False)
-    monkeypatch.setattr("live_executor.ENABLE_REAL_LIVE_TRADING", True)
     # Monkeypatch event_tier or TIER_C_EVENTS to make OBJECTIVE_CONVERSION_T2 a Tier C event for this test
     monkeypatch.setattr("live_executor.event_tier", lambda e: "C" if e == "OBJECTIVE_CONVERSION_T2" else "unknown")
     
@@ -359,7 +323,8 @@ async def test_live_executor_operator_allowlist_overrides_tier_c(monkeypatch):
         game=_game(),
         book_store=_book_store(),
     )
-    assert attempt.order_status == "matched"
+    assert attempt.order_status == "rejected_precheck"
+    assert attempt.reason_if_rejected == "confirmation_only_event"
 
 
 @pytest.mark.asyncio
@@ -407,9 +372,8 @@ async def test_live_executor_rejects_terminal_price_chasing_before_submit(monkey
     "LOW_PRICE_UNDERDOG_COUNTERPUNCH",
     "LATE_CHEAP_LEAD_SWING_REPRICE",
 ])
-async def test_live_executor_operator_allowlist_overrides_research_taxonomy(monkeypatch, event_type):
+async def test_live_executor_rejects_research_events_even_if_allowlisted(monkeypatch, event_type):
     monkeypatch.setattr("live_executor.TRADE_EVENTS", {event_type})
-    monkeypatch.setattr("live_executor.ENABLE_REAL_LIVE_TRADING", True)
     executor = LiveExecutor(client=FakeLiveClient())
     attempt = await executor.try_buy(
         signal=_signal(event_type=event_type, cluster_event_types=event_type),
@@ -417,7 +381,8 @@ async def test_live_executor_operator_allowlist_overrides_research_taxonomy(monk
         game=_game(),
         book_store=_book_store(),
     )
-    assert attempt.order_status == "matched"
+    assert attempt.order_status == "rejected_precheck"
+    assert attempt.reason_if_rejected == "research_event_not_live_tradable"
 
 
 @pytest.mark.asyncio
@@ -486,15 +451,9 @@ async def test_reject_reasons_carry_numeric_values_for_funnel(monkeypatch):
     assert "q=0.200" in low_quality.reason_if_rejected
     assert "min=0.500" in low_quality.reason_if_rejected
 
-    monkeypatch.setattr("live_executor.TRADE_EVENTS", {"POLL_TEAM_WIPE"})
     monkeypatch.setattr("live_executor.MIN_EXECUTABLE_EDGE", 0.99)
     no_edge = await executor.try_buy(
-        signal=_signal(
-            event_type="POLL_TEAM_WIPE",
-            cluster_event_types="POLL_TEAM_WIPE",
-            executable_edge=0.05,
-        ),
-        mapping=_mapping(),
+        signal=_signal(executable_edge=0.05), mapping=_mapping(),
         game=_game(), book_store=_book_store(),
     )
     assert no_edge.reason_if_rejected.startswith("edge_too_small:")
