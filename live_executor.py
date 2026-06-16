@@ -1264,6 +1264,10 @@ class LiveExecutor:
         book_store,
     ) -> LiveOrderAttempt:
         """Submit a FAK buy from a dashboard manual order."""
+        # TODO: P1 follow-up: create manual_order_policy.py for manual entry safety checks.
+        # Manual orders intentionally do not use evaluate_policy().
+        # They are operator-directed actions and require a separate manual-order safety policy.
+        # Do not route them through automated event/cadence/strategy gates.
         def _reject(reason: str) -> LiveOrderAttempt:
             attempt = LiveOrderAttempt(
                 event_type="MANUAL",
