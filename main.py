@@ -1033,6 +1033,20 @@ async def steam_loop(
                                             )
                                         else:
                                             print(f"EVENT_VALUE REJECT {mapping.get('name')} {ev_result.side} reason={ev_attempt.reason_if_rejected}")
+                                    else:
+                                        # Paper path (PaperTrader simulated fills).
+                                        pos, reason = trader.enter(
+                                            signal=ev_result.to_signal_dict(),
+                                            token_id=ev_result.token_id,
+                                            side=ev_result.side,
+                                            book_store=book_store,
+                                            match_id=str(game.get("match_id") or ""),
+                                            market_name=mapping.get("name"),
+                                            opposing_token_id=opposing_tok,
+                                        )
+                                        if pos:
+                                            position_logger.log_entry(pos)
+                                            print(f"EVENT_VALUE ENTER {mapping.get('name')} {ev_result.side} event={ev_result.actual_event_type} price={pos.entry_price:.4f} edge={ev_result.edge:.4f}")
 
                         # --- Value Engine ---
                         if value_engine is not None and value_logger is not None:

@@ -214,6 +214,9 @@ EXIT_HORIZON_BY_EVENT: dict[str, int] = {
     # at 0.68). Reconciled positions are OUR hold-to-settle positions — keep them held.
     "STARTUP_RECONCILE": 0,
     "RUNTIME_RECONCILE": 0,
+    "VALUE": 0,
+    "EVENT_TRIGGERED_VALUE": 0,
+    "DSWING": 0,
     # Strongest signals: hold to Settlement (disabled fixed horizon)
     "THRONE_EXPOSED": 0,
     "OBJECTIVE_CONVERSION_T4": 0,

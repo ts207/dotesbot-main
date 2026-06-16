@@ -375,6 +375,40 @@ class PaperTrader:
                 to_close.append((token_id, px, "adverse_event"))
                 continue
 
+            # 2026-06-03 — VALUE and DSWING specialization.
+            # Value-style (thesis_invalidation): hold to settlement.
+            # DSwing-style (map_end_convergence): hold to map end.
+            # Both skip take_profit, stop_loss, trailing_stop, and horizon.
+            if pos.hold_policy == "thesis_invalidation" or pos.strategy_kind in {"VALUE", "EVENT_TRIGGERED_VALUE"}:
+                if pos.match_id in game_over_match_ids:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "game_over"))
+                elif age_sec >= max_hold_sec:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "max_hold_timeout"))
+                elif exit_px is not None:
+                    # Fair invalidation: if model fair drops significantly below entry, cut.
+                    # Mirroring live_exit_engine.py's fair_invalidation (3c/5c buffers).
+                    if (pos.fair_price > 0
+                        and pos.fair_price < pos.entry_price - 0.03
+                        and pos.fair_price < exit_px - 0.05):
+                        to_close.append((token_id, exit_px, "fair_invalidation"))
+                    # Catastrophe salvage: residual value cut if near zero and not a flip.
+                    elif 0.0 < 0.12 and exit_px < 0.12:
+                         # Paper trader doesn't have easy NW lead access here, so we use a simpler
+                         # price-only floor as a safety net.
+                         to_close.append((token_id, exit_px, "catastrophe_salvage"))
+                continue
+
+            if pos.hold_policy == "map_end_convergence" or pos.strategy_kind == "DSWING":
+                if pos.match_id in game_over_match_ids:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "map_end_convergence"))
+                elif age_sec >= max_hold_sec:
+                    px = exit_px if exit_px is not None else pos.entry_price
+                    to_close.append((token_id, px, "max_hold_timeout"))
+                continue
+
             if pos.is_underdog_reversal:
                 # Underdog reversal: wide stop, TP=0.75, no horizon.
                 # Only exits: take_profit, absolute stop, game_over, max_hold_timeout.
