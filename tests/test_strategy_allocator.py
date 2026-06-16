@@ -41,9 +41,9 @@ def _cand(strategy: str, token_id: str = "tok_A", match_id: str = "m1",
 # ---------------------------------------------------------------------------
 
 def test_priority_ordering():
-    assert _priority(_cand("EVENT_CONTINUATION_EDGE")) < _priority(_cand("EVENT_REVERSAL_EDGE"))
-    assert _priority(_cand("EVENT_REVERSAL_EDGE")) < _priority(_cand("VALUE_EDGE"))
-    assert _priority(_cand("VALUE_EDGE")) < _priority(_cand("DSWING"))
+    assert _priority(_cand("EVENT_CONTINUATION_EDGE")) < _priority(_cand("VALUE_EDGE"))
+    assert _priority(_cand("VALUE_EDGE")) < _priority(_cand("EVENT_REVERSAL_EDGE"))
+    assert _priority(_cand("EVENT_REVERSAL_EDGE")) < _priority(_cand("DSWING"))
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +82,27 @@ def test_event_preempts_value():
     assert row is not None
     assert row["winner_strategy"] == "EVENT_CONTINUATION_EDGE"
     assert "VALUE_EDGE" in row["blocked_strategies"]
+
+
+# ---------------------------------------------------------------------------
+# test_value_preempts_reversal
+# ---------------------------------------------------------------------------
+
+def test_value_preempts_reversal():
+    """VALUE_EDGE wins over EVENT_REVERSAL_EDGE on same token."""
+    c_value = _cand("VALUE_EDGE", token_id="tok_A", edge=0.10)
+    c_rev = _cand("EVENT_REVERSAL_EDGE", token_id="tok_A", edge=0.15)
+    decisions = allocate_candidates([c_rev, c_value], entered_tokens=set())
+    assert len(decisions) == 1
+    d = decisions[0]
+    assert d.winner is c_value
+    assert len(d.blocked) == 1
+    assert d.blocked[0] is c_rev
+    assert d.block_reason == "preempted_by_value"
+    row = decision_to_log_row(d)
+    assert row is not None
+    assert row["winner_strategy"] == "VALUE_EDGE"
+    assert "EVENT_REVERSAL_EDGE" in row["blocked_strategies"]
 
 
 # ---------------------------------------------------------------------------

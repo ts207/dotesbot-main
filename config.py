@@ -96,6 +96,17 @@ EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_
 EVENT_VALUE_REVERSAL_MAX_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MAX_ASK", "0.45"))
 EVENT_VALUE_REVERSAL_MIN_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_ASK", "0.08"))
 
+# Event-reversal exit quarantine.
+# Default is disabled so EVENT_REVERSAL_EDGE positions do not silently become an
+# unvalidated scalp strategy. When disabled, they still exit on game_over and the
+# global max-hold safety net.
+EVENT_REVERSAL_ACTIVE_EXITS_ENABLED = os.getenv(
+    "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED",
+    "false",
+).lower() in {"1", "true", "yes"}
+EVENT_REVERSAL_TAKE_PROFIT_CENTS = float(os.getenv("EVENT_REVERSAL_TAKE_PROFIT_CENTS", "0.08"))
+EVENT_REVERSAL_MAX_HOLD_SEC = int(os.getenv("EVENT_REVERSAL_MAX_HOLD_SEC", "300"))
+
 ENABLE_MATCH_WINNER_GAME3_PROXY = os.getenv(
     "ENABLE_MATCH_WINNER_GAME3_PROXY", "true"
 ).lower() in {"1", "true", "yes"}

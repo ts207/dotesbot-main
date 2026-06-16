@@ -1,0 +1,221 @@
+diff --git a/strategy_allocator.py b/strategy_allocator.py
+index db14813..0000000 100644
+--- a/strategy_allocator.py
++++ b/strategy_allocator.py
+@@ -5,10 +5,11 @@ Replaces implicit runtime priority (event fires → value blocked by _entered_toks)
+ with a transparent collect → allocate → execute pattern.
+ 
+-Priority order (mirrors existing implicit order):
+-  1. EVENT_CONTINUATION_EDGE / EVENT_REVERSAL_EDGE
++Priority order:
++  1. EVENT_CONTINUATION_EDGE
+   2. VALUE_EDGE
+-  3. DSWING
++  3. EVENT_REVERSAL_EDGE
++  4. DSWING
+ 
+ Per token_id:
+   - Token already in entered_tokens → all candidates blocked (already_entered).
+@@ -28,8 +29,8 @@ from typing import Any
+ # Priority — lower index = higher priority.
+ _STRATEGY_PRIORITY: dict[str, int] = {
+     "EVENT_CONTINUATION_EDGE": 0,
+-    "EVENT_REVERSAL_EDGE": 1,
+-    "VALUE_EDGE": 2,
++    "VALUE_EDGE": 1,
++    "EVENT_REVERSAL_EDGE": 2,
+     "DSWING": 3,
+ }
+ 
+diff --git a/config.py b/config.py
+index 56fb04e..0000000 100644
+--- a/config.py
++++ b/config.py
+@@ -96,6 +96,16 @@ EVENT_VALUE_REVERSAL_MIN_EDGE = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_EDGE",
+ EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_FAIR_DELTA", "0.10"))
+ EVENT_VALUE_REVERSAL_MAX_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MAX_ASK", "0.45"))
+ EVENT_VALUE_REVERSAL_MIN_ASK = float(os.getenv("EVENT_VALUE_REVERSAL_MIN_ASK", "0.08"))
++
++# Event-reversal exit quarantine.
++# Default is disabled so EVENT_REVERSAL_EDGE positions do not silently become an
++# unvalidated scalp strategy. When disabled, they still exit on game_over and the
++# global max-hold safety net.
++EVENT_REVERSAL_ACTIVE_EXITS_ENABLED = os.getenv(
++    "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED",
++    "false",
++).lower() in {"1", "true", "yes"}
++EVENT_REVERSAL_TAKE_PROFIT_CENTS = float(os.getenv("EVENT_REVERSAL_TAKE_PROFIT_CENTS", "0.08"))
++EVENT_REVERSAL_MAX_HOLD_SEC = int(os.getenv("EVENT_REVERSAL_MAX_HOLD_SEC", "300"))
+ 
+ ENABLE_MATCH_WINNER_GAME3_PROXY = os.getenv(
+     "ENABLE_MATCH_WINNER_GAME3_PROXY", "true"
+diff --git a/main.py b/main.py
+index c880b4b..0000000 100644
+--- a/main.py
++++ b/main.py
+@@ -459,8 +459,12 @@ async def steam_loop(
+     actual_event_logger: ActualDotaEventLogger | None = None,
+     event_value_engine: EventTriggeredValueEngine | None = None,
+     strategy_signal_logger: StrategySignalLogger | None = None,
+     allocator_logger: AllocatorLogger | None = None,
++    dswing_map_end_detected_ns: dict[str, int] | None = None,
+ ):
+     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
+         print("Missing STEAM_API_KEY. Copy .env.example to .env and fill it in.")
+         return
++    if dswing_map_end_detected_ns is None:
++        dswing_map_end_detected_ns = {}
+ 
+     last_mapping_refresh = 0.0
+     _sub_absent_polls: dict[str, int] = {}  # token -> consecutive refreshes absent from live set
+@@ -2328,6 +2332,10 @@ async def main():
+         book_move_logger,
+         strategy_signal_logger,
++        value_logger,
++        dswing_logger,
++        dswing_exit_quality_logger,
++        allocator_logger,
+     ]
+     if match_winner_logger:
+         loggers.append(match_winner_logger)
+@@ -2971,6 +2979,7 @@ async def main():
+                     event_value_engine=event_value_engine,
+                     strategy_signal_logger=strategy_signal_logger,
+                     allocator_logger=allocator_logger,
++                    dswing_map_end_detected_ns=dswing_map_end_detected_ns,
+                 ),
+                 proactive_refresh_loop(session),
+             ]
+diff --git a/tests/test_strategy_allocator.py b/tests/test_strategy_allocator.py
+index 244207b..0000000 100644
+--- a/tests/test_strategy_allocator.py
++++ b/tests/test_strategy_allocator.py
+@@ -43,9 +43,10 @@ def _cand(strategy: str, token_id: str = "tok_A", match_id: str = "m1",
+ # ---------------------------------------------------------------------------
+ 
+ def test_priority_ordering():
+-    assert _priority(_cand("EVENT_CONTINUATION_EDGE")) < _priority(_cand("EVENT_REVERSAL_EDGE"))
+-    assert _priority(_cand("EVENT_REVERSAL_EDGE")) < _priority(_cand("VALUE_EDGE"))
+-    assert _priority(_cand("VALUE_EDGE")) < _priority(_cand("DSWING"))
++    assert _priority(_cand("EVENT_CONTINUATION_EDGE")) < _priority(_cand("VALUE_EDGE"))
++    assert _priority(_cand("VALUE_EDGE")) < _priority(_cand("EVENT_REVERSAL_EDGE"))
++    assert _priority(_cand("EVENT_REVERSAL_EDGE")) < _priority(_cand("DSWING"))
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -89,6 +90,25 @@ def test_event_preempts_value():
+     assert "VALUE_EDGE" in row["blocked_strategies"]
+ 
+ 
++# ---------------------------------------------------------------------------
++# test_value_preempts_reversal
++# ---------------------------------------------------------------------------
++
++def test_value_preempts_reversal():
++    """VALUE_EDGE wins over EVENT_REVERSAL_EDGE on same token."""
++    c_value = _cand("VALUE_EDGE", token_id="tok_A", edge=0.10)
++    c_rev = _cand("EVENT_REVERSAL_EDGE", token_id="tok_A", edge=0.15)
++    decisions = allocate_candidates([c_rev, c_value], entered_tokens=set())
++    assert len(decisions) == 1
++    d = decisions[0]
++    assert d.winner is c_value
++    assert len(d.blocked) == 1
++    assert d.blocked[0] is c_rev
++    assert d.block_reason == "preempted_by_value"
++    row = decision_to_log_row(d)
++    assert row is not None
++    assert row["winner_strategy"] == "VALUE_EDGE"
++    assert "EVENT_REVERSAL_EDGE" in row["blocked_strategies"]
++
++
+ # ---------------------------------------------------------------------------
+ # test_reversal_preempts_value_lower_priority_than_continuation
+ # ---------------------------------------------------------------------------
+diff --git a/tests/test_event_reversal_exit.py b/tests/test_event_reversal_exit.py
+new file mode 100644
+index 0000000..0000000
+--- /dev/null
++++ b/tests/test_event_reversal_exit.py
+@@ -0,0 +1,80 @@
++"""Tests for EVENT_REVERSAL_EDGE live exit quarantine/config."""
++from __future__ import annotations
++
++from types import SimpleNamespace
++
++import config
++from live_exit_engine import decide_live_exit
++
++
++ENTRY_NS = 1_000_000_000_000
++
++
++def _pos(**overrides):
++    base = {
++        "token_id": "tok_A",
++        "match_id": "m1",
++        "trader_kind": "value",
++        "strategy_kind": "EVENT_REVERSAL_EDGE",
++        "hold_policy": "reversal_bounce_or_thesis",
++        "entry_time_ns": ENTRY_NS,
++        "entry_price": 0.40,
++        "fair_price": 0.50,
++        "expected_move": 0.10,
++        "backed_direction": "radiant",
++    }
++    base.update(overrides)
++    return SimpleNamespace(**base)
++
++
++def test_event_reversal_active_exits_disabled_holds_even_at_bounce(monkeypatch):
++    monkeypatch.setattr(config, "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED", False, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_TAKE_PROFIT_CENTS", 0.08, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_MAX_HOLD_SEC", 60, raising=False)
++
++    decision = decide_live_exit(
++        position=_pos(),
++        book={"best_bid": 0.60},
++        game_over_match_ids=set(),
++        now_ns=ENTRY_NS + 30_000_000_000,
++    )
++
++    assert decision.should_exit is False
++    assert decision.reason == ""
++
++
++def test_event_reversal_active_exits_enabled_takes_bounce_profit(monkeypatch):
++    monkeypatch.setattr(config, "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED", True, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_TAKE_PROFIT_CENTS", 0.08, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_MAX_HOLD_SEC", 300, raising=False)
++
++    decision = decide_live_exit(
++        position=_pos(),
++        book={"best_bid": 0.49},
++        game_over_match_ids=set(),
++        now_ns=ENTRY_NS + 30_000_000_000,
++    )
++
++    assert decision.should_exit is True
++    assert decision.reason == "event_reversal_bounce_take_profit"
++    assert decision.reference_bid == 0.49
++
++
++def test_event_reversal_active_exits_enabled_times_out(monkeypatch):
++    monkeypatch.setattr(config, "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED", True, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_TAKE_PROFIT_CENTS", 0.08, raising=False)
++    monkeypatch.setattr(config, "EVENT_REVERSAL_MAX_HOLD_SEC", 60, raising=False)
++
++    decision = decide_live_exit(
++        position=_pos(),
++        book={"best_bid": 0.42},
++        game_over_match_ids=set(),
++        now_ns=ENTRY_NS + 61_000_000_000,
++    )
++
++    assert decision.should_exit is True
++    assert decision.reason == "event_reversal_timeout"
++    assert decision.reference_bid == 0.42
++
++
++def test_event_reversal_still_exits_on_game_over_when_active_exits_disabled(monkeypatch):
++    monkeypatch.setattr(config, "EVENT_REVERSAL_ACTIVE_EXITS_ENABLED", False, raising=False)
++

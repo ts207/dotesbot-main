@@ -457,10 +457,13 @@ async def steam_loop(
     event_value_engine: EventTriggeredValueEngine | None = None,
     strategy_signal_logger: StrategySignalLogger | None = None,
     allocator_logger: AllocatorLogger | None = None,
+    dswing_map_end_detected_ns: dict[str, int] | None = None,
 ):
     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
         print("Missing STEAM_API_KEY. Copy .env.example to .env and fill it in.")
         return
+    if dswing_map_end_detected_ns is None:
+        dswing_map_end_detected_ns = {}
 
     last_mapping_refresh = 0.0
     _sub_absent_polls: dict[str, int] = {}  # token -> consecutive refreshes absent from live set
@@ -2330,6 +2333,10 @@ async def main():
         signal_markout_logger,
         book_move_logger,
         strategy_signal_logger,
+        value_logger,
+        dswing_logger,
+        dswing_exit_quality_logger,
+        allocator_logger,
     ]
     if match_winner_logger:
         loggers.append(match_winner_logger)
@@ -2983,6 +2990,7 @@ async def main():
                     event_value_engine=event_value_engine,
                     strategy_signal_logger=strategy_signal_logger,
                     allocator_logger=allocator_logger,
+                    dswing_map_end_detected_ns=dswing_map_end_detected_ns,
                 ),
                 proactive_refresh_loop(session),
             ]

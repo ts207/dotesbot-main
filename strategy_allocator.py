@@ -3,10 +3,11 @@
 Replaces implicit runtime priority (event fires → value blocked by _entered_toks)
 with a transparent collect → allocate → execute pattern.
 
-Priority order (mirrors existing implicit order):
-  1. EVENT_CONTINUATION_EDGE / EVENT_REVERSAL_EDGE
+Priority order:
+  1. EVENT_CONTINUATION_EDGE
   2. VALUE_EDGE
-  3. DSWING
+  3. EVENT_REVERSAL_EDGE
+  4. DSWING
 
 Per token_id:
   - Token already in entered_tokens → all candidates blocked (already_entered).
@@ -26,8 +27,8 @@ from typing import Any
 # Priority — lower index = higher priority.
 _STRATEGY_PRIORITY: dict[str, int] = {
     "EVENT_CONTINUATION_EDGE": 0,
-    "EVENT_REVERSAL_EDGE": 1,
-    "VALUE_EDGE": 2,
+    "VALUE_EDGE": 1,
+    "EVENT_REVERSAL_EDGE": 2,
     "DSWING": 3,
 }
 
