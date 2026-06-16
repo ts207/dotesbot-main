@@ -16,9 +16,6 @@ except ImportError:
 load_dotenv()
 
 RUN_ID = os.getenv("RUN_ID") or str(int(time.time()))
-DOTA_FAIR_MODEL_PATH = os.getenv("DOTA_FAIR_MODEL_PATH", "dota_fair_model/models/dota_fair.joblib")
-
-
 def _git_code_version() -> str:
     env_version = os.getenv("CODE_VERSION")
     if env_version:
@@ -161,8 +158,6 @@ MIN_LAG = float(os.getenv("MIN_LAG", os.getenv("MIN_EDGE", "0.05")))
 MIN_EXECUTABLE_EDGE = float(os.getenv("MIN_EXECUTABLE_EDGE", "0.05"))
 UNDERDOG_REVERSAL_MIN_EDGE = float(os.getenv("UNDERDOG_REVERSAL_MIN_EDGE", "0.02"))
 UNDERDOG_REVERSAL_MIN_LAG = float(os.getenv("UNDERDOG_REVERSAL_MIN_LAG", "0.03"))
-MIN_ML_EDGE = float(os.getenv("MIN_ML_EDGE", "0.10"))
-
 # --- S3: net-worth value gate (2026-06-03) ---------------------------------
 # The only robust edge (806-signal analysis + game logic): net worth predicts
 # the winner, and profit = gap between net-worth-implied fair and market price.
@@ -179,7 +174,6 @@ S3_MAX_PRICE = float(os.getenv("S3_MAX_PRICE", "0.84"))     # never pay above th
 # once more data accumulates. Fail-open if Elo unknown.
 S3_ELO_ENABLED = os.getenv("S3_ELO_ENABLED", "false").lower() == "true"
 S3_ELO_MARGIN = int(os.getenv("S3_ELO_MARGIN", "50"))      # skip if backed_elo < opp_elo - this
-ML_STRATEGY_ENABLED = os.getenv("ML_STRATEGY_ENABLED", "false").lower() in {"1", "true", "yes"}
 PRICE_LOOKBACK_SEC = float(os.getenv("PRICE_LOOKBACK_SEC", "10"))
 DEFAULT_MAX_FILL_PRICE = float(os.getenv("DEFAULT_MAX_FILL_PRICE", "0.80"))
 MAX_SPREAD = float(os.getenv("MAX_SPREAD", "0.15"))

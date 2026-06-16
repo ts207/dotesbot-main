@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+import collections
 from typing import Callable
 
 import websockets
@@ -32,6 +33,7 @@ class BookStore:
     def __init__(self):
         self.books = {}
         self.last_any_msg_ns = None
+        self.book_history = collections.defaultdict(lambda: collections.deque(maxlen=200))
 
     def record_msg(self):
         self.last_any_msg_ns = time.time_ns()
@@ -48,6 +50,30 @@ class BookStore:
             "received_at_ns": None,
             "raw": None,
         })
+
+    def _record_history(self, book: dict):
+        asset_id = book["asset_id"]
+        bid = book.get("best_bid")
+        ask = book.get("best_ask")
+        mid = (bid + ask) / 2 if bid is not None and ask is not None else None
+        self.book_history[asset_id].append({
+            "received_at_ns": book.get("received_at_ns"),
+            "bid": bid,
+            "ask": ask,
+            "mid": mid,
+        })
+
+    def get_snapshot_before(self, asset_id: str, max_ns: int) -> dict | None:
+        """Returns the most recent book state received on or before max_ns."""
+        hist = self.book_history.get(asset_id)
+        if not hist:
+            return None
+        # Traverse backward (newest to oldest) to find the first snapshot <= max_ns
+        for snap in reversed(hist):
+            snap_ns = snap.get("received_at_ns")
+            if snap_ns and snap_ns <= max_ns:
+                return snap
+        return None
 
     def _recompute_top(self, book: dict):
         bids = book.get("bids", {})
@@ -84,6 +110,7 @@ class BookStore:
             book["ask_size"] = ask_size
         book["received_at_ns"] = time.time_ns()
         book["raw"] = raw
+        self._record_history(book)
         return book
 
     def replace_snapshot(self, asset_id: str, bids: list, asks: list, raw=None) -> dict:
@@ -106,6 +133,7 @@ class BookStore:
         self._recompute_top(book)
         book["received_at_ns"] = time.time_ns()
         book["raw"] = raw
+        self._record_history(book)
         return book
 
     def apply_price_change(self, asset_id: str, side: str, price: float, size: float, raw=None) -> dict:
@@ -118,8 +146,9 @@ class BookStore:
             else:
                 levels[price] = size
             self._recompute_top(book)
-        book["received_at_ns"] = time.time_ns()
-        book["raw"] = raw
+            book["received_at_ns"] = time.time_ns()
+            book["raw"] = raw
+            self._record_history(book)
         return book
 
     def get(self, asset_id: str) -> dict | None:

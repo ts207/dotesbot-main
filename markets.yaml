@@ -11607,3 +11607,66 @@ markets:
   steam_radiant_team: Team Resilience
   steam_dire_team: Team Refuser
   steam_side_mapping: reversed
+- name: 'Dota 2: 4ikibamboni vs Spirit Academy - Game 1 Winner'
+  condition_id: '0xc0ef33df8d4451c790ca43c74c9bd13c18bbbc9e22c879637b03ec64a8ae3fda'
+  market_id: '2553703'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: 4ikibamboni
+  no_team: Spirit Academy
+  yes_token_id: '65034628956166163860459226820683079678815771722683491625711793063265537469956'
+  no_token_id: '11993789905930618929797115479091935795039315832030700647060946719375080872370'
+  dota_match_id: '8854136844'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 17:02:09'
+  auto_mapped_at_utc: '2026-06-16T12:39:34+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: 4ikibamboni
+  steam_dire_team: Team Spirit Academy
+  steam_side_mapping: normal
+- name: 'Dota 2: Carstensz vs Ivory - Game 1 Winner'
+  condition_id: '0x910fd8909197bf3a3e291084f4208cf3fbfb603838139524fe4155f37b8bd937'
+  market_id: '2529378'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Carstensz
+  no_team: Ivory
+  yes_token_id: '113470224052791684419471375507739353974970183068495836572467876786506199877730'
+  no_token_id: '108884255828334567549973021902224091035975501587787702045505372626289278567333'
+  dota_match_id: '8854136736'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-13 07:48:57'
+  auto_mapped_at_utc: '2026-06-16T12:48:45+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Ivory
+  steam_dire_team: Carstensz Esports
+  steam_side_mapping: reversed
+- name: 'Dota 2: Yakult Brothers vs Vici Gaming - Game 1 Winner'
+  condition_id: '0xe2c5c75bf3ad2bf138e454468b7732e739baa409ad81d516c81c59c0cdc74927'
+  market_id: '2552716'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Yakult Brothers
+  no_team: Vici Gaming
+  yes_token_id: '19580164639920989548621496680197104559987323053913639425976388268355745264983'
+  no_token_id: '67912365605334974161354811555361007958250209660544781079431391894244851829819'
+  dota_match_id: '8854153066'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-15 14:20:06'
+  auto_mapped_at_utc: '2026-06-16T12:54:17+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Yakutou Brothers
+  steam_dire_team: Vici Gaming
+  steam_side_mapping: reversed

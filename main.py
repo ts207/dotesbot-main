@@ -40,14 +40,13 @@ from team_utils import norm_team
 
 # Current paper runtime has two entry strategies: VALUE and DSWING. Event
 # detection remains enabled for diagnostics, but it does not create entries.
-ENABLE_EVENT_ENTRY_STRATEGY = False
-
+ENABLE_LEGACY_EVENT_DIAGNOSTICS = True
+ENABLE_LEGACY_EVENT_ENTRIES = False
 from config import (
     STEAM_API_KEY, STEAM_POLL_SECONDS, PAPER_EXECUTION_DELAY_MS, LIVE_TRADING,
     ALLOW_CONFIRMATION_ONLY_LIVE_TRADES, MAX_BOOK_AGE_MS, MIN_EXECUTABLE_EDGE,
     MIN_LAG, MAX_SPREAD, MIN_ASK_SIZE_USD, PAPER_SLIPPAGE_CENTS, PAPER_TRADE_SIZE_USD,
-    PRICE_LOOKBACK_SEC, REQUIRE_TOP_LIVE_FOR_SIGNALS, DOTA_FAIR_MODEL_PATH,
-    MIN_ML_EDGE, ML_STRATEGY_ENABLED,
+    PRICE_LOOKBACK_SEC, REQUIRE_TOP_LIVE_FOR_SIGNALS,
     ENABLE_MATCH_WINNER_GAME3_PROXY, ENABLE_MATCH_WINNER_RESEARCH,
     ENABLE_REAL_LIVE_TRADING, MAX_TRADE_USD, MAX_STEAM_AGE_MS,
     BOOK_MOVE_GRACE_SEC, BOOK_MOVE_ALPHA_THRESHOLD,
@@ -785,6 +784,7 @@ async def steam_loop(
                         actual_events = actual_event_detector.observe(game)
                         if actual_events:
                             # Pre-event book capture for EVENT strategy horizon markouts
+                            event_ns = actual_events[0].received_at_ns if actual_events else int(game.get("received_at_ns") or 0)
                             for mapping in mappings:
                                 if str(mapping.get("dota_match_id") or "") in {match_id, str(game.get("lobby_id") or "")}:
                                     for key in ("yes_token_id", "no_token_id"):
@@ -792,15 +792,14 @@ async def steam_loop(
                                         if tok:
                                             b = book_store.get(tok)
                                             if b:
-                                                b["pre_event_bid"] = b.get("best_bid")
-                                                b["pre_event_ask"] = b.get("best_ask")
-                                                if b.get("best_bid") is not None and b.get("best_ask") is not None:
-                                                    b["pre_event_price"] = (b["best_bid"] + b["best_ask"]) / 2
-                                                else:
-                                                    b["pre_event_price"] = None
-                                                b["pre_event_book_received_at_ns"] = b.get("received_at_ns")
-                                                now_ns = time.time_ns()
-                                                b["pre_event_book_age_ms"] = (now_ns - b["received_at_ns"]) / 1e6 if b.get("received_at_ns") else None
+                                                snap = book_store.get_snapshot_before(tok, event_ns)
+                                                if snap:
+                                                    b["pre_event_bid"] = snap.get("bid")
+                                                    b["pre_event_ask"] = snap.get("ask")
+                                                    b["pre_event_price"] = snap.get("mid")
+                                                    b["pre_event_book_received_at_ns"] = snap.get("received_at_ns")
+                                                    now_ns = time.time_ns()
+                                                    b["pre_event_book_age_ms"] = (now_ns - snap["received_at_ns"]) / 1e6 if snap.get("received_at_ns") else None
 
                             actual_events_by_match[match_id] = actual_events
                             if actual_event_logger is not None:
@@ -1175,7 +1174,7 @@ async def steam_loop(
                         # Log contested decisions (preemptions + already_entered).
                         if allocator_logger is not None:
                             for _dec in _decisions:
-                                _row = decision_to_log_row(_dec)
+                                _row = decision_to_log_row(_dec, include_uncontested=True)
                                 if _row:
                                     allocator_logger.log_decision(_row)
 
@@ -1982,7 +1981,7 @@ async def steam_loop(
                                             signal["decision"] = "skip"
                                             signal["reason"] = "research_mode_match_winner"
 
-                                if ENABLE_EVENT_ENTRY_STRATEGY and signal["decision"] == "paper_buy_yes":
+                                if ENABLE_LEGACY_EVENT_ENTRIES and signal["decision"] == "paper_buy_yes":
                                     candidates.append({
                                         "signal": signal,
                                         "direction": event_direction,
@@ -2206,8 +2205,7 @@ async def main():
     _write_heartbeat()
     _startup_hb_task = asyncio.create_task(_startup_heartbeat_loop())
     print(
-        f"Runtime config: LIVE_TRADING={LIVE_TRADING} MODE={os.getenv('MODE', 'paper')} "
-        f"ML_STRATEGY_ENABLED={ML_STRATEGY_ENABLED}"
+        f"Runtime config: LIVE_TRADING={LIVE_TRADING} MODE={os.getenv('MODE', 'paper')}"
     )
 
     # Initial sync: try to link any already-live Steam games before starting

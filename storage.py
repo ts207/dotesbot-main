@@ -1480,9 +1480,8 @@ class StrategySignalLogger(CsvLogger):
 
 
 class AllocatorLogger(CsvLogger):
-    """Logs contested allocation decisions: any tick where one strategy preempts
-    another on the same token, or a token is already held when candidates arrive.
-    Uncontested wins are NOT logged (nothing to attribute).
+    """Logs allocation decisions including preemptions and uncontested wins.
+    Uncontested wins are now logged by default.
     """
 
     def __init__(self, filename: str = ALLOCATOR_LOG_CSV_PATH):
@@ -1503,6 +1502,8 @@ class AllocatorLogger(CsvLogger):
             "winner_entry_trigger",
             "winner_exit_trigger",
             "winner_primary_metric",
+            "candidate_count",
+            "blocked_count",
             "blocked_strategies",   # JSON list of strategy names
             "blocked_edges",        # JSON list of edge values
             "blocked_fairs",        # JSON list of fair values
