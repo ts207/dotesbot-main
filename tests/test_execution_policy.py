@@ -5,6 +5,14 @@ import time
 from execution_policy import POLICY_VERSION, PolicyInput, evaluate_policy
 from live_executor import LiveExecutor
 from storage import LiveAttemptLogger
+import storage_v2
+import pytest
+
+@pytest.fixture(autouse=True)
+def mock_storage_path(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "test_state.sqlite")
+    monkeypatch.setattr(storage_v2, "DEFAULT_DB_PATH", db_path)
+    return db_path
 
 
 def _policy_input(**overrides):
@@ -97,3 +105,88 @@ def test_live_attempt_logger_has_policy_columns(tmp_path):
     assert "paper_only_bypass" in logger.headers
     assert "policy_version" in logger.headers
     assert "risk_tags" in logger.headers
+
+def test_execution_policy_rejects_stale_steam():
+    now_ns = time.time_ns()
+    game = {"data_source": "top_live", "received_at_ns": now_ns - 120_000_000_000}
+    result = evaluate_policy(_policy_input(now_ns=now_ns, game=game))
+    assert result.allowed is False
+    assert "steam_stale" in result.live_skip_reason
+
+def test_execution_policy_orientation_flip():
+    inp = _policy_input()
+    inp.game["radiant_lead"] = 10000
+    inp.mapping["steam_side_mapping"] = "normal"
+    inp.mapping["yes_token_id"] = "TOK1"
+    inp.book["best_ask"] = 0.20 # Unreasonably low for a huge lead
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "orientation_flip_suspected" in result.live_skip_reason
+
+def test_execution_policy_rejects_wide_spread():
+    inp = _policy_input()
+    inp.book["best_bid"] = 0.10
+    inp.book["best_ask"] = 0.90
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "spread_too_wide" in result.live_skip_reason
+
+def test_execution_policy_rejects_low_decisive_stomp_quality():
+    inp = _policy_input()
+    inp.signal["event_type"] = "POLL_DECISIVE_STOMP"
+    inp.signal["event_quality"] = 0.1 # Very low quality
+    inp.book["best_ask"] = 0.70 # above the 0.65 floor
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "decisive_stomp_quality_too_low" in result.live_skip_reason
+
+def test_execution_policy_rejects_low_decisive_stomp_price_floor():
+    inp = _policy_input()
+    inp.signal["event_type"] = "POLL_DECISIVE_STOMP"
+    inp.signal["event_quality"] = 1.0 
+    inp.book["best_ask"] = 0.60 # below the 0.65 floor
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "decisive_stomp_price_below_floor" in result.live_skip_reason
+
+def test_execution_policy_max_positions():
+    inp = _policy_input()
+    inp.risk_state["open_positions"] = 1000 # way above max
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "max_open_positions" in result.live_skip_reason
+
+def test_execution_policy_max_drawdown():
+    inp = _policy_input()
+    inp.risk_state["daily_realized_pnl_usd"] = -1000 # busted
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "daily_drawdown_breaker" in result.live_skip_reason
+
+def test_execution_policy_double_match_entry_blocked_for_event():
+    inp = _policy_input()
+    inp.signal["strategy_family"] = "EVENT"
+    inp.signal["event_direction"] = "YES"
+    inp.risk_state["submitted_match_sides"] = ["YES"]
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "match_already_submitted" in result.live_skip_reason
+
+def test_execution_policy_double_match_entry_allowed_for_value():
+    inp = _policy_input()
+    inp.signal["strategy_family"] = "VALUE"
+    inp.signal["event_type"] = "VALUE"
+    inp.signal["event_direction"] = "YES"
+    inp.risk_state["submitted_match_sides"] = ["YES"]
+    result = evaluate_policy(inp)
+    assert result.allowed is True
+
+def test_execution_policy_family_cap():
+    inp = _policy_input()
+    inp.signal["strategy_family"] = "EVENT"
+    inp.signal["size_usd"] = 10
+    inp.risk_state["EVENT_max_live_usd"] = 50
+    inp.risk_state["submitted_family_usd"] = {"EVENT": 45}
+    result = evaluate_policy(inp)
+    assert result.allowed is False
+    assert "strategy_family_cap" in result.live_skip_reason

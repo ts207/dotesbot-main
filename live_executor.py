@@ -853,12 +853,17 @@ class LiveExecutor:
         return "real_live" if ENABLE_REAL_LIVE_TRADING else "dry_live"
 
     def _risk_state_for_policy(self, match_id: str | None = None) -> dict[str, Any]:
-        return {
+        state = {
             "total_submitted_usd": self.total_submitted_usd,
             "open_positions": self.open_positions,
             "daily_realized_pnl_usd": self.daily_realized_pnl_usd,
             "match_open_usd": self._submitted_match_usd.get(str(match_id), 0.0) if match_id else None,
+            "submitted_match_sides": self._submitted_match_sides.get(str(match_id)) if match_id else None,
+            "submitted_family_usd": self._submitted_family_usd,
         }
+        for family in ["VALUE", "EVENT", "DSWING"]:
+            state[f"{family}_max_live_usd"] = _strategy_family_cap_usd(family)
+        return state
 
     def _apply_policy_result(self, attempt: LiveOrderAttempt, result: PolicyResult) -> LiveOrderAttempt:
         attempt.policy_allowed = result.allowed
@@ -939,179 +944,35 @@ class LiveExecutor:
         )
         if not policy_result.allowed:
             return self._reject(signal, mapping, game, policy_result.reason, policy_result=policy_result)
-        if not ALLOW_EVENT_TRADES:
-            return self._reject(signal, mapping, game, "event_trades_disabled")
-        if ALLOW_GAME_OVER_ONLY and not game.get("game_over"):
-            return self._reject(signal, mapping, game, "game_over_only")
+
         if LIVE_ORDER_TYPE not in _ALLOWED_ORDER_TYPES:
             return self._reject(signal, mapping, game, "order_type_not_allowed")
-        if self.total_submitted_usd >= MAX_TOTAL_LIVE_USD:
-            return self._reject(signal, mapping, game, "max_total_live_usd_reached")
-        if self.open_positions >= MAX_OPEN_POSITIONS:
-            return self._reject(signal, mapping, game, "max_open_positions_reached")
-        if self.daily_realized_pnl_usd <= -MAX_DAILY_DRAWDOWN_USD:
-            return self._reject(signal, mapping, game, f"daily_drawdown_circuit_breaker:{self.daily_realized_pnl_usd:.2f}")
         disk_reason = self.disk_guard.reject_reason()
         if disk_reason:
             return self._reject(signal, mapping, game, disk_reason)
 
-        # 2026-06-03 — ORIENTATION SANITY GUARD. The binder occasionally flips the
-        # token↔team mapping (yes_token bound to the wrong outcome — confirmed on
-        # GLYPH vs Carstensz). A flip is catastrophic AND invisible to the value
-        # gate (buying the LOSER cheap looks like a perfect value buy). Block any
-        # trade where the yes_token price grossly contradicts yes_team's net-worth
-        # standing. Conservative thresholds so genuine value trades aren't caught.
-        _rl = _to_float(game.get("radiant_lead"))
-        if _rl is not None:
-            _yes_team = mapping.get("yes_team")
-            _srt = (mapping.get("steam_radiant_team") or "").strip()
-            _yes_is_rad = (_srt == _yes_team) if _srt else (game.get("radiant_team") == _yes_team)
-            _yes_lead = _rl if _yes_is_rad else -_rl
-            _yb = book_store.get(mapping.get("yes_token_id")) if book_store else None
-            _yp = _to_float((_yb or {}).get("best_ask"))
-            if _yp is not None and ((_yes_lead > 5000 and _yp < 0.35) or (_yes_lead < -5000 and _yp > 0.65)):
-                return self._reject(signal, mapping, game,
-                    f"orientation_flip_suspected:yes_lead={_yes_lead:.0f}_yes_ask={_yp:.2f}")
-
         event_type = str(signal.get("event_type") or "")
-        cluster_types = {e for e in str(signal.get("cluster_event_types") or event_type).split("+") if e}
         is_book_move = event_type == "BOOK_MOVE"
-        event_direction = str(signal.get("event_direction") or "")
-
-        # Block ALL second entries on a match.
-        # 2026-05-29 added opposite-direction allowance, then REVERTED after
-        # 14-trade backtest: 0/4 win rate on opposite POLL_FIGHT_SWING, -$28.77
-        # net across all opposite trades. 8 matches went from winning first
-        # bet to worse total with opposite. The engine's first-direction
-        # signal is good; opposite-direction "reversal" signals are mostly
-        # noise that dilute winning positions.
-        existing = self._submitted_match_sides.get(signal_match_id)
-        existing_dirs = (set(existing) if isinstance(existing, (list, set))
-                         else ({existing} if existing else set()))
-        if existing_dirs:
-            reason = ("match_already_submitted" if event_direction in existing_dirs
-                      else "match_direction_conflict")
-            return self._reject(signal, mapping, game, reason)
-
-        if not is_book_move:
-            if LIVE_REQUIRE_CADENCE_SCHEMA and signal.get("event_schema_version") != "cadence_v1":
-                return self._reject(signal, mapping, game, "missing_cadence_event_schema")
-            cadence_quality = str(signal.get("source_cadence_quality") or "")
-            if LIVE_ALLOWED_CADENCE_QUALITIES and cadence_quality and cadence_quality not in LIVE_ALLOWED_CADENCE_QUALITIES:
-                return self._reject(
-                    signal, mapping, game,
-                    f"cadence_quality_not_live_allowed:got={cadence_quality}_allowed={','.join(sorted(LIVE_ALLOWED_CADENCE_QUALITIES))}",
-                )
-            event_quality = _to_float(signal.get("event_quality"))
-            if event_quality is None or event_quality < LIVE_MIN_EVENT_QUALITY:
-                _q = f"{event_quality:.3f}" if event_quality is not None else "None"
-                return self._reject(
-                    signal, mapping, game,
-                    f"event_quality_too_low:q={_q}_min={LIVE_MIN_EVENT_QUALITY:.3f}",
-                )
-            if event_type == "POLL_DECISIVE_STOMP" and (event_quality is None or event_quality < LIVE_MIN_DECISIVE_STOMP_QUALITY):
-                _q = f"{event_quality:.3f}" if event_quality is not None else "None"
-                return self._reject(
-                    signal, mapping, game,
-                    f"decisive_stomp_quality_too_low:q={_q}_min={LIVE_MIN_DECISIVE_STOMP_QUALITY:.3f}",
-                )
-        if event_type == "POLL_DECISIVE_STOMP":
-            ask = _to_float(signal.get("ask"))
-            # Below 0.65 the two losses at 0.60/0.63 dominate; stomp signal is unreliable at low prices
-            if ask is not None and ask < 0.65:
-                return self._reject(signal, mapping, game, f"decisive_stomp_price_below_floor:ask={ask:.4f}_floor=0.6500")
-        if event_type == "POLL_FIGHT_SWING":
-            ask = _to_float(signal.get("ask"))
-            # Above 0.82 win rate drops sharply; alpha concentrated at ask ≤ 0.82
-            if ask is not None and ask > 0.82:
-                return self._reject(signal, mapping, game, f"fight_swing_price_above_cap:ask={ask:.4f}_cap=0.8200")
-        if event_type == "OBJECTIVE_CONVERSION_T3":
-            ask = _to_float(signal.get("ask"))
-            edge = _to_float(signal.get("executable_edge"))
-            if ask is not None and ask > 0.85 and (edge is None or edge < 0.08):
-                _e = f"{edge:.4f}" if edge is not None else "None"
-                return self._reject(
-                    signal, mapping, game,
-                    f"objective_conversion_t3_requires_8c_edge_above_85c:ask={ask:.4f}_edge={_e}",
-                )
-        _ask_terminal = _to_float(signal.get("ask"))
-        if _ask_terminal is not None and _ask_terminal >= 0.95 and event_type != "THRONE_EXPOSED":
-            return self._reject(signal, mapping, game, f"chasing_terminal_price:ask={_ask_terminal:.4f}")
-        if not is_book_move:
-            if DISABLE_STRUCTURE_TRADES and (event_type in STRUCTURE_EVENTS or cluster_types <= STRUCTURE_EVENTS):
-                return self._reject(signal, mapping, game, "structure_trade_disabled")
-            if TRADE_EVENTS and not (event_type in TRADE_EVENTS or cluster_types & TRADE_EVENTS):
-                return self._reject(signal, mapping, game, "event_not_allowed")
-            # 2026-06-01 — Events explicitly in TRADE_EVENTS (operator allowlist)
-            # override the taxonomy tier. POLL_FIRST_SWING_SETTLE (S1, the core
-            # strategy) has tier "unknown" because it was never added to the
-            # event_taxonomy tiers — so this gate rejected it as
-            # "unknown_event_not_live_tradable" even though it's the primary
-            # tradeable event. TRADE_EVENTS is the authoritative tradeable set.
-            tier = event_tier(event_type)
-            if event_type not in TRADE_EVENTS:
-                if tier == "C" and not ALLOW_CONFIRMATION_ONLY_LIVE_TRADES:
-                    return self._reject(signal, mapping, game, "confirmation_only_event")
-                if tier in {"research", "block", "unknown"}:
-                    return self._reject(signal, mapping, game, f"{tier}_event_not_live_tradable")
-
-        fair = _to_float(signal.get("fair_price"))
-        lag = _to_float(signal.get("lag"))
-        edge = _to_float(signal.get("executable_edge"))
-        # 2026-06-01 — Hold-to-settle events (EXIT_HORIZON=0) hold to $0/$1, so the
-        # momentum gates (edge/lag = short-horizon markout) don't apply — the cap +
-        # settle win-rate is the EV check. signal_engine already bypasses these for
-        # hold-to-settle, but the live_executor had its OWN copies that still rejected
-        # every S1/coverage signal (edge≈0 or negative when holding to settle). This
-        # was blocking trades even after they passed signal_engine. Mirror the bypass.
-        from config import EXIT_HORIZON_BY_EVENT as _EH_LX
-        _is_hts_lx = _EH_LX.get(event_type, None) == 0
-        if fair is None and not _is_hts_lx:
-            return self._reject(signal, mapping, game, "missing_fair_price")
-        if not _is_hts_lx:
-            if edge is None or edge < MIN_EXECUTABLE_EDGE:
-                _e = f"{edge:.4f}" if edge is not None else "None"
-                return self._reject(signal, mapping, game, f"edge_too_small:edge={_e}_min={MIN_EXECUTABLE_EDGE:.4f}")
-            if not is_book_move and (lag is None or lag < MIN_LAG):
-                _l = f"{lag:.4f}" if lag is not None else "None"
-                return self._reject(signal, mapping, game, f"lag_too_small:lag={_l}_min={MIN_LAG:.4f}")
-
-        steam_age = age_ms(game.get("received_at_ns"))
-        if not is_book_move:
-            if steam_age > MAX_STEAM_AGE_MS:
-                return self._reject(signal, mapping, game, f"steam_stale:age_ms={steam_age}_max={MAX_STEAM_AGE_MS}")
 
         token_id = str(signal.get("token_id") or "")
         book = book_store.get(token_id) if book_store else None
         if not book:
             return self._reject(signal, mapping, game, "missing_live_book")
-        book_age = age_ms(book.get("received_at_ns"))
-        if book_age > MAX_BOOK_AGE_MS:
-            return self._reject(signal, mapping, game, f"book_stale:age_ms={book_age}_max={MAX_BOOK_AGE_MS}")
         ask = _to_float(book.get("best_ask"))
         bid = _to_float(book.get("best_bid"))
         if ask is None or bid is None:
             return self._reject(signal, mapping, game, "missing_bid_or_ask")
-        if ask < 0.05:
-            return self._reject(signal, mapping, game, f"market_near_zero:ask={ask:.4f}")
+
+        fair = _to_float(signal.get("fair_price"))
+        lag = _to_float(signal.get("lag"))
+        edge = _to_float(signal.get("executable_edge"))
         spread = ask - bid
-        if spread > MAX_SPREAD:
-            return self._reject(signal, mapping, game, f"spread_too_wide:spread={spread:.4f}_max={MAX_SPREAD:.4f}")
+        book_age = age_ms(book.get("received_at_ns"))
+        steam_age = age_ms(game.get("received_at_ns"))
         event_max_fill = _to_float(signal.get("max_fill_price")) or DEFAULT_MAX_FILL_PRICE
         event_max_fill = min(max(event_max_fill, 0.0), 0.99)
-        if ask > event_max_fill:
-            return self._reject(signal, mapping, game, f"ask_above_event_max_fill:ask={ask:.4f}_cap={event_max_fill:.4f}")
-        if ask >= 0.95 and event_type != "THRONE_EXPOSED":
-            return self._reject(signal, mapping, game, f"chasing_terminal_price:ask={ask:.4f}")
-
-        # Recompute edge against the fresh best ask immediately before submission.
-        # For BOOK_MOVE signals, skip fresh_edge check — the price_cap gate is the real safety net,
-        # and fresh_edge failures occur when price moves 1-2 ticks during async scheduling.
+        
         fresh_edge = (fair - ask) if fair is not None else 0.0
-        if not is_book_move and not _is_hts_lx and fresh_edge < MIN_EXECUTABLE_EDGE:
-            return self._reject(signal, mapping, game, f"fresh_edge_too_small:fresh_edge={fresh_edge:.4f}_min={MIN_EXECUTABLE_EDGE:.4f}")
-        if event_type == "OBJECTIVE_CONVERSION_T3" and ask > 0.85 and fresh_edge < 0.08:
-            return self._reject(signal, mapping, game, f"objective_conversion_t3_requires_8c_fresh_edge_above_85c:ask={ask:.4f}_fresh_edge={fresh_edge:.4f}")
 
         tick_size = str(mapping.get("tick_size") or LIVE_TICK_SIZE)
         effective_ask = ask
@@ -1536,36 +1397,44 @@ class LiveExecutor:
                 f"mapping_invalid:{';'.join(mapping_result.mapping_errors) or 'confidence_not_1'}"
             )
 
-        # --- budget gates ---
-        if not ALLOW_EVENT_TRADES:
-            return self._reject_value(signal, mapping, game, token_id, size_usd, "event_trades_disabled")
-        if self.total_submitted_usd + size_usd > MAX_TOTAL_LIVE_USD:
-            return self._reject_value(signal, mapping, game, token_id, size_usd, "max_total_live_usd_reached")
-        if self.open_positions >= MAX_OPEN_POSITIONS:
-            return self._reject_value(signal, mapping, game, token_id, size_usd, "max_open_positions_reached")
-        family_cap = _strategy_family_cap_usd(strategy_family)
-        family_used = float(self._submitted_family_usd.get(strategy_family, 0.0))
-        if family_used + size_usd > family_cap:
-            return self._reject_value(
-                signal, mapping, game, token_id, size_usd,
-                f"strategy_family_cap:{strategy_family}:used={family_used:.1f}_cap={family_cap:.1f}"
+        signal_dict = {
+            "event_type": attempt_event_type,
+            "strategy_kind": attempt_event_type,
+            "strategy_family": strategy_family,
+            "strategy_subtype": strategy_subtype,
+            "event_direction": str(signal.direction),
+            "token_id": token_id,
+            "side": signal.side,
+            "fair_price": signal.fair_price,
+            "executable_edge": signal.edge,
+            "size_usd": float(signal.sized_usd),
+            "book_age_ms": signal.book_age_ms,
+            "game_time_sec": signal.game_time_sec,
+            "is_reversal": is_reversal,
+            "is_continuation": is_continuation,
+        }
+        book_for_policy = book_store.get(token_id) if book_store else None
+        policy_result = evaluate_policy(
+            PolicyInput(
+                mode=self._policy_mode(),
+                strategy_kind=attempt_event_type,
+                market_type=str(mapping.get("market_type") or ""),
+                token_id=token_id,
+                side=str(signal.side),
+                signal=signal_dict,
+                game=dict(game),
+                mapping=dict(mapping),
+                book=dict(book_for_policy) if book_for_policy else None,
+                now_ns=time.time_ns(),
+                risk_state=self._risk_state_for_policy(signal_match_id),
             )
-        if self.daily_realized_pnl_usd <= -MAX_DAILY_DRAWDOWN_USD:
-            return self._reject_value(
-                signal, mapping, game, token_id, size_usd,
-                f"daily_drawdown_circuit_breaker:{self.daily_realized_pnl_usd:.2f}")
+        )
+        if not policy_result.allowed:
+            return self._reject_value(signal, mapping, game, token_id, size_usd, policy_result.reason, policy_result=policy_result)
+
         disk_reason = self.disk_guard.reject_reason()
         if disk_reason:
             return self._reject_value(signal, mapping, game, token_id, size_usd, disk_reason)
-        # Per-match exposure cap — the HARD backstop against over-stacking. A value
-        # bet is hold-to-settle and wants ~ONE entry per match; this caps cumulative
-        # submitted USD per match at VALUE_MAX_PER_MATCH (≈ one trade) regardless of
-        # whether the dedup/recording fires. This is what dumped ~$50 into Inner
-        # Circle/MODUS (no cap on this path). Persisted in _submitted_match_usd.
-        match_used = self._submitted_match_usd.get(signal_match_id, 0.0)
-        if match_used + size_usd > VALUE_MAX_PER_MATCH:
-            return self._reject_value(signal, mapping, game, token_id, size_usd,
-                                      f"value_match_cap:used={match_used:.1f}_cap={VALUE_MAX_PER_MATCH:.1f}")
 
         # Re-entry cooldown per (match, direction). Hold-to-settle wants ONE bet
         # per match-side; the cooldown plus the caller's open-position check guard

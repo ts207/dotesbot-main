@@ -135,8 +135,13 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
     checks remain in place while callers migrate their duplicated gates here.
     """
     from config import (
+        ALLOW_CONFIRMATION_ONLY_LIVE_TRADES,
+        ALLOW_EVENT_TRADES,
+        ALLOW_GAME_OVER_ONLY,
+        DISABLE_STRUCTURE_TRADES,
         LIVE_ALLOWED_CADENCE_QUALITIES,
         LIVE_MIN_EVENT_QUALITY,
+        LIVE_MIN_DECISIVE_STOMP_QUALITY,
         LIVE_REQUIRE_CADENCE_SCHEMA,
         DEFAULT_MAX_FILL_PRICE,
         MAX_BOOK_AGE_MS,
@@ -150,7 +155,18 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         MIN_EXECUTABLE_EDGE,
         MIN_LAG,
         TRADE_EVENTS,
+        VALUE_MAX_PER_MATCH,
     )
+    from event_taxonomy import event_tier
+    
+    STRUCTURE_EVENTS = frozenset({
+        "OBJECTIVE_CONVERSION_T2",
+        "OBJECTIVE_CONVERSION_T3",
+        "OBJECTIVE_CONVERSION_T4",
+        "BASE_PRESSURE_T3_COLLAPSE",
+        "BASE_PRESSURE_T4",
+        "THRONE_EXPOSED",
+    })
 
     strategy_disabled = _strategy_disabled(inp)
     if strategy_disabled:
@@ -163,6 +179,11 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         return reject(f"mapping_quarantined:{reason}", risk_tags=("mapping_valid",))
     if str(inp.market_type or "").upper() not in {"MAP_WINNER", "MATCH_WINNER"}:
         return reject("unsupported_market_type", risk_tags=("unsupported_market_type",))
+
+    if not ALLOW_EVENT_TRADES:
+        return reject("event_trades_disabled", risk_tags=("event_trades_disabled",))
+    if ALLOW_GAME_OVER_ONLY and not inp.game.get("game_over"):
+        return reject("game_over_only", risk_tags=("game_over_only",))
 
     if inp.game.get("data_source") not in (None, "", "top_live"):
         return reject("non_top_live_source", risk_tags=("non_top_live_source",))
@@ -192,6 +213,11 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
     ask = _float(inp.book.get("best_ask"))
     if bid is None or ask is None:
         return reject("missing_bid_or_ask", risk_tags=("missing_bid_or_ask",))
+    if ask < 0.05:
+        return reject(
+            f"market_near_zero:ask={ask:.4f}",
+            risk_tags=("market_near_zero",),
+        )
 
     radiant_lead = _float(inp.game.get("radiant_lead"))
     if radiant_lead is not None:
@@ -242,8 +268,24 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         )
 
     event_type = str(inp.signal.get("event_type") or "")
+    cluster_types = {e for e in str(inp.signal.get("cluster_event_types") or event_type).split("+") if e}
+    is_book_move = event_type == "BOOK_MOVE"
+    
     if event_type and TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"} and event_type not in TRADE_EVENTS:
         return reject("event_not_allowed", risk_tags=("event_not_allowed",))
+        
+    if not is_book_move:
+        if DISABLE_STRUCTURE_TRADES and (event_type in STRUCTURE_EVENTS or cluster_types <= STRUCTURE_EVENTS):
+            return reject("structure_trade_disabled", risk_tags=("structure_trade_disabled",))
+        if TRADE_EVENTS and not (event_type in TRADE_EVENTS or cluster_types & TRADE_EVENTS):
+            return reject("event_not_allowed", risk_tags=("event_not_allowed",))
+        tier = event_tier(event_type)
+        if event_type not in TRADE_EVENTS:
+            if tier == "C" and not ALLOW_CONFIRMATION_ONLY_LIVE_TRADES:
+                return reject("confirmation_only_event", risk_tags=("confirmation_only_event",))
+            if tier in {"research", "block", "unknown"}:
+                return reject(f"{tier}_event_not_live_tradable", risk_tags=("event_tier_not_live",))
+
     if event_type and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
         if LIVE_REQUIRE_CADENCE_SCHEMA and inp.signal.get("event_schema_version") != "cadence_v1":
             return reject("cadence_schema_missing", risk_tags=("cadence_schema_missing",))
@@ -258,6 +300,27 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
             return reject(
                 f"event_quality_too_low:q={event_quality:.3f}_min={LIVE_MIN_EVENT_QUALITY:.3f}",
                 risk_tags=("event_quality_too_low",),
+            )
+        if event_type == "POLL_DECISIVE_STOMP" and (event_quality is None or event_quality < LIVE_MIN_DECISIVE_STOMP_QUALITY):
+            _q = f"{event_quality:.3f}" if event_quality is not None else "None"
+            return reject(
+                f"decisive_stomp_quality_too_low:q={_q}_min={LIVE_MIN_DECISIVE_STOMP_QUALITY:.3f}",
+                risk_tags=("event_quality_too_low",),
+            )
+
+    if event_type == "POLL_DECISIVE_STOMP":
+        if ask is not None and ask < 0.65:
+            return reject(f"decisive_stomp_price_below_floor:ask={ask:.4f}_floor=0.6500", risk_tags=("decisive_stomp_price_below_floor",))
+    if event_type == "POLL_FIGHT_SWING":
+        if ask is not None and ask > 0.82:
+            return reject(f"fight_swing_price_above_cap:ask={ask:.4f}_cap=0.8200", risk_tags=("fight_swing_price_above_cap",))
+    if event_type == "OBJECTIVE_CONVERSION_T3":
+        _edge_fresh = _float(inp.signal.get("executable_edge"))
+        if ask is not None and ask > 0.85 and (_edge_fresh is None or _edge_fresh < 0.08):
+            _e = f"{_edge_fresh:.4f}" if _edge_fresh is not None else "None"
+            return reject(
+                f"objective_conversion_t3_requires_8c_edge_above_85c:ask={ask:.4f}_edge={_e}",
+                risk_tags=("objective_conversion_t3_edge",),
             )
 
     if not _is_hold_to_settle(inp.signal):
@@ -288,6 +351,38 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
     match_used = _float(inp.risk_state.get("match_open_usd"))
     if match_used is not None and match_used >= MAX_OPEN_USD_PER_MATCH:
         return reject("max_open_usd_per_match", risk_tags=("max_open_usd_per_match",))
+
+    # Match duplication logic (not applied to VALUE/DSWING which have separate cooldowns/logic)
+    strategy_family = str(inp.signal.get("strategy_family") or "")
+    if strategy_family not in {"VALUE", "DSWING"}:
+        event_direction = str(inp.signal.get("event_direction") or "")
+        existing = inp.risk_state.get("submitted_match_sides")
+        existing_dirs = (set(existing) if isinstance(existing, (list, set))
+                         else ({existing} if existing else set()))
+        if existing_dirs:
+            reason = ("match_already_submitted" if event_direction in existing_dirs
+                      else "match_direction_conflict")
+            return reject(reason, risk_tags=("match_direction_conflict",))
+
+    # Strategy family cap logic
+    strategy_family = str(inp.signal.get("strategy_family") or "")
+    if strategy_family:
+        family_cap = _float(inp.risk_state.get(f"{strategy_family}_max_live_usd")) or MAX_TOTAL_LIVE_USD
+        family_used = _float(inp.risk_state.get("submitted_family_usd", {}).get(strategy_family)) or 0.0
+        size_usd_req = _float(inp.signal.get("size_usd")) or 0.0  # approximate size
+        if family_used + size_usd_req > family_cap:
+            return reject(
+                f"strategy_family_cap:{strategy_family}:used={family_used:.1f}_cap={family_cap:.1f}",
+                risk_tags=("strategy_family_cap",),
+            )
+            
+    # Value specific match cap
+    if strategy_family == "VALUE":
+        if match_used is not None and match_used + size_usd_req > VALUE_MAX_PER_MATCH:
+            return reject(
+                f"value_match_cap:used={match_used:.1f}_cap={VALUE_MAX_PER_MATCH:.1f}",
+                risk_tags=("value_match_cap",),
+            )
 
     return allow(risk_tags=("hold_to_settle_edge_lag_bypass",) if _is_hold_to_settle(inp.signal) else ())
 
