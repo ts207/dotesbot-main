@@ -545,7 +545,65 @@ async def _handle_manual_order(
             "event_type": "MANUAL",
             "manual": True,
             "price_cap": float(order.get("price_cap") or 0) or None,
+            "side": side,
         }
+
+        if ENABLE_REAL_LIVE_TRADING and live_executor is not None:
+            attempt = await live_executor.try_buy_manual(
+                signal=signal,
+                mapping=mapping,
+                token_id=token_id,
+                match_id=match_id or str(mapping.get("dota_match_id") or ""),
+                book_store=book_store,
+            )
+            if attempt.order_status in ("matched", "filled", "submitting"):
+                from positions import LivePosition
+                from state_store import StateStore
+                is_filled = attempt.order_status in ("matched", "filled")
+                entry_px = attempt.fair_price if is_filled else 0.0
+                cost = attempt.submitted_size_usd
+                shares = cost / entry_px if (is_filled and entry_px > 0) else 0.0
+
+                StateStore().get_live_position_store().add(LivePosition(
+                    position_id=f"{attempt.match_id}:{attempt.token_id}:{attempt.created_at_ns}",
+                    state="OPEN" if is_filled else "PENDING_ENTRY",
+                    token_id=attempt.token_id,
+                    opposing_token_id=opposing or "",
+                    match_id=attempt.match_id,
+                    market_name=mapping.get("name"),
+                    side=side,
+                    entry_price=entry_px,
+                    shares=shares,
+                    cost_usd=cost,
+                    entry_time_ns=attempt.created_at_ns,
+                    entry_game_time_sec=0,
+                    event_type="MANUAL",
+                    expected_move=0.0,
+                    fair_price=attempt.price_cap or 0.0,
+                    trader_kind="manual",
+                    exit_horizon_sec=None,
+                    signal_id="manual",
+                    backed_direction="manual",
+                    pending_entry_order_id=attempt.order_id if not is_filled else None,
+                    strategy_kind="MANUAL",
+                    strategy_family="MANUAL",
+                    strategy_subtype=None,
+                    entry_is_reversal=False,
+                    entry_is_continuation=False,
+                    entry_engine="manual",
+                    exit_engine="manual",
+                    hold_policy="manual",
+                ))
+                return {
+                    "status": attempt.order_status,
+                    "mode": "live",
+                    "entry_price": entry_px,
+                    "shares": shares,
+                    "match_id": attempt.match_id,
+                }
+            else:
+                return {"status": "rejected", "reason": attempt.reason_if_rejected}
+
         annotated_signal = _annotate_signal_policy_for_paper(
             signal=signal,
             token_id=token_id,
@@ -574,8 +632,8 @@ async def _handle_manual_order(
                 print(f"manual buy log_entry failed (non-fatal): {_le}")
         print(f"MANUAL ENTER {pos.match_id} {pos.side} price={pos.entry_price:.4f} cost=${pos.cost_usd:.2f}")
         return {
-            "status": "filled" if not ENABLE_REAL_LIVE_TRADING else "submitted",
-            "mode": "paper" if not ENABLE_REAL_LIVE_TRADING else "live",
+            "status": "filled",
+            "mode": "paper",
             "entry_price": pos.entry_price,
             "shares": pos.shares,
             "match_id": pos.match_id,
@@ -1573,7 +1631,7 @@ async def steam_loop(
                                         cost = a.filled_size_usd or a.submitted_size_usd or 0.0
                                         live_position_store.add(LivePosition(
                                             position_id=f"{a.match_id}:{a.token_id}:{a.created_at_ns}",
-                                            state="OPEN",
+                                            state="OPEN" if a.order_status in ("matched", "filled") else "PENDING_ENTRY",
                                             token_id=a.token_id,
                                             opposing_token_id=ds_opp or "",
                                             match_id=a.match_id,
@@ -1620,6 +1678,7 @@ async def steam_loop(
                                             entry_current_game_number=mapping.get("current_game_number") or mapping.get("game_number"),
                                             entry_market_type=mapping.get("market_type"),
                                             entry_book_age_ms=ds_res.book_age_ms,
+                                            pending_entry_order_id=a.order_id if a.order_status not in ("matched", "filled") else None,
                                         ))
                                         mode = "LIVE" if ENABLE_REAL_LIVE_TRADING else "PAPER"
                                         print(f"DSWING {mode} ENTER {mapping.get('name')} {ds_res.side} ask={ds_res.ask:.3f} fair={ds_res.series_fair:.3f} edge={ds_res.edge:+.3f} status={a.order_status}")

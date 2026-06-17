@@ -389,6 +389,23 @@ class LiveCLOBClient:
             )
         return _response_to_dict(resp)
 
+    async def buy_fok_market(self, *, token_id: str, amount_usd: float, price_cap: float, tick_size: str, neg_risk: bool) -> dict[str, Any]:
+        order_args = self._MarketOrderArgs(
+            token_id=str(token_id),
+            amount=float(amount_usd),
+            side="BUY",
+            price=float(price_cap),
+        )
+        options = self._Options(tick_size=str(tick_size), neg_risk=bool(neg_risk) or None)
+        async with self._lock:
+            resp = await asyncio.to_thread(
+                self._client.create_and_post_market_order,
+                order_args,
+                options,
+                self._OrderType.FOK,
+            )
+        return _response_to_dict(resp)
+
     async def buy_gtc_limit(self, *, token_id: str, amount_usd: float, price_cap: float, tick_size: str, neg_risk: bool, limit_price: float | None = None) -> dict[str, Any]:
         """GTC limit buy — posts at limit_price (or price_cap if not given) and rests until filled or cancelled.
         size is in shares = amount_usd / order_price."""
@@ -916,6 +933,17 @@ class LiveExecutor:
         )
         return self._apply_policy_result(attempt, policy_result)
 
+    async def _submit_buy_market(self, *, token_id: str, amount_usd: float, price_cap: float, tick_size: str, neg_risk: bool) -> dict[str, Any]:
+        if LIVE_ORDER_TYPE == "FAK":
+            return await self.client.buy_fak_market(
+                token_id=token_id, amount_usd=amount_usd, price_cap=price_cap, tick_size=tick_size, neg_risk=neg_risk
+            )
+        if LIVE_ORDER_TYPE == "FOK":
+            return await self.client.buy_fok_market(
+                token_id=token_id, amount_usd=amount_usd, price_cap=price_cap, tick_size=tick_size, neg_risk=neg_risk
+            )
+        raise RuntimeError(f"Unsupported market order type: {LIVE_ORDER_TYPE}")
+
     async def try_buy(self, *, signal: dict, mapping: dict, game: dict, book_store) -> LiveOrderAttempt:
         mapping_result = validate_mapping_identity(mapping, game)
         if not mapping_result.ok:
@@ -1064,9 +1092,10 @@ class LiveExecutor:
                 )
 
         neg_risk = bool(mapping.get("neg_risk", False))
+        event_direction = str(signal.get("event_direction") or "")
         attempt = LiveOrderAttempt(
             event_type=event_type,
-            event_direction=str(signal.get("event_direction") or ""),
+            event_direction=event_direction,
             token_id=token_id,
             side=str(signal.get("side") or ""),
             fair_price=fair,
@@ -1132,7 +1161,7 @@ class LiveExecutor:
                     limit_price=gtc_limit_price,
                 )
             else:
-                resp = await self.client.buy_fak_market(
+                resp = await self._submit_buy_market(
                     token_id=token_id,
                     amount_usd=order_usd,
                     price_cap=price_cap,
@@ -1294,11 +1323,20 @@ class LiveExecutor:
             return _reject("ENABLE_REAL_LIVE_TRADING=false")
 
         size_usd = float(signal.get("size_usd", 0.0))
-        if size_usd <= 0: return _reject("size <= 0")
-        if self.total_submitted_usd + size_usd > MAX_TOTAL_LIVE_USD: return _reject("MAX_TOTAL_LIVE_USD exceeded")
-        if self.open_positions >= MAX_OPEN_POSITIONS: return _reject("MAX_OPEN_POSITIONS exceeded")
-        if self.daily_realized_pnl_usd < -MAX_DAILY_DRAWDOWN_USD: return _reject("MAX_DAILY_DRAWDOWN_USD exceeded")
-        if size_usd > MAX_TRADE_USD: return _reject("MAX_TRADE_USD exceeded")
+        from manual_order_policy import evaluate_manual_policy
+        match_used = self._submitted_match_usd.get(match_id, 0.0)
+        
+        policy_result = evaluate_manual_policy(
+            size_usd=size_usd,
+            match_used_usd=match_used,
+            total_submitted_usd=self.total_submitted_usd,
+            open_positions=self.open_positions,
+            daily_realized_pnl_usd=self.daily_realized_pnl_usd,
+            remaining_budget_usd=self.remaining_budget(),
+        )
+
+        if not policy_result.allowed:
+            return _reject(policy_result.reason)
 
         book = book_store.get_book(token_id)
         if not book: return _reject("no_book")
@@ -1401,8 +1439,15 @@ class LiveExecutor:
                 f"mapping_invalid:{';'.join(mapping_result.mapping_errors) or 'confidence_not_1'}"
             )
 
+        if attempt_event_type == "VALUE_EDGE":
+            policy_event_type = "VALUE"
+        elif attempt_event_type in {"EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE"}:
+            policy_event_type = "EVENT_TRIGGERED_VALUE"
+        else:
+            policy_event_type = attempt_event_type
+
         signal_dict = {
-            "event_type": attempt_event_type,
+            "event_type": policy_event_type,
             "strategy_kind": attempt_event_type,
             "strategy_family": strategy_family,
             "strategy_subtype": strategy_subtype,
@@ -1541,12 +1586,12 @@ class LiveExecutor:
             self.client = LiveCLOBClient()
 
         try:
-            resp = await self.client.buy_fak_market(
+            resp = await self._submit_buy_market(
                 token_id=str(token_id),
-                amount_usd=size_usd,
-                price_cap=price_cap,
-                tick_size=tick_size,
-                neg_risk=neg_risk,
+                amount_usd=float(size_usd),
+                price_cap=float(price_cap),
+                tick_size=str(tick_size),
+                neg_risk=bool(neg_risk),
             )
             attempt.response_received_ns = time.time_ns()
         except Exception as exc:
