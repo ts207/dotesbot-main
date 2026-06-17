@@ -35,7 +35,7 @@ def check_heartbeats():
 
 def run_risk_audit(nav):
     try:
-        out = subprocess.check_output([".venv/bin/python", "risk_config_audit.py", str(nav)], stderr=subprocess.STDOUT).decode()
+        out = subprocess.check_output([".venv/bin/python", "risk_config_audit.py", "--nav", str(nav)], stderr=subprocess.STDOUT).decode()
         if "WARN" in out:
             return False, out
         return True, out
@@ -43,7 +43,7 @@ def run_risk_audit(nav):
         return False, e.output.decode()
     except FileNotFoundError:
         try:
-            out = subprocess.check_output(["python3", "risk_config_audit.py", str(nav)], stderr=subprocess.STDOUT).decode()
+            out = subprocess.check_output(["python3", "risk_config_audit.py", "--nav", str(nav)], stderr=subprocess.STDOUT).decode()
             if "WARN" in out:
                 return False, out
             return True, out
