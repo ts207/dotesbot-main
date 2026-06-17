@@ -83,15 +83,15 @@ def test_storage_v2_save_and_load_daily_budget(tmp_storage):
         "submitted_match_usd": {"M1": 50.0},
         "submitted_family_usd": {"value": 50.0}
     }
-    tmp_storage.save_daily_budget("2026-06-16", budget)
+    tmp_storage.save_daily_budget("2026-06-16", budget, mode="real_live")
     
-    loaded = tmp_storage.load_daily_budget("2026-06-16")
+    loaded = tmp_storage.load_daily_budget("2026-06-16", mode="real_live")
     assert loaded is not None
     assert loaded["total_submitted_usd"] == 150.0
     assert loaded["open_positions"] == 2
     assert loaded["submitted_match_sides"] == {"M1": "YES"}
 
-    assert tmp_storage.load_daily_budget("2026-06-17") is None
+    assert tmp_storage.load_daily_budget("2026-06-17", mode="real_live") is None
 
 
 def test_live_position_store_uses_storage_v2(tmp_path):

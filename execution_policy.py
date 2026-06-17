@@ -93,6 +93,15 @@ def _int(value: Any) -> int | None:
         return None
 
 
+def _requested_size_usd(signal: Mapping[str, Any]) -> float:
+    return (
+        _float(signal.get("size_usd"))
+        or _float(signal.get("target_size_usd"))
+        or _float(signal.get("sized_usd"))
+        or 0.0
+    )
+
+
 def _age_ms(received_at_ns: Any, now_ns: int) -> int:
     ts = _int(received_at_ns)
     if not ts:
@@ -371,7 +380,7 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
     if strategy_family:
         family_cap = _float(inp.risk_state.get(f"{strategy_family}_max_live_usd")) or MAX_TOTAL_LIVE_USD
         family_used = _float(inp.risk_state.get("submitted_family_usd", {}).get(strategy_family)) or 0.0
-        size_usd_req = _float(inp.signal.get("size_usd")) or 0.0  # approximate size
+        size_usd_req = _requested_size_usd(inp.signal)
         if family_used + size_usd_req > family_cap:
             return reject(
                 f"strategy_family_cap:{strategy_family}:used={family_used:.1f}_cap={family_cap:.1f}",

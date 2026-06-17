@@ -156,7 +156,8 @@ async def _live_health() -> dict:
     
     storage = StorageV2()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    budget = storage.load_daily_budget(today) or {}
+    from live_state import live_state_mode
+    budget = storage.load_daily_budget(today, mode=live_state_mode()) or {}
     positions = storage.load_positions(mode="live")
     if not isinstance(positions, list):
         positions = []
@@ -611,7 +612,8 @@ async def _broadcast_loop(app: web.Application) -> None:
                 from storage_v2 import StorageV2
                 storage = StorageV2()
                 today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                live_state = storage.load_daily_budget(today) or {}
+                from live_state import live_state_mode
+                live_state = storage.load_daily_budget(today, mode=live_state_mode()) or {}
                 live_positions = storage.load_positions(mode="live")
                 
                 valid, _ = load_valid_mappings()
@@ -710,7 +712,8 @@ async def _api_data(_request: web.Request) -> web.Response:
     from storage_v2 import StorageV2
     storage = StorageV2()
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    live_state = storage.load_daily_budget(today) or {}
+    from live_state import live_state_mode
+    live_state = storage.load_daily_budget(today, mode=live_state_mode()) or {}
     live_positions = storage.load_positions(mode="live")
     
     valid, _ = load_valid_mappings()

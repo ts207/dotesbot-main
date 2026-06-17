@@ -719,7 +719,7 @@ class LiveExecutor:
         self.client = client
         self._http_session: aiohttp.ClientSession | None = None
         self.disk_guard = DiskGuard()
-        state = load_live_state()
+        state = load_live_state(mode=self._policy_mode())
         self.total_submitted_usd = float(state.get("total_submitted_usd", 0.0))
         self.total_filled_usd = float(state.get("total_filled_usd", 0.0))
         self.open_positions = int(state.get("open_positions", 0))
@@ -826,6 +826,7 @@ class LiveExecutor:
             self._submitted_match_sides,
             self._submitted_match_usd,
             self._submitted_family_usd,
+            mode=self._policy_mode(),
         )
 
     def add_realized_pnl(self, pnl_usd: float) -> None:

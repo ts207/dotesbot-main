@@ -90,7 +90,7 @@ async def test_explicit_filled_shares_closes_position(monkeypatch):
 @pytest.mark.anyio
 async def test_live_state_open_positions_decrements_after_full_exit(monkeypatch):
     # Setup LiveExecutor with 1 open position
-    monkeypatch.setattr("live_executor.load_live_state", lambda: {"open_positions": 1})
+    monkeypatch.setattr("live_executor.load_live_state", lambda mode=None: {"open_positions": 1})
     save_mock = MagicMock()
     monkeypatch.setattr("live_executor.save_live_state", save_mock)
     

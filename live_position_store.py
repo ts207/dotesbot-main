@@ -94,7 +94,7 @@ class LivePositionStore:
     def load(self) -> None:
         self.positions = {}
         try:
-            loaded = self.storage.load_positions(mode="live")
+            loaded = self.storage.load_positions(mode="live", active_only=True)
             for pos_dict in loaded:
                 pos = LivePosition(**pos_dict)
                 self.positions[pos.position_id] = pos

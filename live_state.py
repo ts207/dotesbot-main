@@ -4,7 +4,14 @@ import time
 from datetime import datetime, timezone
 from storage_v2 import StorageV2
 
-def load_live_state() -> dict:
+def live_state_mode() -> str:
+    try:
+        from config import ENABLE_REAL_LIVE_TRADING
+        return "real_live" if ENABLE_REAL_LIVE_TRADING else "dry_live"
+    except ImportError:
+        return "dry_live"
+
+def load_live_state(mode: str | None = None) -> dict:
     """Load persisted live risk state from SQLite via StorageV2."""
     default = {
         "total_submitted_usd": 0.0,
@@ -20,7 +27,8 @@ def load_live_state() -> dict:
     storage = StorageV2()
     # Try to load today's state
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    loaded = storage.load_daily_budget(today_str)
+    mode = mode or live_state_mode()
+    loaded = storage.load_daily_budget(today_str, mode=mode)
     
     if loaded:
         return loaded
@@ -40,6 +48,7 @@ def save_live_state(
     submitted_match_sides: dict | None = None,
     submitted_match_usd: dict | None = None,
     submitted_family_usd: dict | None = None,
+    mode: str | None = None,
 ):
     """Persist live risk state to SQLite."""
     date_str = last_reset_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -48,11 +57,12 @@ def save_live_state(
         "total_filled_usd": float(total_filled_usd),
         "open_positions": int(open_positions),
         "daily_realized_pnl_usd": float(daily_realized_pnl_usd),
-        "last_reset_date": str(last_reset_date),
+        "last_reset_date": date_str,
         "submitted_match_sides": submitted_match_sides or {},
         "submitted_match_usd": submitted_match_usd or {},
         "submitted_family_usd": submitted_family_usd or {},
         "updated_at_ns": time.time_ns()
     }
     storage = StorageV2()
-    storage.save_daily_budget(date_str, state)
+    mode = mode or live_state_mode()
+    storage.save_daily_budget(date_str, state, mode=mode)

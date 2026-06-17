@@ -10,27 +10,34 @@ from live_executor import LiveExecutor
 
 class TestLiveRiskDurable(unittest.TestCase):
     def setUp(self):
-        self.test_state_path = "logs/test_live_state.json"
-        live_state.LIVE_STATE_PATH = self.test_state_path
-        if os.path.exists(self.test_state_path):
-            os.remove(self.test_state_path)
+        # Use a temporary SQLite DB for the test instead of a JSON file
+        self.db_path = "logs/test_state.sqlite"
+        if os.path.exists(self.db_path):
+            os.remove(self.db_path)
+            
+        # Patch StorageV2.DEFAULT_DB_PATH
+        self.patcher = patch("storage_v2.DEFAULT_DB_PATH", self.db_path)
+        self.patcher.start()
 
     def tearDown(self):
-        if os.path.exists(self.test_state_path):
-            os.remove(self.test_state_path)
+        self.patcher.stop()
+        if os.path.exists(self.db_path):
+            os.remove(self.db_path)
 
     @patch("live_executor.MAX_TOTAL_LIVE_USD", 10.0)
     def test_persistence_and_budget_cap(self):
-        # 1. Create a state file with $9.50 already spent
+        # 1. Create a state in the DB
         initial_state = {
             "total_submitted_usd": 9.50,
             "total_filled_usd": 8.0,
-            "open_positions": 1,
-            "updated_at_ns": 123456789
+            "open_positions": 1
         }
         os.makedirs("logs", exist_ok=True)
-        with open(self.test_state_path, "w") as f:
-            json.dump(initial_state, f)
+        from live_state import save_live_state
+        from datetime import datetime, timezone
+        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        # LiveExecutor uses _policy_mode() which defaults to 'dry_live' when real trading is off
+        save_live_state(**initial_state, mode="dry_live")
 
         # 2. Initialize LiveExecutor and verify it loads the state
         executor = LiveExecutor()
@@ -66,13 +73,18 @@ class TestLiveRiskDurable(unittest.TestCase):
         executor.open_positions = 0
         
         # Manually trigger save (in real code this happens after order submission)
-        live_state.save_live_state(executor.total_submitted_usd, executor.total_filled_usd, executor.open_positions)
+        from live_state import save_live_state
+        save_live_state(executor.total_submitted_usd, executor.total_filled_usd, executor.open_positions, mode="dry_live")
         
-        # Verify file content
-        with open(self.test_state_path, "r") as f:
-            data = json.load(f)
-            self.assertEqual(data["total_submitted_usd"], 2.0)
-            self.assertEqual(data["total_filled_usd"], 1.5)
+        # Verify DB content
+        from storage_v2 import StorageV2
+        from datetime import datetime, timezone
+        storage = StorageV2()
+        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        data = storage.load_daily_budget(date_str, mode="dry_live")
+        self.assertIsNotNone(data)
+        self.assertEqual(data["total_submitted_usd"], 2.0)
+        self.assertEqual(data["total_filled_usd"], 1.5)
 
 if __name__ == "__main__":
     unittest.main()

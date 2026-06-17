@@ -163,7 +163,7 @@ class PaperTrader:
         """Restore open paper positions from SQLite."""
         try:
             from storage_v2 import StorageV2
-            loaded = StorageV2().load_positions(mode="paper")
+            loaded = StorageV2().load_positions(mode="paper", active_only=True)
         except Exception as e:
             print(f"Failed to load paper positions from DB: {e}")
             return 0

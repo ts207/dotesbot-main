@@ -44,7 +44,7 @@ async def test_live_health_filters_startup_heartbeat_from_exit_count(fake_logs):
     
     storage = storage_v2.StorageV2(path=str(fake_logs / "state_v2.sqlite"))
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    storage.save_daily_budget(today, {"open_positions": 0})
+    storage.save_daily_budget(today, {"open_positions": 0}, mode="real_live")
 
     health = await dashboard._live_health()
     assert health["exits"] == 1  # heartbeat row excluded
@@ -58,7 +58,7 @@ async def test_live_health_detects_drift(fake_logs):
     
     storage = storage_v2.StorageV2(path=str(fake_logs / "state_v2.sqlite"))
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    storage.save_daily_budget(today, {"open_positions": 0})
+    storage.save_daily_budget(today, {"open_positions": 0}, mode="real_live")
     storage.save_position({"position_id": "T1", "token_id": "T1", "state": "OPEN"}, mode="live")
     storage.save_position({"position_id": "T2", "token_id": "T2", "state": "PENDING_EXIT_GTC"}, mode="live")
     storage.save_position({"position_id": "T3", "token_id": "T3", "state": "CLOSED"}, mode="live")

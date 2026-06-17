@@ -2,9 +2,19 @@ import sqlite3
 import os
 import json
 import time
+import logging
 from typing import Any, List, Dict, Iterable
 
 DEFAULT_DB_PATH = "logs/state_v2.sqlite"
+logger = logging.getLogger(__name__)
+
+ACTIVE_POSITION_STATES = frozenset({
+    "OPEN",
+    "PARTIALLY_EXITED",
+    "PENDING_ENTRY",
+    "PENDING_EXIT_GTC",
+    "EXITING",
+})
 
 class StorageV2:
     """SQLite backend for bot state, replacing live_positions.json and paper_trades.csv."""
@@ -59,7 +69,8 @@ class StorageV2:
         );
 
         CREATE TABLE IF NOT EXISTS daily_budgets (
-            date_str TEXT PRIMARY KEY,
+            date_str TEXT NOT NULL,
+            mode TEXT NOT NULL,
             total_submitted_usd REAL,
             total_filled_usd REAL,
             open_positions INTEGER,
@@ -67,11 +78,35 @@ class StorageV2:
             submitted_match_sides TEXT,
             submitted_match_usd TEXT,
             submitted_family_usd TEXT,
-            updated_at_ns INTEGER
+            updated_at_ns INTEGER,
+            PRIMARY KEY (date_str, mode)
         );
         """
         with self.connect() as conn:
-            conn.executescript(schema)
+            # Migration check for daily_budgets
+            cursor = conn.execute("PRAGMA table_info(daily_budgets)")
+            columns = [row["name"] for row in cursor.fetchall()]
+            
+            # If the table exists but doesn't have a mode column, we need to migrate it
+            if columns and "mode" not in columns:
+                conn.execute("ALTER TABLE daily_budgets RENAME TO daily_budgets_legacy_date_only")
+                conn.executescript(schema)
+                
+                # Copy old rows to the new table under the 'legacy' mode
+                conn.execute("""
+                    INSERT INTO daily_budgets (
+                        date_str, mode, total_submitted_usd, total_filled_usd,
+                        open_positions, daily_realized_pnl_usd, submitted_match_sides,
+                        submitted_match_usd, submitted_family_usd, updated_at_ns
+                    )
+                    SELECT
+                        date_str, 'legacy', total_submitted_usd, total_filled_usd,
+                        open_positions, daily_realized_pnl_usd, submitted_match_sides,
+                        submitted_match_usd, submitted_family_usd, updated_at_ns
+                    FROM daily_budgets_legacy_date_only
+                """)
+            else:
+                conn.executescript(schema)
 
     # --- Positions (Live & Paper) ---
     def save_position(self, pos_dict: dict, mode: str):
@@ -113,10 +148,17 @@ class StorageV2:
                 )
             )
 
-    def load_positions(self, mode: str) -> List[dict]:
+    def load_positions(self, mode: str, *, active_only: bool = False) -> List[dict]:
         """Load all open positions for a given mode."""
         with self.connect() as conn:
-            rows = conn.execute("SELECT raw_json FROM positions WHERE mode = ?", (mode,)).fetchall()
+            if active_only:
+                placeholders = ",".join("?" * len(ACTIVE_POSITION_STATES))
+                rows = conn.execute(
+                    f"SELECT raw_json FROM positions WHERE mode = ? AND state IN ({placeholders})",
+                    (mode, *sorted(ACTIVE_POSITION_STATES)),
+                ).fetchall()
+            else:
+                rows = conn.execute("SELECT raw_json FROM positions WHERE mode = ?", (mode,)).fetchall()
             return [json.loads(row["raw_json"]) for row in rows]
 
     def remove_position(self, position_id: str):
@@ -164,17 +206,25 @@ class StorageV2:
             return [json.loads(row["raw_json"]) for row in rows]
 
     # --- Live State (Budgets) ---
-    def save_daily_budget(self, date_str: str, data: dict):
+    _ALLOWED_BUDGET_MODES = {"dry_live", "real_live", "legacy"}
+
+    def _normalize_budget_mode(self, mode: str) -> str:
+        if mode not in self._ALLOWED_BUDGET_MODES:
+            raise ValueError(f"Invalid budget mode: {mode}")
+        return mode
+
+    def save_daily_budget(self, date_str: str, data: dict, mode: str):
         now_ns = time.time_ns()
+        mode = self._normalize_budget_mode(mode)
         with self.connect() as conn:
             conn.execute(
                 """
                 INSERT INTO daily_budgets (
-                    date_str, total_submitted_usd, total_filled_usd, open_positions,
+                    date_str, mode, total_submitted_usd, total_filled_usd, open_positions,
                     daily_realized_pnl_usd, submitted_match_sides, submitted_match_usd,
                     submitted_family_usd, updated_at_ns
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(date_str) DO UPDATE SET
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(date_str, mode) DO UPDATE SET
                     total_submitted_usd=excluded.total_submitted_usd,
                     total_filled_usd=excluded.total_filled_usd,
                     open_positions=excluded.open_positions,
@@ -186,6 +236,7 @@ class StorageV2:
                 """,
                 (
                     date_str,
+                    mode,
                     float(data.get("total_submitted_usd", 0.0)),
                     float(data.get("total_filled_usd", 0.0)),
                     int(data.get("open_positions", 0)),
@@ -197,9 +248,10 @@ class StorageV2:
                 )
             )
 
-    def load_daily_budget(self, date_str: str) -> dict | None:
+    def load_daily_budget(self, date_str: str, mode: str) -> dict | None:
+        mode = self._normalize_budget_mode(mode)
         with self.connect() as conn:
-            row = conn.execute("SELECT * FROM daily_budgets WHERE date_str = ?", (date_str,)).fetchone()
+            row = conn.execute("SELECT * FROM daily_budgets WHERE date_str = ? AND mode = ?", (date_str, mode)).fetchone()
             if not row:
                 return None
             return {
