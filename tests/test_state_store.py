@@ -44,20 +44,25 @@ def test_state_store_initializes_required_tables(tmp_path):
     assert "feed_health" in tables
 
 
-def test_live_position_store_writes_sqlite(tmp_path):
+def test_live_position_store_dual_writes_sqlite(tmp_path):
     json_path = tmp_path / "live_positions.json"
-    db_path = tmp_path / "live_positions.sqlite"
-    store = LivePositionStore(str(json_path))
+    db_path = tmp_path / "state.sqlite"
+    store = LivePositionStore(str(json_path), state_db_path=str(db_path))
     store.positions["P1"] = _pos()
     store.save()
 
-    from storage_v2 import StorageV2
-    mirror = StorageV2(str(db_path))
-    rows = mirror.load_positions(mode="live")
+    mirror = StateStore(str(db_path))
+    rows = mirror.live_positions(active_only=True)
 
     assert len(rows) == 1
     assert rows[0]["position_id"] == "P1"
     assert rows[0]["strategy_kind"] == "VALUE_EDGE"
+    assert mirror.compare_live_positions_json(store.positions.values()) == {
+        "json_count": 1,
+        "sqlite_count": 1,
+        "missing_in_sqlite": [],
+        "extra_in_sqlite": [],
+    }
 
 
 def test_state_store_records_order_policy_strategy_allocation_and_mapping(tmp_path):
