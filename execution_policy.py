@@ -166,6 +166,8 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         MIN_LAG,
         TRADE_EVENTS,
         VALUE_MAX_PER_MATCH,
+        DSWING_MAX_PER_MATCH,
+        EVENT_MAX_PER_MATCH,
     )
     from event_taxonomy import event_tier
     
@@ -387,12 +389,17 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
                 risk_tags=("strategy_family_cap",),
             )
             
-    # Value specific match cap
-    if strategy_family == "VALUE":
-        if match_used is not None and match_used + size_usd_req > VALUE_MAX_PER_MATCH:
+    # Strategy-specific match cap
+    if strategy_family in {"VALUE", "DSWING", "EVENT"}:
+        cap = (
+            VALUE_MAX_PER_MATCH if strategy_family == "VALUE"
+            else DSWING_MAX_PER_MATCH if strategy_family == "DSWING"
+            else EVENT_MAX_PER_MATCH
+        )
+        if match_used is not None and match_used + size_usd_req > cap:
             return reject(
-                f"value_match_cap:used={match_used:.1f}_cap={VALUE_MAX_PER_MATCH:.1f}",
-                risk_tags=("value_match_cap",),
+                f"{strategy_family.lower()}_match_cap:used={match_used:.1f}_cap={cap:.1f}",
+                risk_tags=(f"{strategy_family.lower()}_match_cap",),
             )
 
     return allow(risk_tags=("hold_to_settle_edge_lag_bypass",) if _is_hold_to_settle(inp.signal) else ())

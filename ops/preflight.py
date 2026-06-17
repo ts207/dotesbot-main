@@ -136,12 +136,13 @@ def main() -> int:
             pass
 
         now_ns = time.time_ns()
+        test_match_id = f"99999_{int(now_ns / 1e9)}"
         game = {
-            "match_id": "99999",
+            "match_id": test_match_id,
             "received_at_ns": now_ns,
             "data_source": "top_live",
             "game_time_sec": 1200,
-            "radiant_lead": 7000,
+            "radiant_lead": 15000,
             "radiant_score": 10,
             "dire_score": 6,
             "building_state": 0x7FF | (0x7FF << 11),
@@ -158,7 +159,7 @@ def main() -> int:
         res = ValueEngine().evaluate(
             game,
             mapping,
-            _BookStore(YES={"best_ask": 0.58, "best_bid": 0.56, "received_at_ns": now_ns}),
+            _BookStore(YES={"best_ask": 0.78, "best_bid": 0.76, "received_at_ns": now_ns}),
             entered_tokens=set(),
         )
         all_ok &= _check(
@@ -168,6 +169,50 @@ def main() -> int:
         )
     except Exception as exc:
         all_ok &= _check("value engine round-trip", False, repr(exc))
+
+
+    try:
+        from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal
+
+        class _BookStore(dict):
+            pass
+
+        now_ns = time.time_ns()
+        test_match_id = f"99999_{int(now_ns / 1e9)}"
+        ds_game = {
+            "match_id": test_match_id,
+            "received_at_ns": now_ns,
+            "data_source": "top_live",
+            "game_time_sec": 1200,
+            "radiant_lead": 15000,
+            "radiant_score": 10,
+            "dire_score": 6,
+            "building_state": 0x7FF | (0x7FF << 11),
+            "tower_state": 0x7FF | (0x7FF << 11),
+            "radiant_team": "Radiant",
+            "dire_team": "Dire",
+        }
+        ds_mapping = {
+            "market_type": "MATCH_WINNER",
+            "steam_side_mapping": "normal",
+            "yes_token_id": "YES",
+            "no_token_id": "NO",
+            "game_number": 3,
+            "series_score_yes": 1,
+            "series_score_no": 1,
+        }
+        res = DecisiveSwingEngine().evaluate(
+            ds_game,
+            ds_mapping,
+            _BookStore(YES={"best_ask": 0.78, "best_bid": 0.76, "received_at_ns": now_ns}),
+        )
+        all_ok &= _check(
+            "dswing engine fires on synthetic",
+            any(isinstance(row, DSwingSignal) for row in res),
+            f"rows={len(res)} first={getattr(res[0], 'reason', 'signal') if res else 'none'}",
+        )
+    except Exception as exc:
+        all_ok &= _check("dswing engine round-trip", False, repr(exc))
 
     try:
         from actual_dota_event_detector import ActualDotaEventDetector

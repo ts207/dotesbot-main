@@ -119,7 +119,7 @@ DEFAULTS: dict[str, str] = {
     "MAX_OPEN_POSITIONS": "1",
     "MAX_DAILY_DRAWDOWN_USD": "10",
     "VALUE_ENGINE_ENABLED": "true",
-    "DSWING_ENABLED": "false",
+    "DSWING_ENABLED": "true",
     "EVENT_TRIGGERED_VALUE_ENABLED": "true",
 }
 

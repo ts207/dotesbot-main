@@ -1,7 +1,7 @@
 strategy_kind: LEGACY_EVENT
 version: 2026-06-16
 enabled_paper: true
-enabled_dry_live: false
+enabled_dry_live: true
 enabled_real_live: false
 edge_type: legacy_event_reaction
 target_horizon: configured_event_horizon

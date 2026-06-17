@@ -1,7 +1,7 @@
 strategy_kind: DSWING
 version: 2026-06-16
 enabled_paper: true
-enabled_dry_live: false
+enabled_dry_live: true
 enabled_real_live: false
 edge_type: map_end_series_convergence
 target_horizon: map_end
