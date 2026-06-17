@@ -553,7 +553,7 @@ class LiveExitExecutor:
         bid = book.get("best_bid") if book else None
         ask = book.get("best_ask") if book else None
 
-        if bid is None:
+        if bid is None and reason not in {"map_end_convergence", "game_over"}:
             return LiveExitAttempt(
                 position_id=position.position_id,
                 token_id=position.token_id,
@@ -581,22 +581,26 @@ class LiveExitExecutor:
         min_price = max(round_down_to_tick(entry_price - safety_margin, tick_size), tick)
         # Use the current book bid if it's meaningfully above the floor; otherwise hold at floor.
         # Keep the raw bid separate: forced exits should hit/join the bid, not improve above it.
-        raw_bid_price = min(round_down_to_tick(float(bid), tick_size), max_price)
-        bid_price = raw_bid_price
-        
-        if MAKER_EXIT_MODE:
-            # Aggressive maker: post at best_bid + 1 tick to be top of book
-            maker_price = min(round_down_to_tick(bid_price + tick, tick_size), max_price)
+        if bid is not None:
+            raw_bid_price = min(round_down_to_tick(float(bid), tick_size), max_price)
+            bid_price = raw_bid_price
+            
+            maker_price = None
+            if MAKER_EXIT_MODE:
+                # Aggressive maker: post at best_bid + 1 tick to be top of book
+                maker_price = min(round_down_to_tick(bid_price + tick, tick_size), max_price)
+        else:
+            raw_bid_price = min_price
+            bid_price = min_price
+            maker_price = min_price
             # But don't exceed current ask (if we do, we might as well just hit the bid or ask)
             # Actually, if we post at best_ask, we are joining the queue.
             # If we post at best_bid + tick, we are the new best ask.
-            if ask is not None:
-                ask_price = min(round_down_to_tick(float(ask), tick_size), max_price)
-                # If spread is 1 tick, maker_price == ask_price.
-                # If spread > 1 tick, maker_price < ask_price.
-                bid_price = min(maker_price, ask_price)
-            else:
-                bid_price = maker_price
+        if ask is not None:
+            ask_price = min(round_down_to_tick(float(ask), tick_size), max_price)
+            bid_price = min(maker_price, ask_price) if maker_price is not None else ask_price
+        else:
+            bid_price = maker_price if maker_price is not None else min_price
 
         # For forced exits (time/loss/game-over), always post at the current bid.
         # Flooring to entry - safety_margin posts above the book and leaves the order resting.
