@@ -48,6 +48,7 @@ class StrategyCollectionContext:
     enable_event_triggered_value_trading: bool = False
     enable_value_trading: bool = False
     dswing_enabled: bool = False
+    enable_match_winner_trading: bool = False
 
     # fn(ValueSignal) -> (bool, reason)
     value_confirmation_fn: Callable[[ValueSignal], tuple[bool, str]] | None = None
@@ -263,6 +264,11 @@ def _collect_dswing_candidates(ctx: StrategyCollectionContext) -> list[StrategyC
             ctx.loggers.markout_logger_fn(markout_row, ds_res.token_id)
 
         if not ctx.dswing_enabled:
+            continue
+
+        # Match Winner Research Mode Check
+        is_match_winner = ctx.mapping.get("market_type") == "MATCH_WINNER"
+        if is_match_winner and not ctx.enable_match_winner_trading:
             continue
 
         # DSWING dedup: blocks both sides (prevents holding opposing tokens)
