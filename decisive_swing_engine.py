@@ -176,8 +176,7 @@ class DecisiveSwingEngine:
             lead = int(lead)
         except (TypeError, ValueError):
             return [DSwingReject(match_id, "missing_lead")]
-        if abs(lead) < DSWING_LEAD:
-            return [DSwingReject(match_id, "lead_too_small")]
+            
         direction = "radiant" if lead > 0 else "dire"
 
         sm = mapping.get("steam_side_mapping", "normal")
@@ -187,6 +186,21 @@ class DecisiveSwingEngine:
             side = "NO" if direction == "radiant" else "YES"
         else:
             return [DSwingReject(match_id, "unknown_side_mapping")]
+
+        required_lead = DSWING_LEAD
+        
+        # Contextual threshold logic
+        score_yes = int(mapping.get("series_score_yes") or 0)
+        score_no = int(mapping.get("series_score_no") or 0)
+        
+        if side == "YES" and score_yes == 1 and score_no == 0:
+            required_lead = int(required_lead * 0.7)
+        elif side == "NO" and score_no == 1 and score_yes == 0:
+            required_lead = int(required_lead * 0.7)
+
+        if abs(lead) < required_lead:
+            return [DSwingReject(match_id, "lead_too_small")]
+
         token_id = mapping.get("yes_token_id") if side == "YES" else mapping.get("no_token_id")
         if not token_id:
             return [DSwingReject(match_id, "missing_token_id")]
