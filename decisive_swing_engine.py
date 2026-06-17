@@ -111,6 +111,18 @@ class DSwingSignal:
 class DSwingReject:
     match_id: str
     reason: str
+    direction: str = ""
+    side: str = ""
+    token_id: str = ""
+    lead: int | None = None
+    game_time_sec: int | None = None
+    ask: float | None = None
+    book_age_ms: int | None = None
+    p_game: float | None = None
+    series_fair: float | None = None
+    current_game_number: int | None = None
+    would_pass_live_gates: bool = False
+    live_skip_reason: str = ""
 
 
 def _series_fair(mapping: Mapping, side: str, p_game: float) -> float | None:
@@ -192,32 +204,39 @@ class DecisiveSwingEngine:
                 ask = float(book.get("best_ask"))
             except (TypeError, ValueError):
                 ask = None
+        def _rej(reason, **kw):
+            return [DSwingReject(
+                match_id=match_id, reason=reason, direction=direction, side=side, token_id=str(token_id),
+                lead=lead, game_time_sec=gt, current_game_number=gn, **kw
+            )]
+
         if ask is None:
-            return [DSwingReject(match_id, "missing_ask")]
+            return _rej("missing_ask")
         rcv = book.get("received_at_ns")
-        if not rcv or (time.time_ns() - rcv) / 1e6 > DSWING_MAX_BOOK_AGE_MS:
-            return [DSwingReject(match_id, "book_stale")]
+        book_age_ms = int((time.time_ns() - rcv) / 1e6) if rcv else None
+        if not rcv or book_age_ms > DSWING_MAX_BOOK_AGE_MS:
+            return _rej("book_stale", ask=ask, book_age_ms=book_age_ms)
         if ask > DSWING_MAX_PRICE:
-            return [DSwingReject(match_id, "price_too_high")]
+            return _rej("price_too_high", ask=ask, book_age_ms=book_age_ms)
 
         # Elo + single-game prob (~0.95 at a decisive lead), then series fair.
         from fair_value import compute_side_fair
         fair_res = compute_side_fair(game=game, side=direction)
         if not fair_res.model_available:
-            return [DSwingReject(match_id, f"model_unavailable:{fair_res.model_reason}")]
+            return _rej(f"model_unavailable:{fair_res.model_reason}", ask=ask, book_age_ms=book_age_ms)
 
         p_game = fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
         
         if p_game < DSWING_MIN_P_GAME:
-            return [DSwingReject(match_id, f"p_game_too_low:{p_game:.3f}")]
+            return _rej(f"p_game_too_low:{p_game:.3f}", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
 
         series_fair = _series_fair(mapping, side, p_game)
         if series_fair is None:
-            return [DSwingReject(match_id, "missing_series_state_or_model")]
+            return _rej("missing_series_state_or_model", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
             
         edge = series_fair - ask
         if edge < DSWING_MIN_EDGE:
-            return [DSwingReject(match_id, f"edge_too_small:{edge:.3f}")]
+            return _rej(f"edge_too_small:{edge:.3f}", ask=ask, book_age_ms=book_age_ms, p_game=p_game, series_fair=series_fair)
 
         policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
             mode="paper_research",

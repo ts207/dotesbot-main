@@ -1637,6 +1637,9 @@ async def steam_loop(
                                 token_id=tok_id,
                                     side=tok_side,
                                 )
+                                ref_bid = None
+                                ref_ask = None
+                                reference_price = None
                                 if tok_id and (
                                     signal.get("event_is_primary") is True
                                     or str(signal.get("event_is_primary")).lower() == "true"

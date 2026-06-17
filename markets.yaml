@@ -11856,9 +11856,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 1
+  series_score_yes: 2
   series_score_no: 0
-  current_game_number: 2
+  current_game_number: 3
   yes_team: Team Refuser
   no_team: Game Master
   yes_token_id: '44004221343080747311830855031348803130845361590313949046622526101526829826016'
@@ -11909,9 +11909,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 1
+  series_score_yes: 2
   series_score_no: 0
-  current_game_number: 2
+  current_game_number: 3
   yes_team: Team Refuser
   no_team: Game Master
   yes_token_id: '84140979947364380436277709174370637517434925995111824092852840086801820225408'
@@ -11923,4 +11923,25 @@ markets:
   auto_mapped_source: auto_series_binder
   steam_radiant_team: Team Refuser
   steam_dire_team: Game Master
+  steam_side_mapping: normal
+- name: 'Dota 2: InterActive Philippines vs Ivory - Game 1 Winner'
+  condition_id: '0x7af6bb9024c11e0f8a0ef87a583a3d54fb39b4e86e4dcc34207a6ef5617082fb'
+  market_id: '2564768'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: InterActive Philippines
+  no_team: Ivory
+  yes_token_id: '64463458224474017733353597831277029425208469002742075166714292821773281343823'
+  no_token_id: '73986444752689601449409685235242116652167050410852885054891212877678912655521'
+  dota_match_id: '8855058698'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-16 12:33:33'
+  auto_mapped_at_utc: '2026-06-17T06:28:40+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Ivory
   steam_side_mapping: normal
