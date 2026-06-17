@@ -44,6 +44,9 @@ async def test_manual_order_policy_rejects_exceeding_match_limit(executor):
     executor._submitted_match_usd["M1"] = 40.0
     
     with patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("manual_order_policy.MAX_TRADE_USD", 100.0), \
+         patch("manual_order_policy.MAX_TOTAL_LIVE_USD", 1000.0), \
+         patch("manual_order_policy.MAX_OPEN_POSITIONS", 10), \
          patch("manual_order_policy.MAX_OPEN_USD_PER_MATCH", 50.0), \
          patch.object(executor, "_save"):
          
@@ -65,6 +68,9 @@ async def test_manual_order_policy_allows_valid_order(executor):
     book_store = MockBookStore()
     
     with patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("manual_order_policy.MAX_TRADE_USD", 100.0), \
+         patch("manual_order_policy.MAX_TOTAL_LIVE_USD", 1000.0), \
+         patch("manual_order_policy.MAX_OPEN_POSITIONS", 10), \
          patch.object(executor, "_save"):
         
         executor.client = MagicMock()
