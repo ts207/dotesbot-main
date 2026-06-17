@@ -11945,3 +11945,24 @@ markets:
   steam_radiant_team: InterActive Philippines
   steam_dire_team: Ivory
   steam_side_mapping: normal
+- name: 'Dota 2: Power Rangers vs Flame Team - Game 1 Winner'
+  condition_id: '0xc289d2bc79612c847beb6b869ba9af8bb578773747230e0a2a81d710e9c91a6c'
+  market_id: '2570865'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Power Rangers
+  no_team: Flame Team
+  yes_token_id: '75089446809410402017143017119959617253124230607486024560845932929894284984217'
+  no_token_id: '73122043086869814393299156127753270818728458115177936647153654961044433406648'
+  dota_match_id: '8855338132'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-17 04:36:09'
+  auto_mapped_at_utc: '2026-06-17T12:25:22+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: _PowerRangers
+  steam_dire_team: Flame Esports
+  steam_side_mapping: reversed

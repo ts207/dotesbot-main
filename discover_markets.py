@@ -94,7 +94,10 @@ def _is_bo3_winner_market(market: dict) -> bool:
         return False
     if {str(o).casefold() for o in outcomes} <= {"yes", "no", "over", "under"}:
         return False
-    return bool(re.search(r"\(BO3\)", question, flags=re.I))
+    # If it's "Dota 2: Team A vs Team B" without "Game N" in it, it's a series moneyline
+    if re.search(r"\bGame\s*\d+\s+Winner\b", question, flags=re.I):
+        return False
+    return bool(re.search(r"vs", question, flags=re.I))
 
 
 def _is_bo1_match_winner_market(market: dict) -> bool:
@@ -182,11 +185,11 @@ async def fetch_polymarket_dota_page_markets(session: aiohttp.ClientSession) -> 
             # 2026-05-27: accept BO1 MATCH_WINNER markets in addition to
             # per-game "Game N Winner" markets. BLAST Slam group stage publishes
             # each match as a single BO1 binary instead of per-game winners.
-            if not (_is_map_winner_market(market) or _is_bo1_match_winner_market(market)):
+            if not (_is_map_winner_market(market) or _is_bo1_match_winner_market(market) or _is_bo3_winner_market(market)):
                 continue
             row = dict(market)
             row["source_url"] = url
-            if _is_bo1_match_winner_market(market) and not _is_map_winner_market(market):
+            if (_is_bo1_match_winner_market(market) or _is_bo3_winner_market(market)) and not _is_map_winner_market(market):
                 row["_discovered_market_type"] = "MATCH_WINNER"
             markets.append(row)
 
