@@ -282,3 +282,32 @@ def test_dswing_blocks_when_opposing_token_active(base_ctx):
     candidates = collect_strategy_candidates(base_ctx)
     
     assert len(candidates) == 0
+
+
+def test_dswing_collects_even_when_value_engine_absent(base_ctx):
+    base_ctx.dswing_enabled = True
+    base_ctx.dswing_engine = MagicMock()
+    base_ctx.value_engine = None
+    base_ctx.loggers.value_logger = None
+    
+    sig = MagicMock(spec=DSwingSignal)
+    sig.token_id = "tok_yes"
+    sig.direction = "radiant"
+    sig.edge = 0.05
+    sig.series_fair = 0.87
+    sig.game_time_sec = 900
+    sig.edge_type = "dswing"
+    sig.target_horizon = "end"
+    sig.expected_hold_sec = 600
+    sig.entry_trigger = "e"
+    sig.exit_trigger = "x"
+    sig.primary_metric = "p"
+    sig.secondary_metric = "s"
+    sig.promotion_rule = "pr"
+    sig.disable_rule = "dr"
+
+    base_ctx.dswing_engine.evaluate.return_value = [sig]
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 1
+    assert candidates[0].strategy == "DSWING"

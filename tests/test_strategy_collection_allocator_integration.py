@@ -12,6 +12,7 @@ from strategy_collection import (
 )
 from strategy_allocator import allocate_candidates
 from value_engine import ValueSignal
+from decisive_swing_engine import DSwingSignal
 from event_triggered_value_engine import EventTriggeredValueSignal
 
 
@@ -78,6 +79,25 @@ def _make_event_sig(token_id, is_reversal=False, edge=0.15):
     return sig
 
 
+def _make_dswing_sig(token_id, edge=0.10):
+    sig = MagicMock(spec=DSwingSignal)
+    sig.token_id = token_id
+    sig.direction = "radiant"
+    sig.edge = edge
+    sig.series_fair = 0.80 + edge
+    sig.game_time_sec = 900
+    sig.edge_type = "dswing"
+    sig.target_horizon = "end"
+    sig.expected_hold_sec = 600
+    sig.entry_trigger = "e"
+    sig.exit_trigger = "x"
+    sig.primary_metric = "p"
+    sig.secondary_metric = "s"
+    sig.promotion_rule = "pr"
+    sig.disable_rule = "dr"
+    return sig
+
+
 def test_event_continuation_preempts_value_same_token(integration_ctx):
     integration_ctx.value_engine = MagicMock()
     integration_ctx.event_value_engine = MagicMock()
@@ -125,6 +145,32 @@ def test_value_preempts_event_reversal_same_token(integration_ctx):
     assert d.winner.strategy == "VALUE_EDGE"
     assert d.blocked[0].strategy == "EVENT_REVERSAL_EDGE"
     assert d.block_reason == "preempted_by_value"
+
+
+def test_event_reversal_preempts_dswing_same_token(integration_ctx):
+    integration_ctx.dswing_engine = MagicMock()
+    integration_ctx.event_value_engine = MagicMock()
+    integration_ctx.dswing_enabled = True
+    integration_ctx.loggers.dswing_logger = MagicMock()
+    
+    event = MagicMock()
+    event.event_id = "e1"
+    integration_ctx.game_actual_events = [event]
+    
+    e_sig = _make_event_sig("tok_A", is_reversal=True, edge=0.20)
+    d_sig = _make_dswing_sig("tok_A", edge=0.10)
+    
+    integration_ctx.event_value_engine.evaluate.return_value = [e_sig]
+    integration_ctx.dswing_engine.evaluate.return_value = [d_sig]
+    
+    candidates = collect_strategy_candidates(integration_ctx)
+    decisions = allocate_candidates(candidates, integration_ctx.entered_tokens)
+    
+    assert len(decisions) == 1
+    d = decisions[0]
+    assert d.winner.strategy == "EVENT_REVERSAL_EDGE"
+    assert d.blocked[0].strategy == "DSWING"
+    assert d.block_reason == "preempted_by_event"
 
 
 def test_already_entered_token_blocks_all_collected_candidates(integration_ctx):
