@@ -230,6 +230,38 @@ def _collect_dswing_candidates(ctx: StrategyCollectionContext) -> list[StrategyC
         if ctx.loggers.strategy_signal_logger is not None:
             ctx.loggers.strategy_signal_logger.log_signal(ds_res, strategy="DSWING")
 
+        # Markout logging (async side effect via callback)
+        if ctx.loggers.markout_logger_fn is not None:
+            ds_book = ctx.book_store.get(ds_res.token_id)
+            markout_row = {
+                "signal_timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+                "match_id": str(ctx.game.get("match_id") or ""),
+                "market_name": ctx.mapping.get("name"),
+                "event_type": "DSWING",
+                "event_tier": "A",
+                "event_is_primary": True,
+                "event_direction": ds_res.direction,
+                "token_id": ds_res.token_id,
+                "side": ds_res.side,
+                "decision": "paper_buy_yes",
+                "skip_reason": "",
+                "reference_price": ds_res.ask,
+                "reference_bid": ds_book.get("best_bid") if ds_book else None,
+                "reference_ask": ds_res.ask,
+                "fair_price": ds_res.series_fair,
+                "executable_edge": ds_res.edge,
+                "edge_type": ds_res.edge_type,
+                "target_horizon": ds_res.target_horizon,
+                "expected_hold_sec": ds_res.expected_hold_sec,
+                "entry_trigger": ds_res.entry_trigger,
+                "exit_trigger": ds_res.exit_trigger,
+                "primary_metric": ds_res.primary_metric,
+                "secondary_metric": ds_res.secondary_metric,
+                "promotion_rule": ds_res.promotion_rule,
+                "disable_rule": ds_res.disable_rule,
+            }
+            ctx.loggers.markout_logger_fn(markout_row, ds_res.token_id)
+
         if not ctx.dswing_enabled:
             continue
 

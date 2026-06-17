@@ -141,7 +141,7 @@ ENABLE_MATCH_WINNER_GAME3_PROXY = os.getenv(
 ).lower() in {"1", "true", "yes"}
 
 ENABLE_MATCH_WINNER_RESEARCH = os.getenv(
-    "ENABLE_MATCH_WINNER_RESEARCH", "false"
+    "ENABLE_MATCH_WINNER_RESEARCH", "true"
 ).lower() in {"1", "true", "yes"}
 
 ENABLE_MATCH_WINNER_TRADING = os.getenv(

@@ -125,7 +125,7 @@ class DSwingReject:
     live_skip_reason: str = ""
 
 
-def _series_fair(mapping: Mapping, side: str, p_game: float) -> float | None:
+def _series_fair(mapping: Mapping, side: str, p_game: float, p_next_side: float) -> float | None:
     """Model series-win prob for the side that just (near-)won this map. Uses the
     binder's series state via compute_bo3_match_p. Rejects if state or model is missing."""
     def _i(x):
@@ -141,9 +141,10 @@ def _series_fair(mapping: Mapping, side: str, p_game: float) -> float | None:
         return None
     # winner-as-yes terms
     pc_yes = p_game if side == "YES" else (1.0 - p_game)
+    pn_yes = p_next_side if side == "YES" else (1.0 - p_next_side)
     sy2, sn2 = (sy, sn) if side == "YES" else (sn, sy)
     try:
-        p_yes_series = compute_bo3_match_p(pc_yes, 0.5, sy2, sn2, gn)
+        p_yes_series = compute_bo3_match_p(pc_yes, pn_yes, sy2, sn2, gn)
         return p_yes_series if side == "YES" else (1.0 - p_yes_series)
     except Exception:
         return None
@@ -230,7 +231,11 @@ class DecisiveSwingEngine:
         if p_game < DSWING_MIN_P_GAME:
             return _rej(f"p_game_too_low:{p_game:.3f}", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
 
-        series_fair = _series_fair(mapping, side, p_game)
+        # Estimate next map win probability using Elo/Draft advantage from a neutral state
+        import winprob
+        p_next_side = winprob.fair(lead=0, game_time_sec=0, elo_diff=fair_res.elo_diff, lead_slope=0, draft_h2h=fair_res.draft_h2h)
+
+        series_fair = _series_fair(mapping, side, p_game, p_next_side)
         if series_fair is None:
             return _rej("missing_series_state_or_model", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
             
