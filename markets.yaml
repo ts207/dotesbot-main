@@ -12108,11 +12108,32 @@ markets:
   no_team: PlayTime
   yes_token_id: '52772303225437051189557832840254291253794226432415715802378827555851533363379'
   no_token_id: '1373904140171263765705855636193181402459973765984746615690528653438704337204'
-  dota_match_id: '8855968667'
+  dota_match_id: '8856020729'
   confidence: 1.0
   scheduled_start_utc: '2026-06-17 08:55:53'
   auto_mapped_at_utc: '2026-06-17T21:11:17+00:00'
   auto_mapped_source: auto_series_binder
-  steam_radiant_team: PlayTime
-  steam_dire_team: Team Nemesis
-  steam_side_mapping: reversed
+  steam_radiant_team: Team Nemesis
+  steam_dire_team: PlayTime
+  steam_side_mapping: normal
+- name: 'Dota 2: Team Nemesis vs PlayTime - Game 2 Winner'
+  condition_id: '0x5376a06f8ac11c1e15b99851a22c2fff6338df54c37116ad24b4937b8682ec2d'
+  market_id: '2573029'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 1
+  current_game_number: 2
+  yes_team: Team Nemesis
+  no_team: PlayTime
+  yes_token_id: '91807920253188729173067616454598866145461272818010057860468935360662885978488'
+  no_token_id: '85969780288119658357791527889109592387660774859210287376249642939508988482343'
+  dota_match_id: '8856020729'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-17 08:55:53'
+  auto_mapped_at_utc: '2026-06-17T22:07:01+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Nemesis
+  steam_dire_team: PlayTime
+  steam_side_mapping: normal

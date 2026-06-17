@@ -471,7 +471,7 @@ class EventTriggeredValueEngine:
             lead=lead_after,
             game_time_sec=game_time,
             elo_diff=elo_diff,
-            sized_usd=EVENT_VALUE_TRADE_USD,
+            sized_usd=EVENT_VALUE_TRADE_USD * 2.0 if is_reversal else EVENT_VALUE_TRADE_USD,
             book_age_ms=book_age_ms,
             derived_state_flags=derived.flags,
             is_reversal=is_reversal,

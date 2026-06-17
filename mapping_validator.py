@@ -265,9 +265,19 @@ def validate_mapping_identity(mapping: dict, game: dict, liveleague_context: dic
             normal = normal or normal_steam
             reversed_side = reversed_side or reversed_steam
 
+        configured_side_map = str(mapping.get("steam_side_mapping") or "normal").strip().lower()
+        
         if not (normal or reversed_side):
             result.mapping_errors.append(
                 f"team_name_mismatch yes={yes_team} no={no_team} radiant={radiant_team} dire={dire_team}"
+            )
+        elif configured_side_map == "normal" and not normal:
+            result.mapping_errors.append(
+                f"team_orientation_mismatch: expected normal side_mapping but found reversed (yes={yes_team} no={no_team} radiant={radiant_team} dire={dire_team})"
+            )
+        elif configured_side_map == "reversed" and not reversed_side:
+            result.mapping_errors.append(
+                f"team_orientation_mismatch: expected reversed side_mapping but found normal (yes={yes_team} no={no_team} radiant={radiant_team} dire={dire_team})"
             )
 
     mapped_league = _to_str(mapping.get("league_id"))

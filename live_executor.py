@@ -1364,6 +1364,9 @@ class LiveExecutor:
             book=book,
             ask=ask,
             price_cap=price_cap,
+            operator=signal.get("operator", "unknown_operator"),
+            source=signal.get("source", "dashboard_manual"),
+            pre_trade_book=book,
         )
 
         if not policy_result.allowed:
@@ -1713,23 +1716,51 @@ class LiveExecutor:
                     attempt.order_status = order_status
                     attempt.reason_if_rejected = f"delayed_order_{order_status}"
                     attempt.raw_response_json = json.dumps(_jsonable(status), sort_keys=True)[:4000]
-                self.release_submitted_budget(order_usd, match_id=match_id, strategy_family=strategy_family)
+                    if confirmed_filled_usd > 0:
+                        attempt.filled_size_usd = round(confirmed_filled_usd, 6)
+                
+                amount_to_release = max(0.0, order_usd - confirmed_filled_usd)
+                if confirmed_filled_usd > 0:
+                    self.total_filled_usd += confirmed_filled_usd
+                    self._save()
+
+                self.release_submitted_budget(amount_to_release, match_id=match_id, strategy_family=strategy_family)
                 self.decrement_open_positions(match_id, full_exit=False)
                 await self._emit_delayed_resolution(attempt)
                 return
 
         # Still pending after 30s — cancel and release
         logger.warning("[delayed_poll] order=%s still pending at 30s — cancelling", order_id)
+        
+        # We need the last known confirmed_filled_usd from the loop
+        confirmed_filled_usd = 0.0
+        try:
+            # Re-fetch one last time to ensure we have the most accurate filled amount before canceling
+            final_status = await self._poll_order_status(order_id)
+            confirmed_filled_usd = float(final_status.get("filled_size_usd") or 0)
+        except Exception:
+            pass
+
         try:
             if self.client is None:
                 self.client = LiveCLOBClient()
             await self.client.cancel_order_by_id(order_id)
         except Exception as exc:
-            logger.warning("[delayed_poll] cancel order=%s failed: %s", order_id, exc)
+            logger.warning("[delayed_poll] cancel order=%s failed: %s. NOT releasing budget to prevent leak.", order_id, exc)
+            return
+
         if attempt is not None:
             attempt.order_status = "cancelled"
             attempt.reason_if_rejected = "delayed_order_timeout_cancelled"
-        self.release_submitted_budget(order_usd, match_id=match_id, strategy_family=strategy_family)
+            if confirmed_filled_usd > 0:
+                attempt.filled_size_usd = round(confirmed_filled_usd, 6)
+                
+        amount_to_release = max(0.0, order_usd - confirmed_filled_usd)
+        if confirmed_filled_usd > 0:
+            self.total_filled_usd += confirmed_filled_usd
+            self._save()
+
+        self.release_submitted_budget(amount_to_release, match_id=match_id, strategy_family=strategy_family)
         self.decrement_open_positions(match_id, full_exit=False)
         await self._emit_delayed_resolution(attempt)
 

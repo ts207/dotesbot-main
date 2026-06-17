@@ -24,7 +24,14 @@ def evaluate_manual_policy(
     book: dict,
     ask: float,
     price_cap: float,
+    operator: str,
+    source: str,
+    pre_trade_book: dict,
 ) -> PolicyResult:
+    if mapping.get("mapping_state") == "quarantined":
+        reason = str(mapping.get("quarantine_reason") or "unknown")
+        return reject(f"mapping_quarantined:{reason}")
+
     if size_usd <= 0:
         return reject("size <= 0")
     if size_usd > MAX_TRADE_USD:
