@@ -11856,9 +11856,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 2
+  series_score_yes: 1
   series_score_no: 0
-  current_game_number: 3
+  current_game_number: 2
   yes_team: Team Refuser
   no_team: Game Master
   yes_token_id: '44004221343080747311830855031348803130845361590313949046622526101526829826016'
@@ -11909,9 +11909,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 2
+  series_score_yes: 1
   series_score_no: 0
-  current_game_number: 3
+  current_game_number: 2
   yes_team: Team Refuser
   no_team: Game Master
   yes_token_id: '84140979947364380436277709174370637517434925995111824092852840086801820225408'

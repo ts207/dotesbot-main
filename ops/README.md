@@ -49,8 +49,8 @@ python3 scripts/telegram_ops.py daily --hours 24
 Example cron entries:
 
 ```cron
-0 * * * * cd /home/tstuv/dota-poly-signal-pnl-asd && DREAMLEAGUE_ACTIVE=true /usr/bin/python3 scripts/telegram_ops.py liveness
-0 9 * * * cd /home/tstuv/dota-poly-signal-pnl-asd && /usr/bin/python3 scripts/telegram_ops.py daily --hours 24
+0 * * * * cd /home/tstuv/dota/dotesbot-main/dotesbot-main && DREAMLEAGUE_ACTIVE=true /usr/bin/python3 ops/telegram_ops.py liveness
+0 9 * * * cd /home/tstuv/dota/dotesbot-main/dotesbot-main && /usr/bin/python3 ops/telegram_ops.py daily --hours 24
 ```
 
 ## Disk Guard

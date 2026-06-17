@@ -10,7 +10,7 @@ break" guide. Read it before touching anything.
 A live-betting bot for **Dota 2 markets on Polymarket CLOB**. It reads the live
 Steam game state (net-worth lead per second) and trades the Polymarket order book.
 The validated edge is **informational**: the net-worth lead predicts the game/series
-winner, and the market is sometimes slow to price it. Two strategies exploit this
+winner, and the market is sometimes slow to price it. Three strategies exploit this
 (see §3). Everything is **hold-to-(settlement/convergence)** — no in-game momentum
 scalping (that was tested and is dead: price LEADS the Steam feed).
 
@@ -24,8 +24,8 @@ scalping (that was tested and is dead: price LEADS the Steam feed).
 
 ## 2. How to run it
 - **RUN `python3 supervisor.py`** — NOT `main.py` directly. The supervisor is a
-  watchdog that launches + auto-restarts `main.py`, `auto_series_binder.py`,
-  `settlement_shadow.py` on death or heartbeat staleness.
+  watchdog that launches + auto-restarts `main.py` and `auto_series_binder.py`
+  on death or heartbeat staleness.
 - **To deploy a code change: restart the affected process** (kill it; the supervisor
   relaunches with new code). A running Python process does NOT pick up edits.
   - `main.py` changes (engines, executor, exit logic) → kill `python3 main.py`.
@@ -37,7 +37,7 @@ scalping (that was tested and is dead: price LEADS the Steam feed).
   is what wiped the account; use with extreme care or not at all.
 - Boot does a startup reconcile (now scoped to position tokens, ~15s).
 
-## 3. The two strategies
+## 3. The active strategies
 ### Value bot (`value_engine.py`) — LIVE-READY
 Back the net-worth **leader** when the model `fair − ask ≥ edge`, **hold to settle**.
 - Trades MAP_WINNER (+ game-3-proxy MATCH_WINNER). Gates: `data_source=top_live`,
@@ -46,7 +46,7 @@ Back the net-worth **leader** when the model `fair − ask ≥ edge`, **hold to 
 - **Conviction floor (2026-06-03 sweep):** the edge is concentrated in high-conviction
   trades (fair 0.8+ won ~100%; 0.6–0.7 was a coin-flip that diluted). Gating on FAIR
   (not raw lead — lead is already inside fair) moved the backtest from P(ROI>0)=0.89 /
-  CI straddles 0 → **0.98 / CI off 0**, win 70%→83%. `VALUE_MIN_FAIR=0.0` disables.
+  CI straddles 0 → **0.98 / CI off 0**, win 70%→83%. Note: the config.py default is `VALUE_MIN_FAIR=0.0` (disabled) — the user must explicitly set it (e.g., to 0.80) to activate this gate.
   See `scripts/value_sweep.py`, `stress_edge.py`, memory `stress_test_verdicts_2026_06_03`.
 - Backtest: ~+16.7% ROI / 67% win (full data, pre-conviction-gate). The "+21% filtered"
   config existed (price-floor/edge-cap/time-cap) but was **disabled per user** — those
@@ -61,7 +61,12 @@ near-certain winner's ML below series-fair, exit at map-end convergence.
 - `DSWING_ENABLED=false`. To arm: `DSWING_ENABLED=true` + live + restart.
 - **Depends on reliable series state** (game#/score) for off-decider gating — now
   fixed (see §5 binder). Exit risk: thin ML book may have no bid at map-end.
-- **Combined (both strategies): +16.4% ROI / 76% win / n=62.**
+- **Combined (value + dswing): +16.4% ROI / 76% win / n=62.**
+
+### Event-Triggered Value (`event_triggered_value_engine.py`) — LIVE-READY
+Fires on actual Dota events (kills, tower, NW swings) when the winprob fair diverges from the book.
+- Combines the fast reactivity of event detectors with the conviction of the value model.
+- Operates on the same hold-to-settle paradigm as the standard value bot.
 
 ## 4. The win-prob model (`winprob.py`) — the `fair` source
 `winprob.fair(lead, game_time_sec, elo_diff, lead_slope, draft_h2h)` →
