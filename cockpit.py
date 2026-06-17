@@ -187,6 +187,10 @@ def get_shares(client, token_id) -> float:
 
 def get_cash(client) -> float | None:
     """USDC collateral balance in dollars."""
+    from config import ENABLE_REAL_LIVE_TRADING
+    if not ENABLE_REAL_LIVE_TRADING:
+        from storage_v2 import StorageV2
+        return StorageV2().get_simulated_balance(1000.0)
     from py_clob_client_v2.clob_types import AssetType, BalanceAllowanceParams
     resp = client.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL))
     raw = resp.get("balance") if isinstance(resp, dict) else getattr(resp, "balance", None)

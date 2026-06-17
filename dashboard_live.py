@@ -78,15 +78,21 @@ def panel_capital():
     # balance (sig-3) — best effort, short timeout
     bal=None; appr=None
     try:
-        from dotenv import dotenv_values
-        v=dotenv_values('.env')
-        for k,val in v.items():
-            if val is not None: os.environ.setdefault(k,val)
-        from py_clob_client_v2 import ClobClient, ApiCreds, BalanceAllowanceParams, AssetType
-        creds=ApiCreds(api_key=os.getenv('POLY_CLOB_API_KEY'),api_secret=os.getenv('POLY_CLOB_SECRET'),api_passphrase=os.getenv('POLY_CLOB_PASS_PHRASE'))
-        cl=ClobClient('https://clob.polymarket.com',137,os.getenv('POLY_PRIVATE_KEY'),creds,signature_type=3,funder=os.getenv('POLY_FUNDER_ADDRESS'))
-        r=cl.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL))
-        bal=int(r['balance'])/1e6; appr=all(int(x)>0 for x in r['allowances'].values())
+        from config import ENABLE_REAL_LIVE_TRADING
+        if not ENABLE_REAL_LIVE_TRADING:
+            from storage_v2 import StorageV2
+            bal = StorageV2().get_simulated_balance(1000.0)
+            appr = True
+        else:
+            from dotenv import dotenv_values
+            v=dotenv_values('.env')
+            for k,val in v.items():
+                if val is not None: os.environ.setdefault(k,val)
+            from py_clob_client_v2 import ClobClient, ApiCreds, BalanceAllowanceParams, AssetType
+            creds=ApiCreds(api_key=os.getenv('POLY_CLOB_API_KEY'),api_secret=os.getenv('POLY_CLOB_SECRET'),api_passphrase=os.getenv('POLY_CLOB_PASS_PHRASE'))
+            cl=ClobClient('https://clob.polymarket.com',137,os.getenv('POLY_PRIVATE_KEY'),creds,signature_type=3,funder=os.getenv('POLY_FUNDER_ADDRESS'))
+            r=cl.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL))
+            bal=int(r['balance'])/1e6; appr=all(int(x)>0 for x in r['allowances'].values())
     except Exception:
         pass
     baltxt = (c(f"${bal:.2f}",G) + (" approved" if appr else c(" NOT approved",R))) if bal is not None else c("(balance check unavailable)",D)

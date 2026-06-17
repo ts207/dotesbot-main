@@ -17,9 +17,14 @@ HIST = "logs/nav_history.csv"
 async def main():
     c = cockpit.make_client()
     # 1) USDC cash
-    from py_clob_client_v2.clob_types import AssetType, BalanceAllowanceParams
-    r = c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL))
-    cash = float((r.get("balance") if isinstance(r, dict) else 0) or 0) / 1e6
+    from config import ENABLE_REAL_LIVE_TRADING
+    from storage_v2 import StorageV2
+    if ENABLE_REAL_LIVE_TRADING:
+        from py_clob_client_v2.clob_types import AssetType, BalanceAllowanceParams
+        r = c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL))
+        cash = float((r.get("balance") if isinstance(r, dict) else 0) or 0) / 1e6
+    else:
+        cash = StorageV2().get_simulated_balance(1000.0)
 
     # 2) value held tokens (from the position store) at current bid
     try:

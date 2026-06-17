@@ -772,7 +772,16 @@ class LiveExecutor:
             logger.warning("[delayed_poll] resolution callback failed: %s", exc)
 
     async def _get_cached_usdc_balance(self) -> float | None:
+        from config import ENABLE_REAL_LIVE_TRADING
+        from storage_v2 import StorageV2
         now = time.time_ns()
+        if not ENABLE_REAL_LIVE_TRADING:
+            balance = StorageV2().get_simulated_balance(1000.0)
+            self._balance_cache_usd = balance
+            self._balance_cache_at_ns = now
+            _persist_usdc_balance_snapshot(balance, now)
+            return balance
+
         age_sec = (
             (now - self._balance_cache_at_ns) / 1e9
             if self._balance_cache_at_ns else float("inf")

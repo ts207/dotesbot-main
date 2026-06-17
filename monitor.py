@@ -42,7 +42,12 @@ async def run(halt_on_critical=False):
     c = cockpit.make_client()
 
     # --- 1. NAV snapshot ---
-    cash = float((c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)).get("balance") or 0)) / 1e6
+    from config import ENABLE_REAL_LIVE_TRADING
+    from storage_v2 import StorageV2
+    if ENABLE_REAL_LIVE_TRADING:
+        cash = float((c.get_balance_allowance(BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)).get("balance") or 0)) / 1e6
+    else:
+        cash = StorageV2().get_simulated_balance(1000.0)
     token_val = 0.0
     over = {}   # match_id -> exposure
     stuck = []  # settled-but-held

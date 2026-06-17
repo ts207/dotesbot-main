@@ -164,12 +164,16 @@ async def _live_health() -> dict:
 
     # Attempt to fetch real-time balance from CLOB if credentials exist
     real_balance = None
-    try:
-        if os.getenv("POLY_PRIVATE_KEY") or os.getenv("PK"):
-            client = LiveCLOBClient()
-            real_balance = await client.get_usdc_balance()
-    except Exception:
-        pass
+    from config import ENABLE_REAL_LIVE_TRADING
+    if os.getenv("POLY_PRIVATE_KEY") or os.getenv("PK"):
+        if ENABLE_REAL_LIVE_TRADING:
+            try:
+                client = LiveCLOBClient()
+                real_balance = await client.get_usdc_balance()
+            except Exception:
+                pass
+        else:
+            real_balance = StorageV2().get_simulated_balance(1000.0)
 
     submit_rows = [r for r in attempts if (r.get("phase") or "submit") == "submit"]
     resolution_rows = [r for r in attempts if (r.get("phase") or "") == "resolution"]
@@ -207,7 +211,7 @@ async def _live_health() -> dict:
         "usdc_balance": round(usdc_balance, 2) if usdc_balance is not None else 0.0,
         "usdc_balance_age_sec": usdc_age_sec,
         "is_mock_balance": real_balance is None and usdc_balance == 10.0 and usdc_age_sec is not None and usdc_age_sec > 3600,
-        "is_live_on_chain": real_balance is not None,
+        "is_live_on_chain": ENABLE_REAL_LIVE_TRADING and real_balance is not None,
     }
 
 

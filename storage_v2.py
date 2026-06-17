@@ -320,3 +320,21 @@ class StorageV2:
                 "submitted_match_usd": json.loads(row["submitted_match_usd"] or "{}"),
                 "submitted_family_usd": json.loads(row["submitted_family_usd"] or "{}"),
             }
+
+    def get_simulated_balance(self, starting_balance: float = 1000.0) -> float:
+        """Calculate the simulated cash balance: starting + closed P&L - open positions cost."""
+        with self.connect() as conn:
+            # 1) Realized P&L from closed positions
+            row_closed = conn.execute(
+                "SELECT SUM(pnl_usd) FROM closed_positions WHERE mode IN ('live', 'paper', 'dry_live', 'real_live')"
+            ).fetchone()
+            closed_pnl = row_closed[0] if row_closed and row_closed[0] is not None else 0.0
+
+            # 2) Cost of currently open positions
+            # We use state IN ACTIVE_STATES to only subtract active capital
+            row_open = conn.execute(
+                "SELECT SUM(size_usd) FROM positions WHERE mode IN ('live', 'paper', 'dry_live', 'real_live') AND state IN ('OPEN', 'PARTIALLY_EXITED', 'PENDING_ENTRY', 'PENDING_EXIT_GTC', 'EXITING')"
+            ).fetchone()
+            open_cost = row_open[0] if row_open and row_open[0] is not None else 0.0
+
+            return starting_balance + closed_pnl - open_cost
