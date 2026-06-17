@@ -36,7 +36,7 @@ from config import (
     PAPER_SLIPPAGE_CENTS,
 )
 
-DATA_DIR = "/home/tstuv/dota-poly-signal-pnl-asd/logs"
+DATA_DIR = "/home/tstuv/dota/dotesbot-main/dotesbot-main/logs"
 PAPER_SIZE_USD = 25.0
 
 SEGMENTS = [

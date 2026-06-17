@@ -451,6 +451,40 @@ SCHEMA_VALUE_ATTEMPTS = pa.schema([
 ])
 
 
+SCHEMA_STRATEGY_ALLOCATOR = pa.schema([
+    pa.field("received_at_utc", pa.string()),
+    pa.field("received_at_ns", pa.int64()),
+    pa.field("match_id", pa.string()),
+    pa.field("token_id", pa.string()),
+    pa.field("winner_strategy", pa.string()),
+    pa.field("winner_edge", pa.float64()),
+    pa.field("winner_fair", pa.float64()),
+    pa.field("winner_game_time_sec", pa.int32()),
+    pa.field("winner_direction", pa.string()),
+    pa.field("winner_event_subtype", pa.string()),
+    pa.field("winner_is_reversal", pa.bool_()),
+    pa.field("winner_edge_type", pa.string()),
+    pa.field("winner_target_horizon", pa.string()),
+    pa.field("winner_expected_hold_sec", pa.float64()),
+    pa.field("winner_entry_trigger", pa.string()),
+    pa.field("winner_exit_trigger", pa.string()),
+    pa.field("winner_primary_metric", pa.string()),
+    pa.field("candidate_count", pa.int32()),
+    pa.field("blocked_count", pa.int32()),
+    pa.field("blocked_strategies", pa.string()),
+    pa.field("blocked_edges", pa.string()),
+    pa.field("blocked_fairs", pa.string()),
+    pa.field("blocked_edge_types", pa.string()),
+    pa.field("blocked_target_horizons", pa.string()),
+    pa.field("blocked_expected_hold_secs", pa.string()),
+    pa.field("block_reason", pa.string()),
+    pa.field("counterfactual_note", pa.string()),
+    pa.field("date", pa.string()),
+    pa.field("schema_version", pa.string()),
+    pa.field("source_file", pa.string()),
+])
+
+
 ALL_SCHEMAS = {
     "snapshots": SCHEMA_SNAPSHOTS,
     "book_ticks": SCHEMA_BOOK_TICKS,
@@ -462,4 +496,5 @@ ALL_SCHEMAS = {
     "value_attempts": SCHEMA_VALUE_ATTEMPTS,
     "source_delay": SCHEMA_SOURCE_DELAY,
     "latency": SCHEMA_LATENCY,
+    "strategy_allocator": SCHEMA_STRATEGY_ALLOCATOR,
 }

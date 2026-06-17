@@ -8,13 +8,13 @@ Wants=network-online.target
 Type=simple
 User=tstuv
 Group=tstuv
-WorkingDirectory=/home/tstuv/dota-poly-signal-pnl-asd
+WorkingDirectory=/home/tstuv/dota/dotesbot-main/dotesbot-main
 
 # .env is loaded by python-dotenv at startup; no EnvironmentFile needed.
 # If you split secrets to a separate file, uncomment:
-# EnvironmentFile=/home/tstuv/dota-poly-signal-pnl-asd/.env
+# EnvironmentFile=/home/tstuv/dota/dotesbot-main/dotesbot-main/.env
 
-ExecStart=/usr/bin/python3 /home/tstuv/dota-poly-signal-pnl-asd/main.py
+ExecStart=/home/tstuv/dota/dotesbot-main/dotesbot-main/.venv/bin/python main.py
 
 # Restart policy: come back up after crashes, but don't loop forever on
 # a deterministic startup failure (5 restarts in 5 minutes -> give up).

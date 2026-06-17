@@ -12080,8 +12080,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_no: 1
+  current_game_number: 2
   yes_team: Team Nemesis
   no_team: PlayTime
   yes_token_id: '72283254467076999265532568155707260380697690682508824940707248914521263967062'
@@ -12102,8 +12102,8 @@ markets:
   series_type: '1'
   p_next_yes: 0.5
   series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_no: 1
+  current_game_number: 2
   yes_team: Team Nemesis
   no_team: PlayTime
   yes_token_id: '52772303225437051189557832840254291253794226432415715802378827555851533363379'
