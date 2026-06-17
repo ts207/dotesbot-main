@@ -179,11 +179,11 @@ async def test_dswing_pending_entry():
             return [game]
         raise asyncio.CancelledError()
 
-    with patch("bot_runtime.allocate_candidates", return_value=[MagicMock(winner=cand)]), \
-         patch("bot_runtime.fetch_all_live_games", side_effect=mock_fetch_2), \
-         patch("bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
+    with patch("runtime.bot_runtime.allocate_candidates", return_value=[MagicMock(winner=cand)]), \
+         patch("runtime.bot_runtime.fetch_all_live_games", side_effect=mock_fetch_2), \
+         patch("runtime.bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
          patch("config.ENABLE_REAL_LIVE_TRADING", True), \
-         patch("bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
+         patch("runtime.bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
 
         try:
             await steam_loop(**kwargs)
@@ -193,3 +193,30 @@ async def test_dswing_pending_entry():
     live_position_store.add.assert_called()
     pos2 = live_position_store.add.call_args[0][0]
     assert pos2.state == "PENDING_ENTRY", "Delayed order should be PENDING_ENTRY"
+
+    # Scenario 3: rejected -> no LivePosition
+    live_position_store.add.reset_mock()
+    attempt.order_status = "rejected"
+    attempt.order_id = None
+    attempt.filled_size_usd = 0.0
+
+    call_count_3 = 0
+    async def mock_fetch_3(*args, **kwargs):
+        nonlocal call_count_3
+        call_count_3 += 1
+        if call_count_3 <= 2:
+            return [game]
+        raise asyncio.CancelledError()
+
+    with patch("runtime.bot_runtime.allocate_candidates", return_value=[MagicMock(winner=cand)]), \
+         patch("runtime.bot_runtime.fetch_all_live_games", side_effect=mock_fetch_3), \
+         patch("runtime.bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
+         patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("runtime.bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
+
+        try:
+            await steam_loop(**kwargs)
+        except asyncio.CancelledError:
+            pass
+
+    live_position_store.add.assert_not_called()

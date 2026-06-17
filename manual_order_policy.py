@@ -6,6 +6,8 @@ from config import (
     MAX_OPEN_POSITIONS,
     MAX_DAILY_DRAWDOWN_USD,
     MAX_OPEN_USD_PER_MATCH,
+    MAX_SPREAD,
+    MAX_BOOK_AGE_MS,
 )
 from execution_policy import PolicyResult, allow, reject
 
@@ -17,6 +19,11 @@ def evaluate_manual_policy(
     open_positions: int,
     daily_realized_pnl_usd: float,
     remaining_budget_usd: float,
+    token_id: str,
+    mapping: dict,
+    book: dict,
+    ask: float,
+    price_cap: float,
 ) -> PolicyResult:
     if size_usd <= 0:
         return reject("size <= 0")
@@ -32,5 +39,26 @@ def evaluate_manual_policy(
         return reject(f"MAX_OPEN_USD_PER_MATCH exceeded: used={match_used_usd:.2f} size={size_usd:.2f} cap={MAX_OPEN_USD_PER_MATCH:.2f}")
     if remaining_budget_usd < size_usd:
         return reject(f"insufficient budget: remaining={remaining_budget_usd:.2f} size={size_usd:.2f}")
+
+    if token_id not in (mapping.get("yes_token_id"), mapping.get("no_token_id")):
+        return reject("token_not_in_mapping")
+    if str(mapping.get("market_type") or "").upper() not in {"MAP_WINNER", "MATCH_WINNER"}:
+        return reject("unsupported_market_type")
+
+    import time
+    book_age_ms = (time.time_ns() - book.get("received_at_ns", 0)) / 1e6
+    if book_age_ms > MAX_BOOK_AGE_MS:
+        return reject("book_stale")
+
+    bid = book.get("best_bid")
+    if bid is not None and ask is not None:
+        spread = ask - bid
+        if spread > MAX_SPREAD:
+            return reject("spread_too_wide")
+            
+    if price_cap < ask:
+        return reject("price_cap_below_ask")
+    if price_cap > 0.99:
+        return reject("price_cap_exceeds_max")
 
     return allow(reason="manual_allowed", size_usd=size_usd)

@@ -37,7 +37,7 @@ def executor():
 
 @pytest.mark.anyio
 async def test_manual_order_policy_rejects_exceeding_match_limit(executor):
-    mapping = {"market_type": "MAP_WINNER", "tick_size": "0.01", "name": "TeamA vs TeamB"}
+    mapping = {"yes_token_id": "TOK1", "no_token_id": "TOK2", "market_type": "MAP_WINNER", "tick_size": "0.01", "name": "TeamA vs TeamB"}
     signal = {"side": "YES", "size_usd": 20.0, "price_cap": 0.60}
     book_store = MockBookStore()
     
@@ -60,7 +60,7 @@ async def test_manual_order_policy_rejects_exceeding_match_limit(executor):
 
 @pytest.mark.anyio
 async def test_manual_order_policy_allows_valid_order(executor):
-    mapping = {"market_type": "MAP_WINNER", "tick_size": "0.01", "name": "TeamA vs TeamB"}
+    mapping = {"yes_token_id": "TOK1", "no_token_id": "TOK2", "market_type": "MAP_WINNER", "tick_size": "0.01", "name": "TeamA vs TeamB"}
     signal = {"side": "YES", "size_usd": 10.0, "price_cap": 0.60}
     book_store = MockBookStore()
     

@@ -1318,9 +1318,21 @@ class LiveExecutor:
                 result_for_existing_decision(False, reason or "rejected"),
             )
 
-        from config import ENABLE_REAL_LIVE_TRADING
+        from config import ENABLE_REAL_LIVE_TRADING, LIVE_ORDER_TYPE
+        if LIVE_ORDER_TYPE != "FAK":
+            return _reject(f"manual_orders_only_support_FAK_found_{LIVE_ORDER_TYPE}")
+
         if not ENABLE_REAL_LIVE_TRADING:
             return _reject("ENABLE_REAL_LIVE_TRADING=false")
+
+        book = book_store.get_book(token_id)
+        if not book: return _reject("no_book")
+        ask = book.get("best_ask")
+        if ask is None: return _reject("no_ask")
+
+        price_cap = signal.get("price_cap")
+        if price_cap is None:
+            price_cap = round(min(ask + 0.04, 0.99), 4)
 
         size_usd = float(signal.get("size_usd", 0.0))
         from manual_order_policy import evaluate_manual_policy
@@ -1333,19 +1345,15 @@ class LiveExecutor:
             open_positions=self.open_positions,
             daily_realized_pnl_usd=self.daily_realized_pnl_usd,
             remaining_budget_usd=self.remaining_budget(),
+            token_id=token_id,
+            mapping=mapping,
+            book=book,
+            ask=ask,
+            price_cap=price_cap,
         )
 
         if not policy_result.allowed:
             return _reject(policy_result.reason)
-
-        book = book_store.get_book(token_id)
-        if not book: return _reject("no_book")
-        ask = book.get("best_ask")
-        if ask is None: return _reject("no_ask")
-
-        price_cap = signal.get("price_cap")
-        if price_cap is None:
-            price_cap = round(min(ask + 0.04, 0.99), 4)
 
         usdc = await self._get_cached_usdc_balance()
         if usdc is None:
@@ -1524,6 +1532,10 @@ class LiveExecutor:
                 f"execution_price_protection_no_edge:ask={ask:.4f}_fair={signal.fair_price:.4f}"
             )
 
+        from config import LIVE_ORDER_TYPE
+        if LIVE_ORDER_TYPE not in _ALLOWED_ORDER_TYPES:
+            return self._reject_value(signal, mapping, game, token_id, size_usd, f"unsupported_order_type:{LIVE_ORDER_TYPE}")
+
         trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"
 
         attempt = LiveOrderAttempt(
@@ -1539,7 +1551,7 @@ class LiveExecutor:
             spread=None,
             book_age_ms=signal.book_age_ms,
             steam_age_ms=None,
-            order_type="FAK",
+            order_type=LIVE_ORDER_TYPE,
             submitted_size_usd=size_usd,
             market_name=mapping.get("name"),
             match_id=signal_match_id,
