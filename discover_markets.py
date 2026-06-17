@@ -11,6 +11,7 @@ import aiohttp
 import yaml
 
 from poly_gamma import fetch_active_markets, filter_dota_markets, parse_clob_token_ids
+from mapping import RUNTIME_MARKETS_PATH
 
 MARKETS_YAML = os.path.join(os.path.dirname(__file__), "markets.yaml")
 POLYMARKET_DOTA_GAMES_URL = "https://polymarket.com/esports/dota-2/games"
@@ -216,7 +217,7 @@ def _append_provisional(path: str, entries: list[dict]) -> None:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
-async def main(auto_write: bool = False):
+async def main(auto_write: bool = False, output_path: str = MARKETS_YAML):
     async with aiohttp.ClientSession() as session:
         markets = await fetch_active_markets(session)
         dota_markets = [m for m in filter_dota_markets(markets) if _is_map_winner_market(m) or _is_bo3_winner_market(m)]
@@ -228,7 +229,14 @@ async def main(auto_write: bool = False):
         print("No obvious Dota/esports markets found in the active market fetch.")
         return
 
-    existing_tokens = _load_existing_token_ids(MARKETS_YAML)
+    # Use load_mappings to check existence across base + runtime
+    from mapping import load_mappings
+    raw_existing = load_mappings()
+    existing_tokens: set[str] = set()
+    for ex in raw_existing:
+        existing_tokens.add(str(ex.get("yes_token_id", "")))
+        existing_tokens.add(str(ex.get("no_token_id", "")))
+
     new_entries: list[dict] = []
 
     for m in dota_markets:
@@ -288,14 +296,16 @@ async def main(auto_write: bool = False):
             new_entries.append(entry)
             print("  [NEW — will add as provisional if --write passed]")
         else:
-            print("  [already in markets.yaml]")
+            print(f"  [already in {output_path}]")
 
     if new_entries and auto_write:
-        _append_provisional(MARKETS_YAML, new_entries)
-        print(f"\nAppended {len(new_entries)} provisional entries to {MARKETS_YAML}.")
+        # Ensure parent directory exists for output_path
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        _append_provisional(output_path, new_entries)
+        print(f"\nAppended {len(new_entries)} provisional entries to {output_path}.")
         print("Set dota_match_id and confidence=1.0 for each entry you want to activate.")
     elif new_entries:
-        print(f"\n{len(new_entries)} new market(s) found. Run with --write to add them to {MARKETS_YAML}.")
+        print(f"\n{len(new_entries)} new market(s) found. Run with --write to add them to {output_path}.")
 
 
 if __name__ == "__main__":

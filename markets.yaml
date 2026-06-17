@@ -11850,4 +11850,24 @@ markets:
   current_game_number: 3
   series_score_yes: 2
   series_score_no: 0
-
+- name: 'Dota 2: Carstensz vs InterActive Philippines - Game 1 Winner'
+  condition_id: '0x64bd9b7e6c6fbb27e47db11aedd3b392b23b25f4ac085f5b2aecd443a630614d'
+  market_id: '2564748'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 0
+  current_game_number: 2
+  yes_team: Carstensz
+  no_team: InterActive Philippines
+  yes_token_id: '111166482264126837505070499067418476029053213255021834927097502779981881196762'
+  no_token_id: '106519557773242104588031593746235848700589801832827502884310651142354274626261'
+  dota_match_id: '8854964089'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-16 12:33:33'
+  auto_mapped_at_utc: '2026-06-17T03:45:57+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Carstensz Esports
+  steam_side_mapping: reversed

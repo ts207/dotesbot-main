@@ -13,6 +13,7 @@ import aiohttp
 import yaml
 
 from discover_markets import MARKETS_YAML, main as discover_main
+from mapping import RUNTIME_MARKETS_PATH, load_mappings, apply_runtime_overlay
 from mapping_audit import audit_mappings, quarantine_critical_issues
 from steam_client import fetch_all_live_games
 
@@ -237,16 +238,31 @@ def sync_markets_to_games(
     return updates
 
 
-def load_markets(path: str | Path = MARKETS_YAML) -> dict:
+def load_markets(path: str | Path | None = None) -> dict:
+    """Load markets from a specific file, merged with runtime overlay if using default path."""
+    if path is None:
+        path = MARKETS_YAML
     p = Path(path)
-    if not p.exists():
-        return {"markets": []}
-    with p.open(encoding="utf-8") as f:
-        return yaml.safe_load(f) or {"markets": []}
+    base_markets = []
+    if p.exists():
+        with p.open(encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+            base_markets = data.get("markets", []) or []
+    
+    if str(path) == str(MARKETS_YAML):
+        merged = apply_runtime_overlay(base_markets)
+        return {"markets": merged}
+    
+    return {"markets": base_markets}
 
 
-def write_markets(data: dict, path: str | Path = MARKETS_YAML) -> None:
+def write_markets(data: dict, path: str | Path | None = None) -> None:
+    """Write markets to a file. Defaults to the runtime overlay file to avoid repo pollution."""
+    if path is None:
+        path = RUNTIME_MARKETS_PATH
     p = Path(path)
+    # Ensure directory exists (e.g. logs/)
+    p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
@@ -258,10 +274,12 @@ async def sync_once(
     only_pair: tuple[str, str] | None = None,
 ) -> list[dict]:
     if discover:
-        await discover_main(auto_write=True)
+        # 2026-06-17: Pass RUNTIME_MARKETS_PATH so discoveries don't pollute markets.yaml
+        await discover_main(auto_write=True, output_path=RUNTIME_MARKETS_PATH)
 
-    data = load_markets()
-    markets = data.setdefault("markets", [])
+    # Load MERGED state so we don't overwrite existing runtime mappings with defaults
+    markets = load_mappings()
+    data = {"markets": markets}
 
     async with aiohttp.ClientSession() as session:
         games = await fetch_all_live_games(session)
@@ -272,9 +290,7 @@ async def sync_once(
     quarantined = quarantine_critical_issues(markets, audit_issues)
     if quarantined:
         print(f"mapping_audit quarantined {quarantined} critical mapping(s)")
-    if updates and write:
-        write_markets(data)
-    elif quarantined and write:
+    if (updates or quarantined) and write:
         write_markets(data)
     return updates
 

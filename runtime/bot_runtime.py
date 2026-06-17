@@ -73,6 +73,7 @@ from config import (
     EVENT_TRIGGERED_VALUE_ENABLED, ENABLE_EVENT_TRIGGERED_VALUE_TRADING,
 )
 from sync_markets import live_match_id, sync_markets_to_games, load_markets, write_markets
+from mapping import RUNTIME_MARKETS_PATH, load_valid_mappings
 from mapping_audit import audit_mappings, quarantine_critical_issues
 import team_id_cache  # 2026-05-27: backfills empty Steam team_names from team_ids
 from discover_markets import main as discover_markets_main
@@ -749,7 +750,7 @@ async def steam_loop(
                 if now - last_market_discover >= MARKET_DISCOVER_SECONDS:
                     last_market_discover = now
                     try:
-                        await discover_markets_main(auto_write=True)
+                        await discover_markets_main(auto_write=True, output_path=RUNTIME_MARKETS_PATH)
                     except Exception as _disc_exc:
                         print(f"Market discovery error (non-fatal): {_disc_exc}")
 
