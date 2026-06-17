@@ -162,6 +162,19 @@ def normalize_exit_reason(reason: str | None) -> str:
     return str(reason).strip()
 
 
+def is_real_match_id(match_id: object) -> bool:
+    """Return True for plausible real Dota match IDs, not local test fixtures."""
+    value = str(match_id or "")
+    return value.isdigit() and len(value) >= 8
+
+
+def is_real_outcome_row(row: dict) -> bool:
+    """Filter fixture/test rows out of attribution reports."""
+    match_id = str(row.get("match_id") or "")
+    token_id = str(row.get("token_id") or "")
+    return is_real_match_id(match_id) and not token_id.lower().startswith("tok")
+
+
 def apply_settlement_counterfactual(
     row: dict,
     settlement_price: float | None,
@@ -321,17 +334,44 @@ def load_strategy_outcomes(
     *,
     modes=("paper", "live"),
     settlement_by_match: dict[str, dict] | None = None,
+    real_only: bool = False,
 ) -> list[dict]:
     """Load closed StorageV2 positions and normalize them into outcome rows."""
     rows = []
     for mode in modes:
         for pos in storage.load_closed_positions(mode):
-            rows.append(closed_position_to_outcome_row(
+            row = closed_position_to_outcome_row(
                 pos,
                 mode=mode,
                 settlement_price=_resolve_settlement_price(pos, settlement_by_match),
-            ))
+            )
+            if real_only and not is_real_outcome_row(row):
+                continue
+            rows.append(row)
     return rows
+
+
+def audit_outcome_rows(rows: list[dict]) -> dict:
+    real_rows = [row for row in rows if is_real_outcome_row(row)]
+    suspect_rows = [row for row in rows if not is_real_outcome_row(row)]
+    return {
+        "closed_positions_total": len(rows),
+        "closed_positions_real": len(real_rows),
+        "closed_positions_suspect": len(suspect_rows),
+        "suspect_match_ids": sorted({str(row.get("match_id") or "") for row in suspect_rows}),
+        "suspect_token_ids": sorted({str(row.get("token_id") or "") for row in suspect_rows}),
+    }
+
+
+def print_db_audit(audit: Mapping[str, Any]) -> None:
+    for key in (
+        "closed_positions_total",
+        "closed_positions_real",
+        "closed_positions_suspect",
+        "suspect_match_ids",
+        "suspect_token_ids",
+    ):
+        print(f"{key}: {audit.get(key)}")
 
 
 def _sum_known(rows: list[dict], field: str) -> float | None:
@@ -474,12 +514,20 @@ def main() -> None:
     parser.add_argument("--mode", choices=["paper", "live", "all"], default="all")
     parser.add_argument("--out", default="logs/strategy_outcomes.csv", help="CSV export path")
     parser.add_argument("--summary", action="store_true", help="Print strategy and exit summaries")
+    parser.add_argument("--real-only", action="store_true", help="Exclude local test fixture rows")
+    parser.add_argument("--audit-db", action="store_true", help="Print closed-position real/suspect counts and exit")
     args = parser.parse_args()
 
     from storage_v2 import StorageV2
 
     modes = ("paper", "live") if args.mode == "all" else (args.mode,)
-    rows = load_strategy_outcomes(StorageV2(path=args.db), modes=modes)
+    storage = StorageV2(path=args.db)
+    all_rows = load_strategy_outcomes(storage, modes=modes)
+    if args.audit_db:
+        print_db_audit(audit_outcome_rows(all_rows))
+        return
+
+    rows = [row for row in all_rows if is_real_outcome_row(row)] if args.real_only else all_rows
     write_strategy_outcomes_csv(rows, args.out)
     print(f"Exported {len(rows)} outcome rows to {args.out}")
 

@@ -109,3 +109,56 @@ def test_state_store_records_order_policy_strategy_allocation_and_mapping(tmp_pa
         assert conn.execute("SELECT strategy_kind FROM strategy_signals").fetchone()[0] == "VALUE_EDGE"
         assert conn.execute("SELECT strategy_kind FROM allocation_decisions").fetchone()[0] == "VALUE_EDGE"
         assert conn.execute("SELECT mapping_state FROM mapping_snapshots").fetchone()[0] == "quarantined"
+
+
+def test_record_mapping_snapshots_handles_duplicate_condition_ids(tmp_path):
+    db = tmp_path / "state.sqlite"
+    store = StateStore(str(db))
+
+    store.record_mapping_snapshots(
+        [
+            {
+                "market_id": "MID",
+                "condition_id": "CID",
+                "dota_match_id": "8854333124",
+                "mapping_state": "bound",
+            },
+            {
+                "market_id": "MID",
+                "condition_id": "CID",
+                "dota_match_id": "8854333124",
+                "mapping_state": "bound",
+            },
+        ]
+    )
+
+    with sqlite3.connect(db) as conn:
+        rows = conn.execute("SELECT snapshot_id FROM mapping_snapshots").fetchall()
+
+    assert len(rows) == 2
+    assert len({row[0] for row in rows}) == 2
+
+
+def test_record_mapping_snapshots_does_not_raise_on_duplicate_rows(tmp_path):
+    db = tmp_path / "state.sqlite"
+    store = StateStore(str(db))
+    duplicate_rows = [
+        {
+            "market_id": "",
+            "condition_id": "CID",
+            "dota_match_id": "8854333124",
+            "mapping_state": "quarantined",
+        },
+        {
+            "market_id": "",
+            "condition_id": "CID",
+            "dota_match_id": "8854333124",
+            "mapping_state": "quarantined",
+        },
+    ]
+
+    store.record_mapping_snapshots(duplicate_rows)
+    store.record_mapping_snapshots(duplicate_rows)
+
+    with sqlite3.connect(db) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM mapping_snapshots").fetchone()[0] == 4

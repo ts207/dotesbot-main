@@ -1,4 +1,4 @@
-"""Watchdog supervisor for the Dota/Polymarket bot AND the market binder.
+"""Watchdog supervisor for the Dota/Polymarket bot runtime loops.
 
 Solves the failure that bit us repeatedly: a process either DIES (nohup not
 surviving) or HANGS (PID alive but loop frozen — a zombie that silently stops
@@ -7,7 +7,7 @@ zombied this way; a binder hang stalls the whole pipeline because nothing gets
 bound. A PID check can't detect a hang, so each process rewrites a HEARTBEAT file
 every loop iteration and this watchdog restarts on death OR heartbeat staleness.
 
-Run as the persistent process; it owns BOTH children:
+Run as the persistent process; it owns all critical runtime children:
     python3 supervisor.py
 
 Tunables via env: HANG_SECONDS (default per-process below), CHECK_EVERY (30).
@@ -22,10 +22,34 @@ LOCK_FILE = "logs/supervisor.lock"
 
 # name -> (launch argv, heartbeat file, hang threshold sec, startup grace sec, log file)
 PROCS = {
-    "bot":    ([sys.executable, "main.py"],
-               "logs/heartbeat",         180, 90, "logs/stdout.log"),
-    "binder": ([sys.executable, "auto_series_binder.py", "--loop"],
-               "logs/binder_heartbeat",  150, 45, "logs/binder.log"),
+    "bot": (
+        [sys.executable, "main.py"],
+        "logs/heartbeat",
+        180,
+        90,
+        "logs/stdout.log",
+    ),
+    "binder": (
+        [sys.executable, "auto_series_binder.py", "--loop"],
+        "logs/binder_heartbeat",
+        150,
+        45,
+        "logs/binder.log",
+    ),
+    "shadow": (
+        [sys.executable, "settlement_shadow.py", "--loop"],
+        "logs/shadow_heartbeat",
+        900,
+        120,
+        "logs/settlement_shadow.log",
+    ),
+    "monitor": (
+        [sys.executable, "monitor.py", "--loop"],
+        "logs/monitor_heartbeat",
+        900,
+        120,
+        "logs/monitor.log",
+    ),
 }
 
 global_state = {}

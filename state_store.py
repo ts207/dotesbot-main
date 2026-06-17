@@ -214,13 +214,13 @@ class StateStore:
             )
 
     def record_mapping_snapshots(self, mappings: Iterable[Mapping[str, Any]]) -> None:
-        now_ns = time.time_ns()
         rows = []
-        for mapping in mappings:
+        for idx, mapping in enumerate(mappings):
+            now_ns = time.time_ns()
             market_id = str(mapping.get("market_id") or "")
             condition_id = str(mapping.get("condition_id") or "")
             dota_match_id = str(mapping.get("dota_match_id") or "")
-            snapshot_id = f"{market_id or condition_id or dota_match_id}|{now_ns}"
+            snapshot_id = f"{market_id or condition_id or dota_match_id}|{now_ns}|{idx}"
             rows.append(
                 (
                     snapshot_id,

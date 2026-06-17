@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import sys
 import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -10,14 +11,18 @@ import pytest
 from outcome_attribution import (
     OUTCOME_FIELDNAMES,
     apply_settlement_counterfactual,
+    audit_outcome_rows,
     closed_position_to_outcome_row,
     infer_strategy_family,
+    is_real_outcome_row,
     load_strategy_outcomes,
+    main,
     summarize_exit_reasons,
     summarize_strategy_outcomes,
     write_strategy_outcomes_csv,
 )
 from storage import StrategySignalLogger
+from storage_v2 import StorageV2
 
 
 def base_position(**overrides):
@@ -246,6 +251,93 @@ def test_load_strategy_outcomes_reads_paper_and_live_closed_positions():
     assert rows[1]["settlement_price"] == 0.0
     assert storage.load_closed_positions.call_args_list[0].args == ("paper",)
     assert storage.load_closed_positions.call_args_list[1].args == ("live",)
+
+
+def test_is_real_outcome_row_rejects_fixture_match_m1():
+    assert not is_real_outcome_row({"match_id": "m1", "token_id": "123"})
+    assert not is_real_outcome_row({"match_id": "M1", "token_id": "123"})
+
+
+def test_is_real_outcome_row_rejects_fixture_token_tok_1():
+    assert not is_real_outcome_row({"match_id": "8854333124", "token_id": "tok_1"})
+
+
+def test_is_real_outcome_row_accepts_numeric_match_and_real_token():
+    assert is_real_outcome_row({"match_id": "8854333124", "token_id": "123456789"})
+
+
+def test_load_strategy_outcomes_real_only_filters_test_rows():
+    storage = MagicMock()
+    storage.load_closed_positions.return_value = [
+        base_position(position_id="fixture", match_id="m1", token_id="YES"),
+        base_position(position_id="fixture-token", match_id="8854333124", token_id="tok_1"),
+        base_position(position_id="real", match_id="8854333124", token_id="123456789"),
+    ]
+
+    rows = load_strategy_outcomes(storage, modes=("paper",), real_only=True)
+
+    assert [row["position_id"] for row in rows] == ["real"]
+
+
+def test_audit_outcome_rows_counts_suspect_fixture_rows():
+    rows = [
+        closed_position_to_outcome_row(base_position(position_id="fixture", match_id="m1"), mode="paper"),
+        closed_position_to_outcome_row(base_position(position_id="real", match_id="8854333124", token_id="123"), mode="paper"),
+    ]
+
+    audit = audit_outcome_rows(rows)
+
+    assert audit["closed_positions_total"] == 2
+    assert audit["closed_positions_real"] == 1
+    assert audit["closed_positions_suspect"] == 1
+    assert audit["suspect_match_ids"] == ["m1"]
+
+
+def test_cli_real_only_does_not_emit_fixture_rows(tmp_path, monkeypatch):
+    db_path = tmp_path / "state_v2.sqlite"
+    out_path = tmp_path / "strategy_outcomes.csv"
+    storage = StorageV2(path=str(db_path))
+    storage.save_closed_position(base_position(position_id="fixture", match_id="m1", token_id="YES"), mode="paper")
+    storage.save_closed_position(base_position(position_id="real", match_id="8854333124", token_id="123456789"), mode="paper")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "outcome_attribution.py",
+            "--db",
+            str(db_path),
+            "--mode",
+            "paper",
+            "--out",
+            str(out_path),
+            "--real-only",
+        ],
+    )
+
+    main()
+
+    with open(out_path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert [row["position_id"] for row in rows] == ["real"]
+
+
+def test_cli_audit_db_reports_suspect_rows(tmp_path, monkeypatch, capsys):
+    db_path = tmp_path / "state_v2.sqlite"
+    storage = StorageV2(path=str(db_path))
+    storage.save_closed_position(base_position(position_id="fixture", match_id="m1"), mode="paper")
+    storage.save_closed_position(base_position(position_id="real", match_id="8854333124", token_id="123"), mode="paper")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["outcome_attribution.py", "--db", str(db_path), "--mode", "paper", "--audit-db"],
+    )
+
+    main()
+
+    output = capsys.readouterr().out
+    assert "closed_positions_total: 2" in output
+    assert "closed_positions_real: 1" in output
+    assert "closed_positions_suspect: 1" in output
 
 
 def test_write_strategy_outcomes_csv_stable_header(tmp_path):
