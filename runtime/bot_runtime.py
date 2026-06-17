@@ -58,7 +58,7 @@ from team_utils import norm_team
 #
 # Legacy EventSignalEngine diagnostics may still run, but legacy event entries
 # are disabled unless ENABLE_LEGACY_EVENT_ENTRIES is explicitly true.
-ENABLE_LEGACY_EVENT_DIAGNOSTICS = True
+ENABLE_LEGACY_EVENT_DIAGNOSTICS = False
 ENABLE_LEGACY_EVENT_ENTRIES = False
 from config import (
     STEAM_API_KEY, STEAM_POLL_SECONDS, PAPER_EXECUTION_DELAY_MS, LIVE_TRADING,
@@ -1312,7 +1312,7 @@ async def steam_loop(
                         else:
                             dota_events = []
                         event_detected_ns = time.time_ns()
-                        if dota_events:
+                        if ENABLE_LEGACY_EVENT_DIAGNOSTICS and dota_events:
                             event_logger.log_events(dota_events)
                             # Final model: score same-direction event clusters once,
                             # log every cluster decision, then enter only the best passing
