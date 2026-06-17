@@ -107,3 +107,49 @@ def test_dswing_reject_edge_too_small_includes_p_game_and_series_fair(mock_compu
     assert rej.reason.startswith("edge_too_small")
     assert rej.p_game == 0.90
     assert abs(rej.series_fair - 0.792) < 0.001
+import pytest
+from unittest.mock import MagicMock, patch
+from decisive_swing_engine import DecisiveSwingEngine, DSwingReject
+
+def test_dswing_wrong_market_type_returns_reject():
+    engine = DecisiveSwingEngine()
+    res = list(engine.evaluate({"match_id": "123"}, {"market_type": "MAP_WINNER"}, None))
+    assert len(res) == 1
+    assert isinstance(res[0], DSwingReject)
+    assert res[0].reason == "wrong_market_type"
+
+def test_dswing_invalid_top_live_state_returns_reject():
+    engine = DecisiveSwingEngine()
+    game = {"match_id": "123", "data_source": "top_live"}
+    mapping = {"market_type": "MATCH_WINNER"}
+    res = list(engine.evaluate(game, mapping, None))
+    assert len(res) == 1
+    assert isinstance(res[0], DSwingReject)
+    assert res[0].reason.startswith("missing_fields")
+
+def test_dswing_game_too_early_returns_reject():
+    engine = DecisiveSwingEngine()
+    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 100}
+    mapping = {"market_type": "MATCH_WINNER"}
+    res = list(engine.evaluate(game, mapping, None))
+    assert len(res) == 1
+    assert isinstance(res[0], DSwingReject)
+    assert res[0].reason == "game_too_early"
+
+def test_dswing_missing_lead_returns_reject():
+    engine = DecisiveSwingEngine()
+    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 900}
+    mapping = {"market_type": "MATCH_WINNER"}
+    res = list(engine.evaluate(game, mapping, None))
+    assert len(res) == 1
+    assert isinstance(res[0], DSwingReject)
+    assert res[0].reason == "missing_lead"
+
+def test_dswing_lead_too_small_returns_reject():
+    engine = DecisiveSwingEngine()
+    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 900, "radiant_lead": 1000}
+    mapping = {"market_type": "MATCH_WINNER"}
+    res = list(engine.evaluate(game, mapping, None))
+    assert len(res) == 1
+    assert isinstance(res[0], DSwingReject)
+    assert res[0].reason == "lead_too_small"

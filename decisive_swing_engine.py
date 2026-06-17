@@ -153,27 +153,33 @@ def _series_fair(mapping: Mapping, side: str, p_game: float, p_next_side: float)
 class DecisiveSwingEngine:
     def evaluate(self, game: Mapping, mapping: Mapping, book_store: Any):
         if not DSWING_ENABLED:
-            return []
+            return [DSwingReject(str(game.get("match_id", "")), "research_disabled")]
         if str(mapping.get("market_type")) != "MATCH_WINNER":
-            return []   # this edge is specifically the BO3 moneyline
+            return [DSwingReject(str(game.get("match_id", "")), "wrong_market_type")]
         match_id = str(game.get("match_id") or "")
-        if not match_id or game.get("data_source") != "top_live" or game.get("game_over"):
-            return []
+        if not match_id:
+            return [DSwingReject("", "missing_match_id")]
+        if game.get("data_source") != "top_live":
+            return [DSwingReject(match_id, "wrong_data_source")]
+        if game.get("game_over"):
+            return [DSwingReject(match_id, "game_over")]
         state_check = validate_top_live_state(game)
         if not state_check.ok:
             missing = ",".join(state_check.missing_fields)
             reason = state_check.reason if not missing else f"{state_check.reason}:{missing}"
             return [DSwingReject(match_id, reason)]
         gt = game.get("game_time_sec")
+        if gt is None or gt < DSWING_MIN_GAME_TIME:
+            return [DSwingReject(match_id, "game_too_early")]
         lead = game.get("radiant_lead")
-        if gt is None or lead is None or gt < DSWING_MIN_GAME_TIME:
-            return []
+        if lead is None:
+            return [DSwingReject(match_id, "missing_lead")]
         try:
             lead = int(lead)
         except (TypeError, ValueError):
-            return []
+            return [DSwingReject(match_id, "missing_lead")]
         if abs(lead) < DSWING_LEAD:
-            return []                                   # not a decisive/game-ending swing
+            return [DSwingReject(match_id, "lead_too_small")]
         direction = "radiant" if lead > 0 else "dire"
 
         sm = mapping.get("steam_side_mapping", "normal")
@@ -224,12 +230,12 @@ class DecisiveSwingEngine:
         from fair_value import compute_side_fair
         fair_res = compute_side_fair(game=game, side=direction)
         if not fair_res.model_available:
-            return _rej(f"model_unavailable:{fair_res.model_reason}", ask=ask, book_age_ms=book_age_ms)
+            return _rej("model_unavailable", ask=ask, book_age_ms=book_age_ms)
 
         p_game = fair_res.fair_used if fair_res.fair_used is not None else fair_res.fair
         
         if p_game < DSWING_MIN_P_GAME:
-            return _rej(f"p_game_too_low:{p_game:.3f}", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
+            return _rej("p_game_too_low", ask=ask, book_age_ms=book_age_ms, p_game=p_game)
 
         # Estimate next map win probability using Elo/Draft advantage from a neutral state
         import winprob
@@ -241,7 +247,7 @@ class DecisiveSwingEngine:
             
         edge = series_fair - ask
         if edge < DSWING_MIN_EDGE:
-            return _rej(f"edge_too_small:{edge:.3f}", ask=ask, book_age_ms=book_age_ms, p_game=p_game, series_fair=series_fair)
+            return _rej("edge_too_small", ask=ask, book_age_ms=book_age_ms, p_game=p_game, series_fair=series_fair)
 
         policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
             mode="paper_research",

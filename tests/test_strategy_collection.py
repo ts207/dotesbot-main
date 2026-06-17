@@ -377,3 +377,43 @@ def test_match_winner_research_enabled_does_not_execute_when_trading_disabled(ba
     
     assert len(candidates) == 0
     base_ctx.loggers.markout_logger_fn.assert_called_once()
+
+from decisive_swing_engine import DSwingReject
+
+def test_dswing_research_rejects_are_logged(base_ctx):
+    base_ctx.dswing_enabled = True
+    base_ctx.dswing_engine = MagicMock()
+    base_ctx.loggers.strategy_signal_logger = MagicMock()
+    rej = DSwingReject(match_id="123", reason="lead_too_small")
+    base_ctx.dswing_engine.evaluate.return_value = [rej]
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 0
+    base_ctx.loggers.strategy_signal_logger.log_reject.assert_called_once_with(rej, strategy="DSWING")
+
+def test_dswing_research_rejects_do_not_create_candidates_when_trading_disabled(base_ctx):
+    base_ctx.dswing_enabled = True
+    base_ctx.enable_match_winner_trading = False
+    base_ctx.dswing_engine = MagicMock()
+    rej = DSwingReject(match_id="123", reason="research_disabled")
+    base_ctx.dswing_engine.evaluate.return_value = [rej]
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 0
+
+def test_dswing_candidate_created_only_when_match_winner_trading_enabled(base_ctx):
+    base_ctx.dswing_enabled = True
+    base_ctx.enable_match_winner_trading = True
+    base_ctx.mapping["market_type"] = "MATCH_WINNER"
+    base_ctx.dswing_engine = MagicMock()
+    sig = MagicMock(spec=DSwingSignal)
+    sig.token_id = "tok_yes"
+    sig.direction = "radiant"
+    sig.edge = 0.05
+    sig.series_fair = 0.87
+    sig.game_time_sec = 900
+    base_ctx.dswing_engine.evaluate.return_value = [sig]
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 1
+    assert candidates[0].strategy == "DSWING"
