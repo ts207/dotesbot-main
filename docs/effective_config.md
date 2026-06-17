@@ -2,7 +2,7 @@
 
 `runtime_config.py` is the typed source of truth for high-risk runtime settings.
 `config.py` still exports the legacy module constants used across the bot, but
-those constants now come from `RUNTIME_CONFIG` for the settings below.
+the centralized settings below are derived from `RUNTIME_CONFIG`.
 
 Run:
 
@@ -22,7 +22,8 @@ safe_for_real_live
 ```
 
 `source` is `env` when a value came from the process environment or `.env`, and
-`default` when the repository default was used.
+`default` when the code default in `runtime_config.py` was used. Treat
+`check_config.py` output as the effective truth for the current process.
 
 ## Typed Sections
 
@@ -45,6 +46,10 @@ safe_for_real_live
 Real live mode fails closed if required live settings are missing, using defaults,
 or fail the real-live safety check. This prevents accidental real trading from
 repository defaults.
+
+The repository `.env.example` is an operational template, not a guarantee that
+every value matches the code defaults in `runtime_config.py`. When in doubt, run
+`python check_config.py` and inspect both the runtime value and the source.
 
 ## Paper Mode
 
@@ -72,6 +77,7 @@ MIN_EXECUTABLE_EDGE
 
 ## Defaults
 
-Defaults in `runtime_config.py` intentionally match `.env.example` for the
-centralized settings, so runtime behavior no longer depends on whether `.env`
-exists.
+Defaults in `runtime_config.py` are the fail-safe values used when neither the
+environment nor `.env` provides a setting. `.env.example` documents a practical
+operator template and may intentionally differ where runtime defaults are more
+conservative for tests or startup safety.

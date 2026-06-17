@@ -3,18 +3,19 @@
 This document provides a map of the dotesbot codebase, organized by function.
 
 ### 1. Core Bot Loop
-*   `main.py`: Thin entry point — imports `BotRuntime`, calls `BotRuntime(cfg).run()`
-*   `supervisor.py`: Watchdog that launches + auto-restarts `main.py` and `auto_series_binder.py`.
-*   `runtime/bot_runtime.py`: **The actual bot loop** — main async loop that polls Steam, refreshes books, runs engines, manages exits.
-*   `runtime/*.py`: Sub-runtimes for feed, execution, mapping, strategies.
+*   `main.py`: Thin entry point - imports `BotRuntime`, calls `BotRuntime(cfg).run()`.
+*   `supervisor.py`: Watchdog that launches and auto-restarts `main.py`, `auto_series_binder.py --loop`, `settlement_shadow.py --loop`, and `monitor.py --loop`.
+*   `runtime/bot_runtime.py`: **The actual bot loop** - main async loop that polls Steam, refreshes books, collects strategy candidates, allocates winners, executes entries, and manages exits.
+*   `runtime/*.py`: Sub-runtimes for feed, execution, mapping, markouts, and strategies.
 
 ### 2. Strategies
 *   `value_engine.py`: **Value strategy** — backs NW leader when model fair price > book price.
 *   `decisive_swing_engine.py`: **Decisive-swing ML sniper** — buys BO3 moneyline when a map's NW lead crosses a threshold.
 *   `event_triggered_value_engine.py`: **Event-triggered value** — fires on actual Dota events when fair diverges from book.
-*   `strategy_collection.py` & `strategy_allocator.py`: Collects candidates and handles priority-based allocation.
+*   `strategy_collection.py`: Collects strategy candidates and logs signal/reject side effects.
+*   `strategy_allocator.py`: Pure priority allocator. Current priority is event continuation, value, event reversal, then DSWING.
 *   `strategy_execution.py`: Dispatches allocation winners to live executors or paper traders.
-*   `execution_policy.py`: Unified gate/policy evaluation for all strategies.
+*   `execution_policy.py`: Unified gate/policy evaluation for live and live-parity strategy paths.
 
 ### 3. Win Probability Model
 *   `winprob.py`: Runtime calibrated win-probability model `fair(lead, game_time_sec, elo_diff, lead_slope, draft_h2h)`.
@@ -34,14 +35,15 @@ This document provides a map of the dotesbot codebase, organized by function.
 *   `hybrid_nowcast.py`: Merges slow ML model fair with fast event adjustments.
 
 ### 6. State Management
-*   `storage.py`: Mega CSV logger module.
-*   `storage_v2.py` & `state_store.py`: SQLite backend replacing JSON/CSV for bot state.
-*   `live_position_store.py`: Manages active position lifecycle.
-*   `live_state.py`: Persists daily risk budget state.
+*   `storage.py`: CSV logger module and state-mirroring hooks.
+*   `storage_v2.py`: SQLite backend for active/closed positions and daily budgets.
+*   `state_store.py`: SQLite mirror for live orders, policy decisions, strategy signals, allocation decisions, mappings, and health.
+*   `live_position_store.py`: Manages active live position lifecycle on top of `StorageV2`.
+*   `live_state.py`: Legacy daily risk budget helpers used by live execution paths.
 
 ### 7. Market Mapping/Binding
 *   `auto_series_binder.py`: **Auto-discovery + binding** loop (maps Polymarket markets → live Steam matches).
-*   `mapping.py` & `mapping_validator.py`: Loads and validates `markets.yaml`.
+*   `mapping.py` & `mapping_validator.py`: Loads and validates `markets.yaml` plus the runtime overlay at `logs/runtime_markets.yaml`.
 *   `mapping_audit.py` & `mapping_quarantine.py`: Audits mapping health, auto-quarantines issues.
 *   `discover_markets.py`: Discovers new Dota markets from Polymarket API.
 *   `sync_markets.py`: Full sync orchestration (discover → auto-bind → audit → quarantine).
@@ -60,7 +62,7 @@ This document provides a map of the dotesbot codebase, organized by function.
 
 ### 10. Event Detection
 *   `actual_dota_event_detector.py`: Detects primitive events (kill score changes, tower destroyed).
-*   `event_detector.py`: Legacy event detector for compound events.
+*   `event_detector.py`: Legacy event detector for compound events. Legacy entries are disabled by default.
 *   `event_taxonomy.py`: Event tier classification.
 *   `derived_game_state.py`: Computes phase-adjusted NW lead, structure advantage.
 

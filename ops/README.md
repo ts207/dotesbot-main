@@ -1,8 +1,21 @@
 # Operations
 
+## Runtime Model
+
+The recommended full-stack runtime is the supervisor:
+
+```bash
+python3 supervisor.py
+```
+
+The supervisor manages the bot, market binder, settlement shadow loop, and
+monitor together. The service units in this directory currently launch only
+`main.py`; use them only when binder/shadow/monitor are managed separately, or
+replace `ExecStart` with a supervisor command in your deployment unit.
+
 ## systemd Service
 
-Install the live bot service:
+Install the direct bot service:
 
 ```bash
 sudo cp ops/dota-poly-live.service /etc/systemd/system/dota-poly-live.service
@@ -18,9 +31,9 @@ systemctl status dota-poly-live.service
 journalctl -u dota-poly-live.service -f
 ```
 
-The unit uses `Restart=on-failure` and `RestartSec=10`. On every process start,
-`main.py` cancels stale CLOB orders and runs startup reconciliation before
-normal live trading resumes.
+The unit uses `Restart=on-failure` and `RestartSec=10`. In real-live mode, on
+every process start `main.py` cancels stale CLOB orders and runs startup
+reconciliation before normal live trading resumes.
 
 Python now writes rotating application logs to `logs/bot.log`; do not launch
 the service with shell redirection to that file.
@@ -38,12 +51,13 @@ Liveness alert, intended to run hourly during known DreamLeague windows:
 
 ```bash
 DREAMLEAGUE_ACTIVE=true python3 scripts/telegram_ops.py liveness
+DREAMLEAGUE_ACTIVE=true python3 ops/telegram_ops.py liveness
 ```
 
 Daily summary at 09:00 UTC:
 
 ```bash
-python3 scripts/telegram_ops.py daily --hours 24
+python3 ops/telegram_ops.py daily --hours 24
 ```
 
 Example cron entries:

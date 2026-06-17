@@ -1,4 +1,4 @@
-# Cron jobs for scripts/telegram_ops.py
+# Cron jobs for ops/telegram_ops.py
 #
 # Install with:
 #   crontab -e
@@ -18,7 +18,7 @@
 
 # Liveness check every 30 minutes. Script no-ops when window is inactive or the
 # most recent live_attempts.csv row is within --max-idle-hours.
-*/30 * * * * cd $REPO_DIR && .venv/bin/python3 scripts/telegram_ops.py liveness --max-idle-hours 6 >> logs/cron_telegram.log 2>&1
+*/30 * * * * cd $REPO_DIR && .venv/bin/python3 ops/telegram_ops.py liveness --max-idle-hours 6 >> logs/cron_telegram.log 2>&1
 
 # Daily summary at 09:00 UTC.
-0 9 * * * cd $REPO_DIR && .venv/bin/python3 scripts/telegram_ops.py daily --hours 24 --require-send >> logs/cron_telegram.log 2>&1
+0 9 * * * cd $REPO_DIR && .venv/bin/python3 ops/telegram_ops.py daily --hours 24 --require-send >> logs/cron_telegram.log 2>&1
