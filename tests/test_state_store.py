@@ -43,7 +43,21 @@ def test_state_store_initializes_required_tables(tmp_path):
     assert "policy_decisions" in tables
     assert "feed_health" in tables
 
+def test_live_position_store_writes_to_storage_v2(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "state.sqlite")
+    monkeypatch.setattr("storage_v2.DEFAULT_DB_PATH", db_path)
+    
+    store = LivePositionStore()
+    store.positions["P1"] = _pos()
+    store.save()
 
+    from storage_v2 import StorageV2
+    storage = StorageV2(db_path)
+    rows = storage.load_positions(mode="live", active_only=True)
+
+    assert len(rows) == 1
+    assert rows[0]["position_id"] == "P1"
+    assert rows[0]["strategy_kind"] == "VALUE_EDGE"
 
 def test_state_store_records_order_policy_strategy_allocation_and_mapping(tmp_path):
     db = tmp_path / "state.sqlite"
