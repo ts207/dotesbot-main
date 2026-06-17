@@ -299,7 +299,7 @@ class EventTriggeredValueEngine:
             except Exception:
                 is_g3 = False
             if not is_g3:
-                return [self._reject(event, match_id, cur_ns, "series_market_unpriced", direction=direction)]
+                return [self._reject(event, match_id, cur_ns, "series_market_unpriced")]
         elif market_type != "MAP_WINNER":
             return [self._reject(event, match_id, cur_ns, "unsupported_market_type", direction=direction)]
 

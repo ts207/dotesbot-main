@@ -94,6 +94,8 @@ def _is_bo3_winner_market(market: dict) -> bool:
         return False
     if {str(o).casefold() for o in outcomes} <= {"yes", "no", "over", "under"}:
         return False
+    if re.search(r"\b(handicap|kills?|roshan|duration|total|map handicap)\b", question, flags=re.I):
+        return False
     # If it's "Dota 2: Team A vs Team B" without "Game N" in it, it's a series moneyline
     if re.search(r"\bGame\s*\d+\s+Winner\b", question, flags=re.I):
         return False

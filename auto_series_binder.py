@@ -264,8 +264,9 @@ def bind_event_to_steam(market: dict, event: dict, steam_match: dict,
     # game market of the same series. The same-teams markets (Game 1/2/3) all match
     # the one live game via find_live_steam_match, so without this the live match_id
     # lands on multiple MAP_WINNER markets -> validator kills them all (how Grind G2
-    # got skipped). If this match_id is already bound to ANY MAP_WINNER for these
-    # teams, don't bind it again.
+    # got skipped). If this match_id is already bound to ANOTHER MAP_WINNER for these
+    # teams, don't bind it again. 
+    # NOTE: We DO allow one MAP_WINNER and one MATCH_WINNER to share the same match_id.
     _yt, _nt = norm_team(outcomes[0]), norm_team(outcomes[1])
     for x in markets_yaml.get("markets", []):
         xmid = str(x.get("dota_match_id") or "")
@@ -285,7 +286,9 @@ def bind_event_to_steam(market: dict, event: dict, steam_match: dict,
                     return False
         # (2) this live MATCH is already bound to another game of the SAME series ->
         # don't let one live game land on multiple game markets (the Grind-G2 duplicate).
-        if (xmid == steam_mid and x.get("market_type") == "MAP_WINNER"
+        # FIX: Only block if BOTH are MAP_WINNER or BOTH are MATCH_WINNER.
+        this_type = "MAP_WINNER" if force_map_winner else "MATCH_WINNER"
+        if (xmid == steam_mid and x.get("market_type") == this_type
                 and {norm_team(x.get("yes_team")), norm_team(x.get("no_team"))} == {_yt, _nt}):
             return False
 
@@ -337,47 +340,52 @@ def run_once(verbose: bool = True) -> int:
         # market is the right (and liquid) one. Fall back to the series market
         # only if no game market is currently live (two-sided book).
         live_game = extract_live_game_market(event, md)
-        market = live_game or extract_series_market(event)
-        is_map = live_game is not None
-        if not market:
-            continue
-        try:
-            outcomes = market.get("outcomes")
-            if isinstance(outcomes, str):
-                outcomes = json.loads(outcomes)
-            if not outcomes or len(outcomes) < 2:
-                continue
-        except Exception:
-            continue
-        match = find_live_steam_match(outcomes[0], outcomes[1], valid_live_games)
-        if not match:
-            continue
-        if bind_event_to_steam(market, event, match, md, force_map_winner=is_map):
-            added += 1
-            if verbose:
-                _kind = "GAME" if is_map else "series"
-                print(f"    + [{_kind}] {market.get('question','')[:55]} → Steam {match['match_id']}", flush=True)
-
-        # 2026-06-04 — GAME 3 IS THE MONEYLINE. On a BO3 decider (series 1-1, game 3),
-        # winning the live game wins the series, so the MATCH_WINNER moneyline == the live
-        # game winner (is_game3_match_proxy). The moneyline is the LIQUID market for game 3
-        # (the Game-N MAP market is often dead). Without binding it to the live Steam match
-        # it keeps a placeholder match_id and the decider is never traded. Bind it too.
-        series_mkt = extract_series_market(event)
-        if series_mkt is not None and series_mkt is not market:
+        
+        # 2026-06-18 FIX: Bind BOTH the Map market and the Series market.
+        # DSwing needs MATCH_WINNER (series); Value/Event need MAP_WINNER (live game).
+        
+        # 1. Handle the Live Game (MAP_WINNER)
+        if live_game:
+            outcomes = []
             try:
-                so = series_mkt.get("outcomes")
-                if isinstance(so, str):
-                    so = json.loads(so)
+                outcomes = live_game.get("outcomes")
+                if isinstance(outcomes, str):
+                    outcomes = json.loads(outcomes)
             except Exception:
-                so = None
-            if so and len(so) >= 2:
-                _gn, _sy, _sn = derive_series_state(event, so[0], so[1])
-                if _gn == 3 and _sy == 1 and _sn == 1:  # BO3 decider: game winner == series winner
+                pass
+                
+            if outcomes and len(outcomes) >= 2:
+                match = find_live_steam_match(outcomes[0], outcomes[1], valid_live_games)
+                if match:
+                    if bind_event_to_steam(live_game, event, match, md, force_map_winner=True):
+                        added += 1
+                        if verbose:
+                            print(f"    + [GAME] {live_game.get('question','')[:55]} → Steam {match['match_id']}", flush=True)
+
+        # 2. Handle the Series Market (MATCH_WINNER)
+        series_mkt = extract_series_market(event)
+        if series_mkt:
+            outcomes = []
+            try:
+                outcomes = series_mkt.get("outcomes")
+                if isinstance(outcomes, str):
+                    outcomes = json.loads(outcomes)
+            except Exception:
+                pass
+                
+            if outcomes and len(outcomes) >= 2:
+                # Use the same live match for the series market if one is running
+                match = find_live_steam_match(outcomes[0], outcomes[1], valid_live_games)
+                if match:
                     if bind_event_to_steam(series_mkt, event, match, md, force_map_winner=False):
                         added += 1
                         if verbose:
-                            print(f"    + [G3-moneyline] {series_mkt.get('question','')[:48]} → Steam {match['match_id']}", flush=True)
+                            _tag = "series"
+                            # Special tag if it's G3 decider logic (already handled by bind logic but for logging)
+                            _gn, _sy, _sn = derive_series_state(event, outcomes[0], outcomes[1])
+                            if _gn == 3 and _sy == 1 and _sn == 1:
+                                _tag = "G3-moneyline"
+                            print(f"    + [{_tag}] {series_mkt.get('question','')[:55]} → Steam {match['match_id']}", flush=True)
 
     # Refresh series state on EXISTING mappings — games complete between binds, so
     # the once-set score goes stale (the 'G1 0-0' bug). Re-derive each pass from the

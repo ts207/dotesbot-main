@@ -15,12 +15,12 @@ winner, and the market is sometimes slow to price it. Three strategies exploit t
 scalping (that was tested and is dead: price LEADS the Steam feed).
 
 ## 1. Current state (keep this updated)
-- **Account: ~$5.45, bot HALTED** (`ENABLE_REAL_LIVE_TRADING=false`). Down from
+- **Account: ~$48.85, bot running in unbuffered PAPER mode** (`ENABLE_REAL_LIVE_TRADING=false` and `LIVE_TRADING=true`). Down from
   $115.98 — **the loss was MANUAL cockpit trading, not the bot** (the bot went 5/5
   on its own settled trades). See §8.
-- Strategies built + validated; **value bot live-ready, decisive-swing armed-but-off**.
-- **P0 Safety Patch Complete**: The bot has been fully fortified. State writes are atomic, supervisor process management is robust, manual cockpit trades are routed via IPC through the LiveExecutor to enforce risk limits, catastrophe-salvage has strict net-worth validation, and startup reconciliation blocks on fetch failures.
-- Activation needs two things YOU own: **fund (~$200-300) + commit to bot-only.**
+- Strategies built + validated; **value bot, event-triggered value bot, and decisive-swing sniper all running in paper simulation**.
+- **P0 Safety Patch Complete & Duplicate Conflicts Resolved**: The bot has been fully fortified. State writes are atomic, supervisor process management is robust, manual cockpit trades route via IPC, startup reconciliation is safe, and we have resolved the mapping validation issue (where handicap markets categorized as MATCH_WINNER caused duplicate active match ID failures and muted valid matches).
+- Activation of real live trading needs two things YOU own: **fund (~$200-300) + commit to bot-only.**
 
 ## 2. How to run it
 - **RUN `python3 supervisor.py`** — NOT `main.py` directly. The supervisor is a
