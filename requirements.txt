@@ -6,3 +6,13 @@ pytest>=8.0
 pytest-asyncio>=0.23
 scikit-learn==1.5.0
 joblib>=1.3
+requests
+pandas
+numpy
+pyarrow
+anyio
+pytest-anyio
+matplotlib
+scipy
+py-clob-client-v2
+web3
