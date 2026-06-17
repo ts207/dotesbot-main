@@ -92,6 +92,19 @@ async def test_value_winner_uses_live_path(base_ctx):
     base_ctx.live_position_store.add.assert_called_once()
     assert "tok_yes" in base_ctx.entered_tokens
 
+    # Deep field assertions
+    args, _ = base_ctx.live_position_store.add.call_args
+    pos = args[0]
+    assert pos.strategy_family == "VALUE"
+    assert pos.strategy_kind == "VALUE_EDGE"
+    assert pos.entry_engine == "value"
+    assert pos.exit_engine == "value_fair_invalidation"
+    assert pos.hold_policy == "thesis_invalidation"
+    assert pos.state == "OPEN"
+    assert pos.entry_price == 0.10
+    assert pos.cost_usd == 10.0
+    assert pos.shares == 100.0
+
 
 @pytest.mark.asyncio
 async def test_value_winner_paper_path(base_ctx):
@@ -240,6 +253,17 @@ async def test_event_continuation_winner_calls_try_buy_value(base_ctx):
     
     await execute_allocation_decisions([dec], base_ctx)
     base_ctx.live_executor.try_buy_value.assert_called_once()
+    
+    # Deep field assertions
+    args, _ = base_ctx.live_position_store.add.call_args
+    pos = args[0]
+    assert pos.strategy_family == "EVENT"
+    assert pos.strategy_kind == "EVENT_CONTINUATION_EDGE"
+    assert pos.entry_engine == "event_triggered_value"
+    assert pos.exit_engine == "value_fair_invalidation"
+    assert pos.hold_policy == "thesis_invalidation"
+    assert pos.state == "OPEN"
+    assert pos.pending_entry_order_id is None
 
 
 @pytest.mark.asyncio
@@ -281,3 +305,17 @@ async def test_dswing_winner_calls_try_buy_value(base_ctx):
     
     await execute_allocation_decisions([dec], base_ctx)
     base_ctx.live_executor.try_buy_value.assert_called_once()
+
+    # Deep field assertions
+    args, _ = base_ctx.live_position_store.add.call_args
+    pos = args[0]
+    assert pos.strategy_family == "DSWING"
+    assert pos.strategy_kind == "DSWING"
+    assert pos.entry_engine == "decisive_swing"
+    assert pos.exit_engine == "dswing_map_end"
+    assert pos.hold_policy == "map_end_convergence"
+    assert pos.state == "OPEN"
+    # DSWING specific fields
+    assert pos.entry_p_game == 0.70
+    assert pos.entry_series_fair == 0.70
+    assert pos.entry_book_age_ms == 100

@@ -5,9 +5,7 @@ It dispatches to live executors or paper traders and manages position state.
 """
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any, Callable
 
 from strategy_allocator import AllocationDecision
@@ -415,8 +413,21 @@ async def _execute_dswing_winner(
         
         if a.filled_size_usd > 0 or a.order_status in ("delayed", "live", "matched", "filled"):
             epx = a.avg_fill_price or a.price_cap or sig.ask
-            cost = a.filled_size_usd or a.submitted_size_usd or 0.0
+            fill = None
+            if ctx.normalized_entry_fill_fn:
+                fill = ctx.normalized_entry_fill_fn(
+                    filled_usd=a.filled_size_usd,
+                    filled_shares=None,
+                    avg_fill_price=a.avg_fill_price,
+                    fallback_price=epx,
+                )
             
+            if fill:
+                cost, shares, epx = fill
+            else:
+                cost = a.filled_size_usd or a.submitted_size_usd or 0.0
+                shares = (cost / epx if epx else 0.0)
+
             ds_pos = LivePosition(
                 position_id=f"{a.match_id}:{a.token_id}:{a.created_at_ns}",
                 state="OPEN" if a.order_status in ("matched", "filled") else "PENDING_ENTRY",
@@ -426,7 +437,7 @@ async def _execute_dswing_winner(
                 market_name=mapping.get("name"),
                 side=sig.side,
                 entry_price=epx,
-                shares=(cost / epx if epx else 0.0),
+                shares=shares,
                 cost_usd=cost,
                 entry_time_ns=a.created_at_ns,
                 entry_game_time_sec=sig.game_time_sec,
