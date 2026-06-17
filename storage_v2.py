@@ -83,18 +83,69 @@ class StorageV2:
         );
         """
         with self.connect() as conn:
-            # Migration check for daily_budgets
-            cursor = conn.execute("PRAGMA table_info(daily_budgets)")
-            columns = [row["name"] for row in cursor.fetchall()]
-            
-            # If the table exists but doesn't have a mode column, we need to migrate it
-            if columns and "mode" not in columns:
-                conn.execute("ALTER TABLE daily_budgets RENAME TO daily_budgets_legacy_date_only")
-                conn.executescript(schema)
-                
-                # Copy old rows to the new table under the 'legacy' mode
+            # --- daily_budgets migration (idempotent, 4-state) ---
+            #
+            # State 1: Fresh DB — no tables exist yet.
+            # State 2: Old date-only DB — daily_budgets has no 'mode' column.
+            # State 3: Already-migrated — daily_budgets has 'mode' column.
+            # State 4: Partial/interrupted — daily_budgets_legacy_date_only exists
+            #          from a previous aborted run; new daily_budgets may or may not
+            #          have been re-created.
+
+            existing_tables = {
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+
+            legacy_backup_exists = "daily_budgets_legacy_date_only" in existing_tables
+            # new_table_needed = True means we must CREATE daily_budgets before copying.
+            # This is true when: (a) we just renamed it away, or
+            # (b) a prior interrupted run renamed it but never created the new one.
+            new_table_needed = False
+
+            if "daily_budgets" in existing_tables:
+                cursor = conn.execute("PRAGMA table_info(daily_budgets)")
+                columns = [row["name"] for row in cursor.fetchall()]
+                needs_migration = "mode" not in columns
+            else:
+                needs_migration = False
+
+            if needs_migration:
+                # State 2 → rename date-only table to backup, then rebuild.
+                conn.execute(
+                    "ALTER TABLE daily_budgets RENAME TO daily_budgets_legacy_date_only"
+                )
+                legacy_backup_exists = True
+                new_table_needed = True  # we just removed daily_budgets
+
+            if legacy_backup_exists and "daily_budgets" not in existing_tables and not needs_migration:
+                # State 4b: prior run died between RENAME and CREATE.
+                new_table_needed = True
+
+            if legacy_backup_exists and not new_table_needed:
+                # State 4a: backup exists AND new daily_budgets also exists.
+                # Previous run created the table but copy step may have been
+                # interrupted — replay it safely with OR IGNORE.
                 conn.execute("""
-                    INSERT INTO daily_budgets (
+                    INSERT OR IGNORE INTO daily_budgets (
+                        date_str, mode, total_submitted_usd, total_filled_usd,
+                        open_positions, daily_realized_pnl_usd, submitted_match_sides,
+                        submitted_match_usd, submitted_family_usd, updated_at_ns
+                    )
+                    SELECT
+                        date_str, 'legacy', total_submitted_usd, total_filled_usd,
+                        open_positions, daily_realized_pnl_usd, submitted_match_sides,
+                        submitted_match_usd, submitted_family_usd, updated_at_ns
+                    FROM daily_budgets_legacy_date_only
+                """)
+            elif legacy_backup_exists and new_table_needed:
+                # State 2 (just renamed) or State 4b (backup exists, new table absent):
+                # create the new mode-keyed table, then copy.
+                conn.executescript(schema)
+                conn.execute("""
+                    INSERT OR IGNORE INTO daily_budgets (
                         date_str, mode, total_submitted_usd, total_filled_usd,
                         open_positions, daily_realized_pnl_usd, submitted_match_sides,
                         submitted_match_usd, submitted_family_usd, updated_at_ns
@@ -106,7 +157,12 @@ class StorageV2:
                     FROM daily_budgets_legacy_date_only
                 """)
             else:
+                # State 1 (fresh) or State 3 (already migrated).
+                # CREATE IF NOT EXISTS is a safe no-op on already-existing tables.
                 conn.executescript(schema)
+
+
+
 
     # --- Positions (Live & Paper) ---
     def save_position(self, pos_dict: dict, mode: str):
