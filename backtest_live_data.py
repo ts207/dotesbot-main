@@ -134,7 +134,7 @@ def _load_yes_is_radiant() -> dict[str, bool]:
       2. liveleague_raw.jsonl + markets.yaml yes_team  (fills gaps)
     """
     result: dict[str, bool] = {}
-    for fname in ("logs/dota_events.csv", "logs/signals.csv"):
+    for fname in ("logs/dota_events.csv", "logs/actual_dota_events.csv", "logs/legacy_dota_events.csv", "logs/signals.csv"):
         p = Path(fname)
         if not p.exists():
             continue
