@@ -22,6 +22,11 @@ from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENAB
 from actual_dota_event_detector import ActualDotaEventDetector
 from event_triggered_value_engine import EventTriggeredValueEngine, EventTriggeredValueSignal
 from strategy_allocator import StrategyCandidate, allocate_candidates, decision_to_log_row
+from strategy_collection import (
+    StrategyCollectionContext,
+    StrategyCollectionLoggers,
+    collect_strategy_candidates,
+)
 from config import EVENT_DETECTORS_ENABLED
 from book_move_detector import BookMoveDetector
 from mapping import load_valid_mappings
@@ -1210,168 +1215,39 @@ async def steam_loop(
                         # ── COLLECT: gather all strategy candidates this tick ──────────────
                         # Rejects are logged immediately. Signals are turned into
                         # StrategyCandidate objects for the allocator to prioritize.
-                        _all_candidates: list[StrategyCandidate] = []
+                        _act = set()
+                        if live_position_store:
+                            _act = {p.token_id for p in live_position_store.positions.values()
+                                    if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
 
-                        # --- Event-Triggered Value Engine (collect phase) ---
-                        if event_value_engine is not None and strategy_signal_logger is not None:
-                            match_actual_events = actual_events_by_match.get(str(game.get("match_id") or ""), [])
-                            for actual_event in match_actual_events:
-                                ev_results = event_value_engine.evaluate(
-                                    event=actual_event,
-                                    game=game,
-                                    mapping=mapping,
-                                    book_store=book_store,
-                                    entered_tokens=_entered_toks,
-                                    pre_event_books=pre_event_books_by_event.get(actual_event.event_id),
-                                )
-                                for ev_result in ev_results:
-                                    if not isinstance(ev_result, EventTriggeredValueSignal):
-                                        strategy_signal_logger.log_reject(ev_result)
-                                        continue
-                                    strategy_signal_logger.log_signal(ev_result)
-                                    if signal_markout_logger is not None:
-                                        ev_book = book_store.get(ev_result.token_id)
-                                        asyncio.create_task(_log_signal_markouts({
-                                            "signal_timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
-                                            "match_id": str(game.get("match_id") or ""),
-                                            "market_name": mapping.get("name"),
-                                            "event_type": "EVENT_REVERSAL_EDGE" if ev_result.is_reversal else "EVENT_CONTINUATION_EDGE",
-                                            "event_tier": "A",
-                                            "event_is_primary": True,
-                                            "event_direction": ev_result.direction,
-                                            "token_id": ev_result.token_id,
-                                            "side": ev_result.side,
-                                            "decision": "paper_buy_yes",
-                                            "skip_reason": "",
-                                            "reference_price": ev_result.ask,
-                                            "reference_bid": ev_book.get("best_bid") if ev_book else None,
-                                            "reference_ask": ev_result.ask,
-                                            "fair_price": ev_result.fair_price,
-                                            "fair_raw": ev_result.fair_after_raw,
-                                            "fair_used": ev_result.fair_after_used,
-                                            "model_available": ev_result.model_available,
-                                            "model_reason": ev_result.model_reason,
-                                            "executable_edge": ev_result.edge,
-                                            "edge_type": ev_result.edge_type,
-                                            "target_horizon": ev_result.target_horizon,
-                                            "expected_hold_sec": ev_result.expected_hold_sec,
-                                            "entry_trigger": ev_result.entry_trigger,
-                                            "exit_trigger": ev_result.exit_trigger,
-                                            "primary_metric": ev_result.primary_metric,
-                                            "secondary_metric": ev_result.secondary_metric,
-                                            "promotion_rule": ev_result.promotion_rule,
-                                            "disable_rule": ev_result.disable_rule,
-                                        }, ev_result.token_id, book_store, signal_markout_logger))
-                                    if not ENABLE_EVENT_TRIGGERED_VALUE_TRADING:
-                                        continue
-                                    ev_strategy = (
-                                        "EVENT_REVERSAL_EDGE"
-                                        if ev_result.is_reversal
-                                        else "EVENT_CONTINUATION_EDGE"
-                                    )
-                                    _all_candidates.append(StrategyCandidate(
-                                        strategy=ev_strategy,
-                                        token_id=str(ev_result.token_id),
-                                        match_id=str(game.get("match_id") or ""),
-                                        direction=ev_result.direction,
-                                        edge=ev_result.edge,
-                                        fair=ev_result.fair_price,
-                                        game_time_sec=ev_result.game_time_sec,
-                                        signal=ev_result,
-                                        edge_type=ev_result.edge_type,
-                                        target_horizon=ev_result.target_horizon,
-                                        expected_hold_sec=ev_result.expected_hold_sec,
-                                        entry_trigger=ev_result.entry_trigger,
-                                        exit_trigger=ev_result.exit_trigger,
-                                        primary_metric=ev_result.primary_metric,
-                                        secondary_metric=ev_result.secondary_metric,
-                                        promotion_rule=ev_result.promotion_rule,
-                                        disable_rule=ev_result.disable_rule,
-                                        is_reversal=ev_result.is_reversal,
-                                        event_subtype=ev_result.actual_event_type,
-                                    ))
+                        def _markout_logger_fn(row, token_id):
+                            if signal_markout_logger is not None:
+                                asyncio.create_task(_log_signal_markouts(row, token_id, book_store, signal_markout_logger))
 
-                        # --- Value Engine (collect phase) ---
-                        if value_engine is not None and value_logger is not None:
-                            value_results = value_engine.evaluate(game, mapping, book_store, entered_tokens=_entered_toks)
-                            for result in value_results:
-                                if not isinstance(result, ValueSignal):
-                                    if value_logger is not None:
-                                        value_logger.log_reject(result)
-                                    if strategy_signal_logger is not None:
-                                        strategy_signal_logger.log_reject(result, strategy="VALUE_EDGE")
-                                    continue
-                                if value_logger is not None:
-                                    value_logger.log_signal(result)
-                                if strategy_signal_logger is not None:
-                                    strategy_signal_logger.log_signal(result, strategy="VALUE_EDGE")
-                                if not ENABLE_VALUE_TRADING:
-                                    continue
-                                confirmed, confirm_reason = _value_confirmation_passes(result)
-                                _all_candidates.append(StrategyCandidate(
-                                    strategy="VALUE_EDGE",
-                                    token_id=str(result.token_id),
-                                    match_id=str(game.get("match_id") or ""),
-                                    direction=result.direction,
-                                    edge=result.edge,
-                                    fair=result.fair_price,
-                                    game_time_sec=result.game_time_sec,
-                                    signal=result,
-                                    edge_type=result.edge_type,
-                                    target_horizon=result.target_horizon,
-                                    expected_hold_sec=result.expected_hold_sec,
-                                    entry_trigger=result.entry_trigger,
-                                    exit_trigger=result.exit_trigger,
-                                    primary_metric=result.primary_metric,
-                                    secondary_metric=result.secondary_metric,
-                                    promotion_rule=result.promotion_rule,
-                                    disable_rule=result.disable_rule,
-                                    would_pass_confirmation=confirmed,
-                                ))
-
-                            # --- Decisive-Swing Engine (collect phase) ---
-                            if dswing_engine is not None:
-                                for ds_res in dswing_engine.evaluate(game, mapping, book_store):
-                                    if not isinstance(ds_res, DSwingSignal):
-                                        if dswing_logger is not None:
-                                            dswing_logger.log_reject(ds_res, mapping=mapping)
-                                        if strategy_signal_logger is not None:
-                                            strategy_signal_logger.log_reject(ds_res, strategy="DSWING")
-                                        continue
-                                    if dswing_logger is not None:
-                                        dswing_logger.log_signal(ds_res, mapping=mapping)
-                                    if strategy_signal_logger is not None:
-                                        strategy_signal_logger.log_signal(ds_res, strategy="DSWING")
-                                    if not DSWING_ENABLED:
-                                        continue
-                                    # DSWING dedup: blocks both sides (prevents holding
-                                    # opposing tokens), using ALL live positions not just
-                                    # the current-mapping set.
-                                    ds_opp = mapping["no_token_id"] if ds_res.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
-                                    if live_position_store:
-                                        _act = {p.token_id for p in live_position_store.positions.values()
-                                                if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}}
-                                        if str(ds_res.token_id) in _act or (ds_opp and str(ds_opp) in _act):
-                                            continue
-                                    _all_candidates.append(StrategyCandidate(
-                                        strategy="DSWING",
-                                        token_id=str(ds_res.token_id),
-                                        match_id=str(game.get("match_id") or ""),
-                                        direction=ds_res.direction,
-                                        edge=ds_res.edge,
-                                        fair=ds_res.series_fair,
-                                        game_time_sec=ds_res.game_time_sec,
-                                        signal=ds_res,
-                                        edge_type=ds_res.edge_type,
-                                        target_horizon=ds_res.target_horizon,
-                                        expected_hold_sec=ds_res.expected_hold_sec,
-                                        entry_trigger=ds_res.entry_trigger,
-                                        exit_trigger=ds_res.exit_trigger,
-                                        primary_metric=ds_res.primary_metric,
-                                        secondary_metric=ds_res.secondary_metric,
-                                        promotion_rule=ds_res.promotion_rule,
-                                        disable_rule=ds_res.disable_rule,
-                                    ))
+                        _all_candidates = collect_strategy_candidates(
+                            StrategyCollectionContext(
+                                game=game,
+                                mapping=mapping,
+                                book_store=book_store,
+                                entered_tokens=_entered_toks,
+                                live_active_tokens=_act,
+                                event_value_engine=event_value_engine,
+                                value_engine=value_engine,
+                                dswing_engine=dswing_engine,
+                                enable_event_triggered_value_trading=ENABLE_EVENT_TRIGGERED_VALUE_TRADING,
+                                enable_value_trading=ENABLE_VALUE_TRADING,
+                                dswing_enabled=DSWING_ENABLED,
+                                value_confirmation_fn=_value_confirmation_passes,
+                                loggers=StrategyCollectionLoggers(
+                                    value_logger=value_logger,
+                                    dswing_logger=dswing_logger,
+                                    strategy_signal_logger=strategy_signal_logger,
+                                    markout_logger_fn=_markout_logger_fn,
+                                ),
+                                game_actual_events=actual_events_by_match.get(str(game.get("match_id") or ""), []),
+                                pre_event_books_by_event=pre_event_books_by_event,
+                            )
+                        )
 
                         # ── ALLOCATE: explicit priority + counterfactual attribution ──────
                         _decisions = allocate_candidates(_all_candidates, _entered_toks)
