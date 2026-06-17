@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -238,6 +240,44 @@ def sync_markets_to_games(
     return updates
 
 
+def _atomic_write_yaml(data: dict, path: str | Path) -> None:
+    """Write YAML data atomically to a file."""
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{p.name}.",
+        suffix=".tmp",
+        dir=str(p.parent),
+        text=True,
+    )
+    tmp_path = Path(tmp_name)
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            f.flush()
+            os.fsync(f.fileno())
+
+        os.replace(tmp_path, p)
+
+        try:
+            dir_fd = os.open(str(p.parent), os.O_DIRECTORY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+        except (AttributeError, OSError):
+            pass
+
+    except Exception:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        raise
+
+
 def load_markets(path: str | Path | None = None) -> dict:
     """Load markets from a specific file, merged with runtime overlay if using default path."""
     if path is None:
@@ -260,11 +300,7 @@ def write_markets(data: dict, path: str | Path | None = None) -> None:
     """Write markets to a file. Defaults to the runtime overlay file to avoid repo pollution."""
     if path is None:
         path = RUNTIME_MARKETS_PATH
-    p = Path(path)
-    # Ensure directory exists (e.g. logs/)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    with p.open("w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    _atomic_write_yaml(data, path)
 
 
 async def sync_once(

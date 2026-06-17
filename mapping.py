@@ -11,22 +11,37 @@ DEFAULT_MARKETS_PATH = os.path.join(os.path.dirname(__file__), "markets.yaml")
 RUNTIME_MARKETS_PATH = os.path.join(os.path.dirname(__file__), "logs", "runtime_markets.yaml")
 
 
+def _market_overlay_key(m: dict) -> str | None:
+    """Extract a stable key for merging market data."""
+    key = m.get("condition_id") or m.get("yes_token_id")
+    return str(key) if key else None
+
+
 def apply_runtime_overlay(base_markets: list[dict]) -> list[dict]:
-    """Merge runtime state from logs/runtime_markets.yaml into the given markets list."""
+    """Merge runtime state from logs/runtime_markets.yaml into a copy of base_markets."""
+    # Always return a copy to prevent accidental mutation of global seed state
+    merged = [dict(m) for m in base_markets]
+
     if not os.path.exists(RUNTIME_MARKETS_PATH):
-        return base_markets
+        return merged
 
     try:
         with open(RUNTIME_MARKETS_PATH, "r", encoding="utf-8") as f:
-            runtime_data = yaml.safe_load(f) or {}
-            runtime_markets = runtime_data.get("markets", []) or []
+            runtime_data = yaml.safe_load(f)
+            if not isinstance(runtime_data, dict):
+                return merged
+            runtime_markets = runtime_data.get("markets")
+            if not isinstance(runtime_markets, list):
+                return merged
 
         # Create lookup by condition_id or yes_token_id
         overlay: dict[str, dict] = {}
         for m in runtime_markets:
-            key = m.get("condition_id") or m.get("yes_token_id")
+            if not isinstance(m, dict):
+                continue
+            key = _market_overlay_key(m)
             if key:
-                overlay[str(key)] = m
+                overlay[key] = m
 
         # Fields that are allowed to be updated by runtime
         overlay_fields = {
@@ -38,29 +53,31 @@ def apply_runtime_overlay(base_markets: list[dict]) -> list[dict]:
         }
 
         seen_keys = set()
-        for m in base_markets:
-            key = m.get("condition_id") or m.get("yes_token_id")
+        for m in merged:
+            key = _market_overlay_key(m)
             if not key:
                 continue
-            k_str = str(key)
-            seen_keys.add(k_str)
-            if k_str in overlay:
-                over_m = overlay[k_str]
+            seen_keys.add(key)
+            if key in overlay:
+                over_m = overlay[key]
                 for field in overlay_fields:
                     if field in over_m:
                         m[field] = over_m[field]
 
         # Also include any markets found ONLY in the runtime file (newly discovered)
         for m in runtime_markets:
-            key = m.get("condition_id") or m.get("yes_token_id")
-            if key and str(key) not in seen_keys:
-                base_markets.append(m)
+            if not isinstance(m, dict):
+                continue
+            key = _market_overlay_key(m)
+            if key and key not in seen_keys:
+                merged.append(dict(m))
 
     except Exception as e:
         # Don't let a corrupted runtime file block the whole bot
-        print(f"Warning: could not load runtime markets overlay: {e}")
+        print(f"Warning: could not load runtime markets overlay {RUNTIME_MARKETS_PATH}: {e}")
+        return merged
 
-    return base_markets
+    return merged
 
 
 def load_mappings(filename: str | None = None) -> list[dict]:

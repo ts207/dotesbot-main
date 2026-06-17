@@ -1,4 +1,4 @@
-"""Tests for runtime market-state isolation (overlay)."""
+"""Tests for hardened runtime market-state isolation (overlay)."""
 from __future__ import annotations
 
 import os
@@ -6,6 +6,7 @@ import yaml
 import pytest
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from mapping import load_mappings, RUNTIME_MARKETS_PATH, DEFAULT_MARKETS_PATH
 from sync_markets import load_markets, write_markets
@@ -37,6 +38,8 @@ def mock_markets(tmp_path, monkeypatch):
                 "no_token_id": "tok2",
                 "dota_match_id": "STEAM_MATCH_OR_LOBBY_ID_HERE",
                 "confidence": 0.0,
+                "yes_team": "Team A",
+                "market_id": "m1",
             }
         ]
     }
@@ -179,3 +182,89 @@ async def test_discover_markets_uses_runtime_path(mock_markets, monkeypatch):
     with open(runtime_file) as f:
         runtime_data = yaml.safe_load(f)
         assert any(m["condition_id"] == "cond_new" for m in runtime_data["markets"])
+
+
+# ── BATCH 8 HARDENING TESTS ──────────────────────────────────────────────────
+
+def test_write_markets_is_atomic_and_removes_temp_file(mock_markets):
+    base_file, runtime_file = mock_markets
+    data = {"markets": [{"condition_id": "c1"}]}
+    
+    # Verify write works
+    write_markets(data)
+    assert os.path.exists(runtime_file)
+    
+    # Verify no temp files left behind
+    temp_files = list(runtime_file.parent.glob(".*.tmp"))
+    assert len(temp_files) == 0
+
+
+def test_write_markets_creates_parent_directory(tmp_path, monkeypatch):
+    deep_path = tmp_path / "new_dir" / "deeper" / "runtime.yaml"
+    # sync_markets uses mapping.RUNTIME_MARKETS_PATH as default
+    monkeypatch.setattr("mapping.RUNTIME_MARKETS_PATH", str(deep_path))
+    monkeypatch.setattr("sync_markets.RUNTIME_MARKETS_PATH", str(deep_path))
+    
+    write_markets({"markets": []})
+    assert deep_path.exists()
+
+
+def test_corrupt_runtime_overlay_returns_base_unchanged(mock_markets):
+    base_file, runtime_file = mock_markets
+    
+    # Write invalid YAML
+    with open(runtime_file, "w") as f:
+        f.write("markets: [")
+        
+    # Should not crash and return base
+    markets = load_mappings()
+    assert len(markets) == 1
+    assert markets[0]["condition_id"] == "cond1"
+    assert markets[0]["confidence"] == 0.0
+
+
+def test_non_list_runtime_markets_ignored(mock_markets):
+    base_file, runtime_file = mock_markets
+    
+    runtime_data = {"markets": {"not": "a list"}}
+    with open(runtime_file, "w") as f:
+        yaml.dump(runtime_data, f)
+        
+    markets = load_mappings()
+    assert len(markets) == 1
+    assert markets[0]["confidence"] == 0.0
+
+
+def test_non_dict_runtime_market_entries_skipped(mock_markets):
+    base_file, runtime_file = mock_markets
+    
+    runtime_data = {"markets": ["not a dict", {"condition_id": "cond1", "confidence": 1.0}]}
+    with open(runtime_file, "w") as f:
+        yaml.dump(runtime_data, f)
+        
+    markets = load_mappings()
+    assert len(markets) == 1
+    assert markets[0]["confidence"] == 1.0
+
+
+def test_overlay_does_not_override_canonical_seed_fields(mock_markets):
+    base_file, runtime_file = mock_markets
+    
+    runtime_data = {
+        "markets": [
+            {
+                "condition_id": "cond1",
+                "yes_team": "Bad Override",
+                "market_id": "bad_id",
+                "confidence": 1.0,
+            }
+        ]
+    }
+    with open(runtime_file, "w") as f:
+        yaml.dump(runtime_data, f)
+        
+    markets = load_mappings()
+    m = markets[0]
+    assert m["yes_team"] == "Team A" # Preserved
+    assert m["market_id"] == "m1"     # Preserved
+    assert m["confidence"] == 1.0    # Allowed override
