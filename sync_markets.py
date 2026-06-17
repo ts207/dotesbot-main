@@ -15,8 +15,9 @@ import aiohttp
 import yaml
 
 from discover_markets import MARKETS_YAML, main as discover_main
-from mapping import RUNTIME_MARKETS_PATH, load_mappings, apply_runtime_overlay
+from mapping import RUNTIME_MARKETS_PATH, load_mappings, apply_runtime_overlay, DEFAULT_MARKETS_PATH
 from mapping_audit import audit_mappings, quarantine_critical_issues
+from runtime_markets import compact_runtime_markets
 from steam_client import fetch_all_live_games
 
 
@@ -303,6 +304,34 @@ def write_markets(data: dict, path: str | Path | None = None) -> None:
     _atomic_write_yaml(data, path)
 
 
+def compact_runtime_overlay(path: str | Path | None = None) -> dict:
+    """Load, compact, and write back the runtime market overlay file."""
+    if path is None:
+        path = RUNTIME_MARKETS_PATH
+    
+    # 1. Load base markets (raw seed, no overlay)
+    base_markets = []
+    if os.path.exists(DEFAULT_MARKETS_PATH):
+        with open(DEFAULT_MARKETS_PATH, "r", encoding="utf-8") as f:
+            base_data = yaml.safe_load(f) or {}
+            base_markets = base_data.get("markets", []) or []
+    
+    # 2. Load runtime overlay (raw unmerged)
+    runtime_markets = []
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            runtime_data = yaml.safe_load(f) or {}
+            runtime_markets = runtime_data.get("markets", []) or []
+    
+    # 3. Compact
+    compacted, stats = compact_runtime_markets(runtime_markets, base_markets)
+    
+    # 4. Write back atomically
+    write_markets({"markets": compacted}, path=path)
+    
+    return stats
+
+
 async def sync_once(
     *,
     discover: bool = True,
@@ -352,7 +381,15 @@ def main() -> None:
     parser.add_argument("--watch", action="store_true", help="Keep syncing live Steam matches")
     parser.add_argument("--interval", type=float, default=30.0, help="Watch interval seconds")
     parser.add_argument("--teams", nargs=2, metavar=("TEAM_A", "TEAM_B"), help="Only sync this team pair")
+    parser.add_argument("--compact-runtime-overlay", action="store_true", help="Clean up stale/duplicate runtime markets")
     args = parser.parse_args()
+
+    if args.compact_runtime_overlay:
+        print("Compacting runtime market overlay...")
+        stats = compact_runtime_overlay()
+        print(f"Compaction complete: {stats}")
+        return
+
     only_pair = tuple(args.teams) if args.teams else None
 
     if args.watch:

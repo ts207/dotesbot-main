@@ -6,15 +6,10 @@ import yaml
 
 from mapping_validator import MappingError, has_placeholder, validate_active_mappings, validate_mapping_schema
 from mapping_quarantine import is_quarantined
+from runtime_markets import ALLOWED_RUNTIME_FIELDS, runtime_market_key
 
 DEFAULT_MARKETS_PATH = os.path.join(os.path.dirname(__file__), "markets.yaml")
 RUNTIME_MARKETS_PATH = os.path.join(os.path.dirname(__file__), "logs", "runtime_markets.yaml")
-
-
-def _market_overlay_key(m: dict) -> str | None:
-    """Extract a stable key for merging market data."""
-    key = m.get("condition_id") or m.get("yes_token_id")
-    return str(key) if key else None
 
 
 def apply_runtime_overlay(base_markets: list[dict]) -> list[dict]:
@@ -39,28 +34,19 @@ def apply_runtime_overlay(base_markets: list[dict]) -> list[dict]:
         for m in runtime_markets:
             if not isinstance(m, dict):
                 continue
-            key = _market_overlay_key(m)
+            key = runtime_market_key(m)
             if key:
                 overlay[key] = m
 
-        # Fields that are allowed to be updated by runtime
-        overlay_fields = {
-            "dota_match_id", "confidence", "auto_mapped_at_utc",
-            "auto_mapped_source", "steam_radiant_team", "steam_dire_team",
-            "steam_side_mapping", "current_game_number",
-            "series_score_yes", "series_score_no", "p_next_yes",
-            "quarantined", "quarantine_reason"
-        }
-
         seen_keys = set()
         for m in merged:
-            key = _market_overlay_key(m)
+            key = runtime_market_key(m)
             if not key:
                 continue
             seen_keys.add(key)
             if key in overlay:
                 over_m = overlay[key]
-                for field in overlay_fields:
+                for field in ALLOWED_RUNTIME_FIELDS:
                     if field in over_m:
                         m[field] = over_m[field]
 
@@ -68,7 +54,7 @@ def apply_runtime_overlay(base_markets: list[dict]) -> list[dict]:
         for m in runtime_markets:
             if not isinstance(m, dict):
                 continue
-            key = _market_overlay_key(m)
+            key = runtime_market_key(m)
             if key and key not in seen_keys:
                 merged.append(dict(m))
 
