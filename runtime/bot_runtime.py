@@ -1178,6 +1178,23 @@ async def steam_loop(
                 
                 for cp in closed:
                     position_logger.log_exit(cp)
+                    
+                    # Batch 11: log exit observation ledger
+                    try:
+                        from exit_observation import build_exit_observation_row, write_exit_observation
+                        obs_row = build_exit_observation_row(
+                            position=cp.to_dict(),
+                            book=book_store.get(cp.token_id),
+                            game=last_steam_games.get(cp.match_id) if last_steam_games else None,
+                            game_over_match_ids=game_over_match_ids,
+                            actual_exit_reason=cp.exit_reason,
+                            actual_exit_price=cp.exit_price,
+                            now_ns=cp.exit_time_ns,
+                        )
+                        write_exit_observation(obs_row)
+                    except Exception as e:
+                        print(f"FAILED to write exit observation: {e}")
+
                     print(
                         f"EXIT [{cp.exit_reason}] {cp.market_name} {cp.side} "
                         f"entry={cp.entry_price:.4f} exit={cp.exit_price:.4f} "
