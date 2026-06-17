@@ -557,7 +557,7 @@ async def _handle_manual_order(
                 book_store=book_store,
             )
             if attempt.order_status in ("matched", "filled", "submitting"):
-                from positions import LivePosition
+                from live_position_store import LivePosition
                 from state_store import StateStore
                 is_filled = attempt.order_status in ("matched", "filled")
                 entry_px = attempt.fair_price if is_filled else 0.0
