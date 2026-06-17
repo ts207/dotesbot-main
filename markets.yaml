@@ -11850,3 +11850,56 @@ markets:
   current_game_number: 3
   series_score_yes: 2
   series_score_no: 0
+- name: 'Dota 2: PlayTime vs Estar Backs - Game 1 Winner'
+  market_id: '2563091'
+  condition_id: '0x1e5674984ce84e9a2888ac102fe5a4bbec089c5eaf82293e060cf2f9b9e680fc'
+  yes_token_id: '88361056943553665553847729838215341311893334186698349559024592496458090321634'
+  no_token_id: '38426122330656506854106042890942774345239721431554016921520315928742744764236'
+  market_type: MAP_WINNER
+  yes_team: PlayTime
+  no_team: Estar Backs
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 21:45:00+00'
+  source_url: https://polymarket.com/event/dota2-playti-eb-2026-06-16
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0
+- name: 'Dota 2: PlayTime vs Estar Backs - Game 2 Winner'
+  market_id: '2563092'
+  condition_id: '0x057e4714b121e84b294b0b196b2099f3533433a6d06d308edc9c0caf0ea9bb0e'
+  yes_token_id: '40488296428567680873567677303599667214391220159894861562234541695103481472256'
+  no_token_id: '55121090291977119834303583728036256714858241580943316887283302804451176032555'
+  market_type: MAP_WINNER
+  yes_team: PlayTime
+  no_team: Estar Backs
+  outcome_order_verified: true
+  dota_match_id: STEAM_MATCH_OR_LOBBY_ID_HERE
+  confidence: 0.0
+  scheduled_start_utc: '2026-06-16 21:45:00+00'
+  source_url: https://polymarket.com/event/dota2-playti-eb-2026-06-16
+  current_game_number: 3
+  series_score_yes: 2
+  series_score_no: 0
+- name: 'Dota 2: Carstensz vs InterActive Philippines - Game 1 Winner'
+  condition_id: '0x64bd9b7e6c6fbb27e47db11aedd3b392b23b25f4ac085f5b2aecd443a630614d'
+  market_id: '2564748'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Carstensz
+  no_team: InterActive Philippines
+  yes_token_id: '111166482264126837505070499067418476029053213255021834927097502779981881196762'
+  no_token_id: '106519557773242104588031593746235848700589801832827502884310651142354274626261'
+  dota_match_id: '8854964089'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-16 12:33:33'
+  auto_mapped_at_utc: '2026-06-17T03:26:24+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Carstensz Esports
+  steam_side_mapping: reversed
