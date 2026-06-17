@@ -153,6 +153,7 @@ async def test_dswing_pending_entry():
          patch("runtime.bot_runtime.fetch_all_live_games", side_effect=mock_fetch), \
          patch("runtime.bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
          patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("config.STEAM_API_KEY", "fake_key"), \
          patch("runtime.bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
 
         try:
@@ -183,6 +184,7 @@ async def test_dswing_pending_entry():
          patch("runtime.bot_runtime.fetch_all_live_games", side_effect=mock_fetch_2), \
          patch("runtime.bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
          patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("config.STEAM_API_KEY", "fake_key"), \
          patch("runtime.bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
 
         try:
@@ -212,6 +214,7 @@ async def test_dswing_pending_entry():
          patch("runtime.bot_runtime.fetch_all_live_games", side_effect=mock_fetch_3), \
          patch("runtime.bot_runtime.load_valid_mappings", return_value=([mapping], [])), \
          patch("config.ENABLE_REAL_LIVE_TRADING", True), \
+         patch("config.STEAM_API_KEY", "fake_key"), \
          patch("runtime.bot_runtime.ENABLE_REAL_LIVE_TRADING", True):
 
         try:

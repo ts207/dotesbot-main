@@ -307,15 +307,15 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
                 risk_tags=("cadence_quality_bad",),
             )
         event_quality = _float(inp.signal.get("event_quality"))
-        if event_quality is not None and event_quality < LIVE_MIN_EVENT_QUALITY:
-            return reject(
-                f"event_quality_too_low:q={event_quality:.3f}_min={LIVE_MIN_EVENT_QUALITY:.3f}",
-                risk_tags=("event_quality_too_low",),
-            )
         if event_type == "POLL_DECISIVE_STOMP" and (event_quality is None or event_quality < LIVE_MIN_DECISIVE_STOMP_QUALITY):
             _q = f"{event_quality:.3f}" if event_quality is not None else "None"
             return reject(
                 f"decisive_stomp_quality_too_low:q={_q}_min={LIVE_MIN_DECISIVE_STOMP_QUALITY:.3f}",
+                risk_tags=("event_quality_too_low",),
+            )
+        if event_quality is not None and event_quality < LIVE_MIN_EVENT_QUALITY:
+            return reject(
+                f"event_quality_too_low:q={event_quality:.3f}_min={LIVE_MIN_EVENT_QUALITY:.3f}",
                 risk_tags=("event_quality_too_low",),
             )
 

@@ -63,6 +63,7 @@ async def test_try_buy_value_uses_fok_when_order_type_is_fok(executor):
          patch("live_executor.ENABLE_REAL_LIVE_TRADING", True), \
          patch("live_executor.validate_mapping_identity", return_value=MagicMock(ok=True)), \
          patch("live_executor._value_signal_strategy_meta", return_value=meta_return), \
+         patch("live_executor.evaluate_policy", return_value=MagicMock(allowed=True, price_cap=0.60, risk_tags=())), \
          patch.object(executor, "_save"):
          
         executor.client = MagicMock()
