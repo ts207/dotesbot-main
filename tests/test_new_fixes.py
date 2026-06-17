@@ -174,7 +174,7 @@ def test_legacy_adverse_exit_disabled():
 def test_dswing_rejects_missing_state():
     # Missing current_game_number or series score
     mapping = {"market_type": "MATCH_WINNER", "current_game_number": None}
-    res = _series_fair(mapping, "YES", 0.95)
+    res = _series_fair(mapping, "YES", 0.95, 0.5)
     assert res is None
 
 @patch("decisive_swing_engine.DSWING_ENABLED", True)

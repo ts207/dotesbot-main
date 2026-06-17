@@ -412,6 +412,17 @@ def test_dswing_candidate_created_only_when_match_winner_trading_enabled(base_ct
     sig.edge = 0.05
     sig.series_fair = 0.87
     sig.game_time_sec = 900
+    sig.edge_type = "dswing"
+    sig.target_horizon = "end"
+    sig.expected_hold_sec = 600
+    sig.entry_trigger = "e"
+    sig.exit_trigger = "x"
+    sig.primary_metric = "p"
+    sig.secondary_metric = "s"
+    sig.promotion_rule = "pr"
+    sig.disable_rule = "dr"
+    sig.ask = 0.82
+    sig.side = "YES"
     base_ctx.dswing_engine.evaluate.return_value = [sig]
     
     candidates = collect_strategy_candidates(base_ctx)

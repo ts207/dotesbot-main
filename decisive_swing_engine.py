@@ -165,9 +165,7 @@ class DecisiveSwingEngine:
             return [DSwingReject(match_id, "game_over")]
         state_check = validate_top_live_state(game)
         if not state_check.ok:
-            missing = ",".join(state_check.missing_fields)
-            reason = state_check.reason if not missing else f"{state_check.reason}:{missing}"
-            return [DSwingReject(match_id, reason)]
+            return [DSwingReject(match_id, "invalid_top_live_state")]
         gt = game.get("game_time_sec")
         if gt is None or gt < DSWING_MIN_GAME_TIME:
             return [DSwingReject(match_id, "game_too_early")]

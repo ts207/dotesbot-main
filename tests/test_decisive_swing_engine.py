@@ -125,29 +125,35 @@ def test_dswing_invalid_top_live_state_returns_reject():
     res = list(engine.evaluate(game, mapping, None))
     assert len(res) == 1
     assert isinstance(res[0], DSwingReject)
-    assert res[0].reason.startswith("missing_fields")
+    assert res[0].reason == "invalid_top_live_state"
 
-def test_dswing_game_too_early_returns_reject():
+@patch("decisive_swing_engine.validate_top_live_state")
+def test_dswing_game_too_early_returns_reject(mock_val):
+    mock_val.return_value.ok = True
     engine = DecisiveSwingEngine()
-    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 100}
+    game = {"match_id": "123", "data_source": "top_live", "received_at_ns": 1, "game_time_sec": 100}
     mapping = {"market_type": "MATCH_WINNER"}
     res = list(engine.evaluate(game, mapping, None))
     assert len(res) == 1
     assert isinstance(res[0], DSwingReject)
     assert res[0].reason == "game_too_early"
 
-def test_dswing_missing_lead_returns_reject():
+@patch("decisive_swing_engine.validate_top_live_state")
+def test_dswing_missing_lead_returns_reject(mock_val):
+    mock_val.return_value.ok = True
     engine = DecisiveSwingEngine()
-    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 900}
+    game = {"match_id": "123", "data_source": "top_live", "received_at_ns": 1, "game_time_sec": 900}
     mapping = {"market_type": "MATCH_WINNER"}
     res = list(engine.evaluate(game, mapping, None))
     assert len(res) == 1
     assert isinstance(res[0], DSwingReject)
     assert res[0].reason == "missing_lead"
 
-def test_dswing_lead_too_small_returns_reject():
+@patch("decisive_swing_engine.validate_top_live_state")
+def test_dswing_lead_too_small_returns_reject(mock_val):
+    mock_val.return_value.ok = True
     engine = DecisiveSwingEngine()
-    game = {"match_id": "123", "data_source": "top_live", "radiant_score": 1, "dire_score": 1, "building_state": 0, "tower_state": 0, "received_at_ns": 1, "game_time_sec": 900, "radiant_lead": 1000}
+    game = {"match_id": "123", "data_source": "top_live", "received_at_ns": 1, "game_time_sec": 900, "radiant_lead": 1000}
     mapping = {"market_type": "MATCH_WINNER"}
     res = list(engine.evaluate(game, mapping, None))
     assert len(res) == 1
