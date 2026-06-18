@@ -215,6 +215,63 @@ def generate_reports():
         # Create empty file with headers if no markets included
         pd.DataFrame(columns=["market_id", "dota_match_id", "market_type", "yes_token_id", "no_token_id", "name"]).to_csv("analysis_ready_markets.csv", index=False)
         print("No markets met inclusion criteria. Saved empty analysis_ready_markets.csv.")
+    
+    # 5. Export row data
+    export_data_rows(included)
+
+def export_data_rows(included_markets, root_dir="."):
+    root = Path(root_dir)
+    match_ids = {str(m.get("dota_match_id") or "") for m in included_markets if m.get("dota_match_id")}
+    token_ids = set()
+    for m in included_markets:
+        if m.get("yes_token_id"):
+            token_ids.add(str(m["yes_token_id"]))
+        if m.get("no_token_id"):
+            token_ids.add(str(m["no_token_id"]))
+
+    if not match_ids:
+        print("No match IDs to export.")
+        return
+
+    # Export snapshots
+    print(f"Exporting snapshots for {len(match_ids)} matches...")
+    snap_chunks = []
+    snap_dir = root / "data_v2" / "snapshots"
+    if snap_dir.exists():
+        for pfile in snap_dir.glob("**/*.parquet"):
+            try:
+                df = pd.read_parquet(pfile)
+                filtered = df[df["match_id"].astype(str).isin(match_ids)]
+                if not filtered.empty:
+                    snap_chunks.append(filtered)
+            except Exception as e:
+                print(f"Error reading {pfile}: {e}")
+    
+    if snap_chunks:
+        pd.concat(snap_chunks).to_parquet("analysis_ready_snapshots.parquet", index=False)
+        print(f"Saved analysis_ready_snapshots.parquet with {sum(len(c) for c in snap_chunks)} rows.")
+    else:
+        print("No matching snapshots found.")
+
+    # Export book ticks
+    print(f"Exporting book ticks for {len(token_ids)} tokens...")
+    book_chunks = []
+    book_dir = root / "data_v2" / "book_ticks"
+    if book_dir.exists():
+        for pfile in book_dir.glob("**/*.parquet"):
+            try:
+                df = pd.read_parquet(pfile)
+                filtered = df[df["asset_id"].astype(str).isin(token_ids)]
+                if not filtered.empty:
+                    book_chunks.append(filtered)
+            except Exception as e:
+                print(f"Error reading {pfile}: {e}")
+    
+    if book_chunks:
+        pd.concat(book_chunks).to_parquet("analysis_ready_book_ticks.parquet", index=False)
+        print(f"Saved analysis_ready_book_ticks.parquet with {sum(len(c) for c in book_chunks)} rows.")
+    else:
+        print("No matching book ticks found.")
 
 if __name__ == "__main__":
     generate_reports()
