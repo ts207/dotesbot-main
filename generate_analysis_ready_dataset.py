@@ -126,9 +126,95 @@ class DataCounter:
                     print(f"Error reading {pfile}: {e}")
         return counts
 
-if __name__ == "__main__":
+def filter_markets(markets, snap_counts, book_counts, confirmed_matches, confirmed_tokens):
+    streamer_keywords = ["streamers", "streamer", "battle", "gorgc", "bald", "bulldog", "ns2", "nix", "recren", "miposh"]
+    included = []
+    report = []
+
+    for m in markets:
+        mid = str(m.get("dota_match_id") or "")
+        yid = str(m.get("yes_token_id") or "")
+        nid = str(m.get("no_token_id") or "")
+        name = str(m.get("name") or "").lower()
+
+        s_count = snap_counts.get(mid, 0)
+        y_count = book_counts.get(yid, 0)
+        n_count = book_counts.get(nid, 0)
+        
+        has_outcome = (mid in confirmed_matches) or (yid in confirmed_tokens) or (nid in confirmed_tokens)
+        is_streamer = any(k in name for k in streamer_keywords)
+        valid_mapping = mid and yid and nid and "PLACEHOLDER" not in yid and "PLACEHOLDER" not in nid
+
+        exclusion_reason = None
+        if not valid_mapping: exclusion_reason = "invalid_mapping"
+        elif is_streamer: exclusion_reason = "is_streamer"
+        elif s_count < 3: exclusion_reason = "insufficient_snapshots"
+        elif y_count < 10 or n_count < 10: exclusion_reason = "insufficient_book_ticks"
+        elif not has_outcome: exclusion_reason = "missing_outcome"
+
+        row = {
+            "market_id": m.get("market_id"),
+            "dota_match_id": mid,
+            "market_name": m.get("name"),
+            "market_type": m.get("market_type"),
+            "yes_token_id": yid,
+            "no_token_id": nid,
+            "steam_snapshot_count": s_count,
+            "yes_book_tick_count": y_count,
+            "no_book_tick_count": n_count,
+            "has_outcome": has_outcome,
+            "is_streamer": is_streamer,
+            "included": exclusion_reason is None,
+            "exclusion_reason": exclusion_reason
+        }
+        report.append(row)
+        if exclusion_reason is None:
+            included.append(m)
+
+    return included, report
+
+def generate_reports():
+    from mapping import load_valid_mappings
+    
+    # 1. Load data
     agg = OutcomeAggregator()
+    counter = DataCounter()
+    
     outcomes = agg.get_confirmed_outcomes()
-    match_count = len(outcomes)
-    token_count = sum(len(ts) for ts in outcomes.values())
-    print(f"Found {match_count} confirmed matches and {token_count} confirmed tokens.")
+    snap_counts = counter.get_snapshot_counts()
+    book_counts = counter.get_book_tick_counts()
+    
+    # Convert outcomes to confirmed matches and confirmed tokens
+    confirmed_matches = set(outcomes.keys())
+    confirmed_tokens = set()
+    for tokens in outcomes.values():
+        confirmed_tokens.update(tokens)
+    
+    # 2. Load mappings
+    markets, _ = load_valid_mappings()
+    print(f"Loaded {len(markets)} valid mappings.")
+    
+    # 3. Filter and report
+    included, report = filter_markets(markets, snap_counts, book_counts, confirmed_matches, confirmed_tokens)
+    
+    # 4. Save results
+    report_df = pd.DataFrame(report)
+    report_df.to_csv("coverage_report.csv", index=False)
+    print(f"Saved coverage_report.csv with {len(report)} entries.")
+    
+    included_df = pd.DataFrame(included)
+    if not included_df.empty:
+        # Select key columns for the analysis-ready dataset
+        cols = ["market_id", "dota_match_id", "market_type", "yes_token_id", "no_token_id", "name"]
+        # Only include columns that exist
+        existing_cols = [c for c in cols if c in included_df.columns]
+        included_df = included_df[existing_cols]
+        included_df.to_csv("analysis_ready_markets.csv", index=False)
+        print(f"Saved analysis_ready_markets.csv with {len(included)} entries.")
+    else:
+        # Create empty file with headers if no markets included
+        pd.DataFrame(columns=["market_id", "dota_match_id", "market_type", "yes_token_id", "no_token_id", "name"]).to_csv("analysis_ready_markets.csv", index=False)
+        print("No markets met inclusion criteria. Saved empty analysis_ready_markets.csv.")
+
+if __name__ == "__main__":
+    generate_reports()

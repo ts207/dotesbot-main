@@ -87,3 +87,21 @@ def test_data_counter(tmp_path):
     tick_counts = counter.get_book_tick_counts()
     assert tick_counts["a1"] == 3
     assert tick_counts["a2"] == 1
+
+def test_market_filtering():
+    from generate_analysis_ready_dataset import filter_markets
+    markets = [
+        {"name": "Team A vs Team B", "dota_match_id": "m1", "yes_token_id": "y1", "no_token_id": "n1", "market_id": "poly1", "market_type": "winner"},
+        {"name": "Gorgc Streamer Battle", "dota_match_id": "m2", "yes_token_id": "y2", "no_token_id": "n2", "market_id": "poly2", "market_type": "winner"}
+    ]
+    snap_counts = {"m1": 5, "m2": 5}
+    book_counts = {"y1": 20, "n1": 20, "y2": 20, "n2": 20}
+    confirmed_matches = {"m1", "m2"}
+    confirmed_tokens = set()
+    
+    included, report = filter_markets(markets, snap_counts, book_counts, confirmed_matches, confirmed_tokens)
+    assert len(included) == 1
+    assert included[0]["dota_match_id"] == "m1"
+    # report[0] is m1 (included)
+    # report[1] is m2 (excluded because is_streamer)
+    assert report[1]["exclusion_reason"] == "is_streamer"
