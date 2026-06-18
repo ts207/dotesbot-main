@@ -1,0 +1,17 @@
+strategy_kind: EVENT_REPRICE_120
+version: 2026-06-18
+enabled_paper: true
+enabled_dry_live: true
+enabled_real_live: false
+edge_type: event_repricing
+target_horizon: repricing_120s
+expected_hold_sec: 120
+entry_trigger: fair_delta_used - market_reprice
+exit_trigger: markout_target / timeout
+primary_metric: 120s_realizable_markout
+secondary_metric: 
+promotion_rule: positive_markout
+disable_rule: negative_event_markout
+hold_policy: target_or_timeout
+bounce_target: 
+timeout_sec: 120

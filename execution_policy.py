@@ -125,6 +125,22 @@ def _is_hold_to_settle(signal: Mapping[str, Any]) -> bool:
 
 def _strategy_disabled(inp: PolicyInput) -> str | None:
     try:
+        import strategy_registry
+        kind = inp.strategy_kind.upper()
+        try:
+            contract = strategy_registry.get(kind)
+            if inp.mode == "paper_research" and not contract.enabled_paper:
+                return f"strategy_contract_disabled:{kind}:paper"
+            if inp.mode == "dry_live" and not contract.enabled_dry_live:
+                return f"strategy_contract_disabled:{kind}:dry_live"
+            if inp.mode == "real_live" and not contract.enabled_real_live:
+                return f"strategy_contract_disabled:{kind}:real_live"
+        except KeyError:
+            pass
+    except Exception:
+        pass
+
+    try:
         from config import RUNTIME_CONFIG
     except Exception:
         return None

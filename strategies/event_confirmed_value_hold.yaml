@@ -1,0 +1,17 @@
+strategy_kind: EVENT_CONFIRMED_VALUE_HOLD
+version: 2026-06-18
+enabled_paper: true
+enabled_dry_live: true
+enabled_real_live: false
+edge_type: executable
+target_horizon: settlement
+expected_hold_sec: 0
+entry_trigger: fair_price - executable_ask
+exit_trigger: thesis_invalidation / game_over
+primary_metric: settlement_roi
+secondary_metric: incremental_settlement_roi_over_value
+promotion_rule: positive_settlement_roi
+disable_rule: negative_settlement_roi
+hold_policy: thesis_invalidation
+bounce_target: 
+timeout_sec: 

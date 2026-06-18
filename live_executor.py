@@ -310,6 +310,9 @@ class LiveOrderAttempt:
     paper_only_bypass: bool = False
     policy_version: str = POLICY_VERSION
     risk_tags: tuple[str, ...] = ()
+    manual_operator: str | None = None
+    manual_source: str | None = None
+    manual_pre_trade_book: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -1326,6 +1329,9 @@ class LiveExecutor:
                 trader_kind="manual", exit_horizon_sec=None,
                 strategy_kind="MANUAL", strategy_family="MANUAL", strategy_subtype=None,
                 is_reversal=False, is_continuation=False,
+                manual_operator=signal.get("operator", "unknown_operator"),
+                manual_source=signal.get("source", "dashboard_manual"),
+                manual_pre_trade_book=json.dumps(_jsonable(book_store.get_book(token_id))),
             )
             return self._apply_policy_result(
                 attempt,
@@ -1550,7 +1556,7 @@ class LiveExecutor:
             )
 
         from config import LIVE_ORDER_TYPE
-        if LIVE_ORDER_TYPE not in _ALLOWED_ORDER_TYPES:
+        if LIVE_ORDER_TYPE not in {"FAK", "FOK"}:
             return self._reject_value(signal, mapping, game, token_id, size_usd, f"unsupported_order_type:{LIVE_ORDER_TYPE}")
 
         trader_kind = "dswing" if attempt_event_type == "DSWING" else "value"

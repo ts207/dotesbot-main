@@ -26,6 +26,10 @@ jobs:
             python -m pip install -r requirements.txt
           fi
 
+      - name: Check runtime config (paper safe)
+        run: |
+          python check_config.py || test $? -eq 2
+
       - name: Run tests
         run: |
           python -m pytest tests/
