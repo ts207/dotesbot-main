@@ -94,6 +94,38 @@ class OutcomeAggregator:
 
         return dict(outcomes)
 
+class DataCounter:
+    def __init__(self, root_dir="."):
+        self.root_dir = Path(root_dir)
+
+    def get_snapshot_counts(self):
+        counts = {}
+        snap_dir = self.root_dir / "data_v2" / "snapshots"
+        if snap_dir.exists():
+            for pfile in snap_dir.glob("**/*.parquet"):
+                try:
+                    df = pd.read_parquet(pfile, columns=["match_id"])
+                    vc = df["match_id"].astype(str).value_counts()
+                    for mid, count in vc.items():
+                        counts[mid] = counts.get(mid, 0) + int(count)
+                except Exception as e:
+                    print(f"Error reading {pfile}: {e}")
+        return counts
+
+    def get_book_tick_counts(self):
+        counts = {}
+        book_dir = self.root_dir / "data_v2" / "book_ticks"
+        if book_dir.exists():
+            for pfile in book_dir.glob("**/*.parquet"):
+                try:
+                    df = pd.read_parquet(pfile, columns=["asset_id"])
+                    vc = df["asset_id"].astype(str).value_counts()
+                    for aid, count in vc.items():
+                        counts[aid] = counts.get(aid, 0) + int(count)
+                except Exception as e:
+                    print(f"Error reading {pfile}: {e}")
+        return counts
+
 if __name__ == "__main__":
     agg = OutcomeAggregator()
     outcomes = agg.get_confirmed_outcomes()

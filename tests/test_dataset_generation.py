@@ -63,3 +63,27 @@ def test_outcome_aggregator(tmp_path):
     
     # m8 should NOT be present (PENDING)
     assert "m8" not in outcomes
+
+def test_data_counter(tmp_path):
+    # Mock snapshots
+    snap_dir = tmp_path / "data_v2" / "snapshots" / "date=2026-06-18"
+    snap_dir.mkdir(parents=True)
+    df_snap = pd.DataFrame({"match_id": ["m1", "m1", "m2"]})
+    df_snap.to_parquet(snap_dir / "test_snaps.parquet")
+    
+    # Mock book ticks
+    book_dir = tmp_path / "data_v2" / "book_ticks" / "date=2026-06-18"
+    book_dir.mkdir(parents=True)
+    df_book = pd.DataFrame({"asset_id": ["a1", "a1", "a1", "a2"]})
+    df_book.to_parquet(book_dir / "test_ticks.parquet")
+    
+    from generate_analysis_ready_dataset import DataCounter
+    counter = DataCounter(root_dir=tmp_path)
+    
+    snap_counts = counter.get_snapshot_counts()
+    assert snap_counts["m1"] == 2
+    assert snap_counts["m2"] == 1
+    
+    tick_counts = counter.get_book_tick_counts()
+    assert tick_counts["a1"] == 3
+    assert tick_counts["a2"] == 1
