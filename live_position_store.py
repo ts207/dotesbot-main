@@ -77,6 +77,9 @@ class LivePosition:
     entry_current_game_number: int | None = None
     entry_market_type: str | None = None
     entry_book_age_ms: int | None = None
+    exit_price: float | None = None
+    pnl_usd: float | None = None
+
 
 
 class LivePositionStore:

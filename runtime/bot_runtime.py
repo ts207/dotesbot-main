@@ -2357,16 +2357,21 @@ async def main():
                 filled_shares = _to_float(order_resp.get("filledShares") or order_resp.get("filled_shares") or order_resp.get("sizeMatched") or 0)
 
                 if filled_shares and filled_shares >= pos.shares * 0.999:
+                    fill_price = _to_float(order_resp.get("avgFillPrice") or order_resp.get("avg_fill_price") or order_resp.get("averagePrice")) or pos.exit_order_price or 0.0
+                    proceeds = filled_shares * fill_price
+                    pos.exit_price = fill_price
+                    pos.pnl_usd = proceeds - (pos.cost_usd or 0.0)
                     live_position_store.mark_closed(pos.position_id)
                     if live_executor:
                         live_executor.decrement_open_positions(match_id=pos.match_id)
-                        fill_price = _to_float(order_resp.get("avgFillPrice") or order_resp.get("avg_fill_price") or order_resp.get("averagePrice")) or pos.exit_order_price or 0.0
-                        proceeds = filled_shares * fill_price
                         live_executor.add_realized_pnl(proceeds - (pos.cost_usd or 0.0))
                     print(f"LIVE EXIT GTC FILLED: {pos.market_name} {pos.side} order={pos.pending_exit_order_id}")
                     continue
 
                 if status in ("matched", "filled"):
+                    fill_price = _to_float(order_resp.get("avgFillPrice") or order_resp.get("avg_fill_price") or order_resp.get("averagePrice")) or pos.exit_order_price or 0.0
+                    pos.exit_price = fill_price
+                    pos.pnl_usd = (filled_shares or pos.shares) * fill_price - (pos.cost_usd or 0.0)
                     live_position_store.mark_closed(pos.position_id)
                     if live_executor:
                         live_executor.decrement_open_positions(match_id=pos.match_id)
@@ -2451,12 +2456,14 @@ async def main():
                     print(f"LIVE EXIT GTC POSTED: {pos.market_name} {pos.side} price={attempt.price_posted} order={attempt.order_id}")
                 elif attempt.shares_filled >= pos.shares * 0.999:
                     # Immediate fill (crossed as taker)
+                    resp = json.loads(attempt.raw_response_json) if attempt.raw_response_json else {}
+                    fill_price = _to_float(resp.get("avgFillPrice") or resp.get("avg_fill_price") or resp.get("averagePrice")) or attempt.price_posted or pos.entry_price
+                    proceeds = attempt.shares_filled * fill_price
+                    pos.exit_price = fill_price
+                    pos.pnl_usd = proceeds - (pos.cost_usd or 0.0)
                     live_position_store.mark_closed(pos.position_id)
                     if live_executor:
                         live_executor.decrement_open_positions(match_id=pos.match_id)
-                        resp = json.loads(attempt.raw_response_json) if attempt.raw_response_json else {}
-                        fill_price = _to_float(resp.get("avgFillPrice") or resp.get("avg_fill_price") or resp.get("averagePrice")) or attempt.price_posted or pos.entry_price
-                        proceeds = attempt.shares_filled * fill_price
                         live_executor.add_realized_pnl(proceeds - (pos.cost_usd or 0.0))
                     print(f"LIVE EXIT FILLED: {pos.market_name} {pos.side} status={attempt.order_status}")
                 elif attempt.order_status == "rejected_balance":
