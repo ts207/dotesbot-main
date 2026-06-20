@@ -849,6 +849,8 @@ class LiveAttemptLogger(CsvLogger):
             "markout_3s", "markout_10s", "markout_30s",
             "raw_response_json",
             "trader_kind", "exit_horizon_sec", "signal_id", "execution_path",
+            "model_version", "token_net_worth_lead", "token_score_margin",
+            "radiant_net_worth", "dire_net_worth", "radiant_score", "dire_score"
         ], parquet_table="trade_attempts")
 
     def _to_parquet_row(self, row: dict) -> dict:
@@ -1396,6 +1398,8 @@ class StrategySignalLogger(CsvLogger):
             "would_pass_live_gates", "live_skip_reason", "paper_only_bypass",
             "policy_allowed", "policy_reason", "policy_version", "risk_tags",
             "execution_path",
+            "model_version", "token_net_worth_lead", "token_score_margin",
+            "radiant_net_worth", "dire_net_worth", "radiant_score", "dire_score"
         ])
 
     def log_signal(self, sig, *, strategy: str = "EVENT_TRIGGERED_VALUE") -> None:
@@ -1458,6 +1462,13 @@ class StrategySignalLogger(CsvLogger):
             "policy_version": getattr(sig, "policy_version", ""),
             "risk_tags": getattr(sig, "risk_tags", ""),
             "execution_path": self._execution_path,
+            "model_version": getattr(sig, "model_version", ""),
+            "token_net_worth_lead": getattr(sig, "token_net_worth_lead", ""),
+            "token_score_margin": getattr(sig, "token_score_margin", ""),
+            "radiant_net_worth": getattr(sig, "radiant_net_worth", ""),
+            "dire_net_worth": getattr(sig, "dire_net_worth", ""),
+            "radiant_score": getattr(sig, "radiant_score", ""),
+            "dire_score": getattr(sig, "dire_score", ""),
         }
         self.append(row)
         _mirror_state("record_strategy_signal", row)
@@ -1525,6 +1536,13 @@ class StrategySignalLogger(CsvLogger):
             "policy_version": "",
             "risk_tags": "",
             "execution_path": self._execution_path,
+            "model_version": getattr(rej, "model_version", ""),
+            "token_net_worth_lead": getattr(rej, "token_net_worth_lead", ""),
+            "token_score_margin": getattr(rej, "token_score_margin", ""),
+            "radiant_net_worth": getattr(rej, "radiant_net_worth", ""),
+            "dire_net_worth": getattr(rej, "dire_net_worth", ""),
+            "radiant_score": getattr(rej, "radiant_score", ""),
+            "dire_score": getattr(rej, "dire_score", ""),
         }
         self.append(row)
         _mirror_state("record_strategy_signal", row)

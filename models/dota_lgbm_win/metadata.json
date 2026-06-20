@@ -1,6 +1,21 @@
 {
   "strategy": "MODEL_VALUE_EDGE",
   "model_type": "lgbm_win_export",
+  "model_name": "model_value_edge_v0_state_tree",
+  "model_class": "state_only_threshold_tree",
+  "uses_market_price": false,
+  "uses_game_time": false,
+  "uses_objectives": false,
+  "uses_orderbook_dynamics": false,
+  "deployment_status": "paper_only",
+  "known_limitations": [
+    "state-only model",
+    "ignores market mid",
+    "ignores game time",
+    "ignores towers, barracks, roshan, lineups",
+    "coarse probability buckets",
+    "small backtest sample"
+  ],
   "trained_on": "expanded_sideaware_highmed_112",
   "target": "official_win",
   "entry_rule": "p_model - ask >= 0.15; persistence=2",

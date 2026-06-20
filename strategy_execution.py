@@ -337,7 +337,10 @@ async def _execute_model_value_winner(
                 entry_edge=sig.edge,
                 entry_ask=sig.ask,
                 entry_backed_side=sig.direction,
-                entry_radiant_lead=0.0,
+                entry_radiant_lead=sig.radiant_net_worth - sig.dire_net_worth,
+                entry_token_net_worth_lead=sig.token_net_worth_lead,
+                entry_token_score_margin=sig.token_score_margin,
+                entry_model_version=sig.model_version,
             )
             ctx.live_position_store.add(v_pos)
             ctx.entered_tokens.add(str(sig.token_id))

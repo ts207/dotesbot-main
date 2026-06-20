@@ -120,7 +120,8 @@ EVENT_MAX_PER_MATCH = float(os.getenv("EVENT_MAX_PER_MATCH", str(VALUE_MAX_PER_M
 VALUE_FAK_BUFFER_TICKS = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "4"))
 
 MODEL_VALUE_ENABLED = RUNTIME_CONFIG.strategy.model_value_enabled
-ENABLE_MODEL_VALUE_TRADING = os.getenv("ENABLE_MODEL_VALUE_TRADING", "true").lower() in {"1", "true", "yes"}
+_paper_only = not RUNTIME_CONFIG.live.enable_real_live_trading and RUNTIME_CONFIG.paper.paper_mode in {"research", "live_parity"}
+ENABLE_MODEL_VALUE_TRADING = os.getenv("ENABLE_MODEL_VALUE_TRADING", str(_paper_only)).lower() in {"1", "true", "yes"}
 MODEL_VALUE_MIN_EDGE = float(os.getenv("MODEL_VALUE_MIN_EDGE", "0.15"))
 MODEL_VALUE_CONFIRM_ENABLED = os.getenv("MODEL_VALUE_CONFIRM_ENABLED", "true").lower() in {"1", "true", "yes"}
 MODEL_VALUE_CONFIRM_MIN_EDGE = float(os.getenv("MODEL_VALUE_CONFIRM_MIN_EDGE", "0.15"))
@@ -131,6 +132,8 @@ MODEL_VALUE_MAX_ASK = float(os.getenv("MODEL_VALUE_MAX_ASK", "0.95"))
 MODEL_VALUE_MAX_SPREAD = float(os.getenv("MODEL_VALUE_MAX_SPREAD", "0.05"))
 MODEL_VALUE_MAX_BOOK_AGE_MS = int(os.getenv("MODEL_VALUE_MAX_BOOK_AGE_MS", "10000"))
 MODEL_VALUE_TRADE_USD = float(os.getenv("MODEL_VALUE_TRADE_USD", "5.0"))
+MODEL_VALUE_MAX_PER_MATCH = float(os.getenv("MODEL_VALUE_MAX_PER_MATCH", "5.0"))
+MODEL_VALUE_MAX_OPEN_POSITIONS = int(os.getenv("MODEL_VALUE_MAX_OPEN_POSITIONS", "1"))
 MODEL_VALUE_MODEL_PATH = os.getenv("MODEL_VALUE_MODEL_PATH", "models/dota_lgbm_win/model.json")
 
 

@@ -66,7 +66,10 @@ class LivePosition:
     entry_edge: float | None = None
     entry_ask: float | None = None
     entry_backed_side: str | None = None
-    entry_radiant_lead: int | None = None
+    entry_radiant_lead: float | None = None
+    entry_token_net_worth_lead: float | None = None
+    entry_token_score_margin: float | None = None
+    entry_model_version: str | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
     # 2026-06-16 — DSWING audit extensions

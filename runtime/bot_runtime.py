@@ -93,6 +93,18 @@ MARKET_DISCOVER_SECONDS = 600  # re-scrape Polymarket for new G3 markets every 1
 _LOCK_HANDLE = None
 
 
+def _get_policy_mode() -> str:
+    from config import LIVE_TRADING, ENABLE_REAL_LIVE_TRADING, PAPER_MODE
+    if ENABLE_REAL_LIVE_TRADING:
+        return "real_live"
+    if LIVE_TRADING:
+        return "dry_live"
+    return {
+        "research": "paper_research",
+        "live_parity": "paper_live_parity",
+        "shadow_live": "dry_live",
+    }.get(PAPER_MODE, "paper_research")
+
 def _annotate_signal_policy_for_paper(
     *,
     signal: dict,
@@ -105,11 +117,7 @@ def _annotate_signal_policy_for_paper(
 ) -> dict:
     book = book_store.get(token_id) if token_id else None
 
-    mode = {
-        "research": "paper_research",
-        "live_parity": "paper_live_parity",
-        "shadow_live": "dry_live",
-    }.get(PAPER_MODE, "paper_research")
+    mode = _get_policy_mode()
 
     match_id = str(game.get("match_id") or game.get("lobby_id") or "")
 
@@ -1265,6 +1273,7 @@ async def steam_loop(
                                 enable_value_trading=ENABLE_VALUE_TRADING,
                                 dswing_enabled=DSWING_ENABLED,
                                 enable_model_value_trading=ENABLE_MODEL_VALUE_TRADING,
+                                policy_mode=_get_policy_mode(),
                                 value_confirmation_fn=_value_confirmation_passes,
                                 model_value_confirmation_fn=_model_value_confirmation_passes,
                                 loggers=StrategyCollectionLoggers(

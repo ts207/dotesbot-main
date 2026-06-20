@@ -52,6 +52,7 @@ class StrategyCollectionContext:
     dswing_enabled: bool = False
     enable_match_winner_trading: bool = False
     enable_model_value_trading: bool = False
+    policy_mode: str = "paper_research"
 
     # fn(ValueSignal) -> (bool, reason)
     value_confirmation_fn: Callable[[ValueSignal], tuple[bool, str]] | None = None
@@ -311,7 +312,7 @@ def _collect_model_value_candidates(ctx: StrategyCollectionContext) -> list[Stra
 
     results: list[StrategyCandidate] = []
     model_results = ctx.model_value_engine.evaluate(
-        ctx.game, ctx.mapping, ctx.book_store, entered_tokens=ctx.entered_tokens
+        ctx.game, ctx.mapping, ctx.book_store, entered_tokens=ctx.entered_tokens, mode=ctx.policy_mode
     )
     for result in model_results:
         if not isinstance(result, ModelValueSignal):
@@ -326,8 +327,12 @@ def _collect_model_value_candidates(ctx: StrategyCollectionContext) -> list[Stra
             continue
 
         confirmed = True
+        confirm_reason = ""
         if ctx.model_value_confirmation_fn is not None:
-            confirmed, _ = ctx.model_value_confirmation_fn(result)
+            confirmed, confirm_reason = ctx.model_value_confirmation_fn(result)
+
+        if not confirmed:
+            continue
 
         results.append(StrategyCandidate(
             strategy="MODEL_VALUE_EDGE",
@@ -349,4 +354,5 @@ def _collect_model_value_candidates(ctx: StrategyCollectionContext) -> list[Stra
             disable_rule=result.disable_rule,
             would_pass_confirmation=confirmed,
         ))
+
     return results

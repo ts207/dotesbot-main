@@ -38,21 +38,21 @@ def base_mapping():
 
 def test_engine_rejects_missing_match_id():
     engine = ModelValueEngine()
-    res = engine.evaluate({"data_source": "top_live"}, {}, None)
+    res = engine.evaluate({"data_source": "top_live"}, {}, None, entered_tokens=set())
     assert len(res) == 0
 
 def test_engine_rejects_non_top_live(base_game, base_mapping):
     game = dict(base_game)
     game["data_source"] = "league_stream"
     engine = ModelValueEngine()
-    res = engine.evaluate(game, base_mapping, None)
+    res = engine.evaluate(game, base_mapping, None, entered_tokens=set())
     assert len(res) == 0
 
 def test_engine_rejects_game_over(base_game, base_mapping):
     game = dict(base_game)
     game["game_over"] = True
     engine = ModelValueEngine()
-    res = engine.evaluate(game, base_mapping, None)
+    res = engine.evaluate(game, base_mapping, None, entered_tokens=set())
     assert len(res) == 1
     assert isinstance(res[0], ModelValueReject)
     assert res[0].reason == "game_over"
@@ -61,7 +61,7 @@ def test_engine_rejects_missing_book(base_game, base_mapping):
     engine = ModelValueEngine()
     book_store = MagicMock()
     book_store.get.return_value = None
-    res = engine.evaluate(base_game, base_mapping, book_store)
+    res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
     assert len(res) >= 1
     assert any(isinstance(r, ModelValueReject) and r.reason == "missing_book" for r in res)
 
@@ -81,7 +81,7 @@ def test_engine_rejects_stale_book(base_game, base_mapping):
             "features_available": True,
             "reason": "ok"
         }
-        res = engine.evaluate(base_game, base_mapping, book_store)
+        res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
         assert len(res) >= 1
         # Should reject with book_stale
         assert any(isinstance(r, ModelValueReject) and r.reason == "book_stale" for r in res)
@@ -101,7 +101,7 @@ def test_engine_rejects_wide_spread(base_game, base_mapping):
             "features_available": True,
             "reason": "ok"
         }
-        res = engine.evaluate(base_game, base_mapping, book_store)
+        res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
         assert len(res) >= 1
         assert any(isinstance(r, ModelValueReject) and r.reason == "spread_too_large" for r in res)
 
@@ -121,7 +121,7 @@ def test_engine_rejects_ask_out_of_bounds(base_game, base_mapping):
             "features_available": True,
             "reason": "ok"
         }
-        res = engine.evaluate(base_game, base_mapping, book_store)
+        res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
         assert len(res) >= 1
         assert any(isinstance(r, ModelValueReject) and r.reason == "ask_out_of_bounds" for r in res)
 
@@ -142,7 +142,7 @@ def test_engine_rejects_small_edge(base_game, base_mapping):
             "best_bid": 0.49,
             "received_at_ns": time.time_ns()
         }
-        res = engine.evaluate(base_game, base_mapping, book_store)
+        res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
         assert len(res) >= 1
         assert any(isinstance(r, ModelValueReject) and r.reason == "edge_too_small" for r in res)
 
@@ -162,7 +162,7 @@ def test_engine_chooses_highest_edge_side(base_game, base_mapping):
             {"model_probability": 0.85, "model_version": "test", "features_available": True, "reason": "ok"},
             {"model_probability": 0.15, "model_version": "test", "features_available": True, "reason": "ok"}
         ]
-        res = engine.evaluate(base_game, base_mapping, book_store)
+        res = engine.evaluate(base_game, base_mapping, book_store, entered_tokens=set())
         assert len(res) == 1
         sig = res[0]
         assert isinstance(sig, ModelValueSignal)
@@ -188,7 +188,7 @@ def test_engine_does_not_require_net_worth_leader(base_game, base_mapping):
             {"model_probability": 0.70, "model_version": "test", "features_available": True, "reason": "ok"},
             {"model_probability": 0.30, "model_version": "test", "features_available": True, "reason": "ok"}
         ]
-        res = engine.evaluate(game, base_mapping, book_store)
+        res = engine.evaluate(game, base_mapping, book_store, entered_tokens=set())
         assert len(res) == 1
         assert res[0].direction == "radiant"
         assert res[0].edge == pytest.approx(0.20)

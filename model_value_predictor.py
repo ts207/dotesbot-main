@@ -39,6 +39,31 @@ def load_model(model_path: str = "models/dota_lgbm_win/model.json") -> bool:
         else:
             _METADATA = {}
 
+        # Validation
+        if not _FEATURE_NAMES:
+            print("Validation failed: features.json missing or empty")
+            _MODEL_DATA = _FEATURE_NAMES = _METADATA = None
+            return False
+
+        if not _METADATA:
+            print("Validation failed: metadata.json missing or empty")
+            _MODEL_DATA = _FEATURE_NAMES = _METADATA = None
+            return False
+
+        strategy = _METADATA.get("strategy")
+        if strategy != "MODEL_VALUE_EDGE":
+            print(f"Validation failed: metadata.strategy is {strategy}, expected MODEL_VALUE_EDGE")
+            _MODEL_DATA = _FEATURE_NAMES = _METADATA = None
+            return False
+
+        allowed_status = {"paper_only", "live", "dry_live"}
+        status = _METADATA.get("deployment_status")
+        if status not in allowed_status:
+            print(f"Validation failed: deployment_status {status} not in {allowed_status}")
+            _MODEL_DATA = _FEATURE_NAMES = _METADATA = None
+            return False
+
+        print(f"Loaded MODEL_VALUE_EDGE model version: {_METADATA.get('model_name', 'unknown')}")
         return True
     except Exception as e:
         print(f"Error loading model from {model_path}: {e}")
@@ -86,7 +111,11 @@ def build_side_features(
 
         return {
             "token_net_worth_lead": token_net_worth_lead,
-            "token_score_margin": token_score_margin
+            "token_score_margin": token_score_margin,
+            "radiant_net_worth": r_nw,
+            "dire_net_worth": d_nw,
+            "radiant_score": r_score,
+            "dire_score": d_score
         }
     except (TypeError, ValueError):
         return None

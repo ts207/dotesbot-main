@@ -12978,14 +12978,14 @@ markets:
   no_team: Power Rangers
   yes_token_id: '48550802950735043265251093406040748038183271667565569247460798581228300247807'
   no_token_id: '74805413999318014998010917769846313511908543774965956384897381145308314819440'
-  dota_match_id: '8859074936'
+  dota_match_id: '8859150673'
   confidence: 1.0
   scheduled_start_utc: '2026-06-19 21:43:59'
   auto_mapped_at_utc: '2026-06-20T09:35:01+00:00'
   auto_mapped_source: auto_series_binder
-  steam_radiant_team: _PowerRangers
-  steam_dire_team: 4ikibamboni
-  steam_side_mapping: reversed
+  steam_radiant_team: 4ikibamboni
+  steam_dire_team: _PowerRangers
+  steam_side_mapping: normal
 - name: 'Dota 2: 4ikibamboni vs Power Rangers - Game 2 Winner'
   condition_id: '0x527f029fa0c6e38f9549a0b7ceed93b0da76ef9b080ef75359a2e4c1da785b8b'
   market_id: '2610453'
@@ -13007,3 +13007,45 @@ markets:
   steam_radiant_team: _PowerRangers
   steam_dire_team: 4ikibamboni
   steam_side_mapping: reversed
+- name: 'Dota 2: Zero Tenacity vs summer bear - Game 1 Winner'
+  condition_id: '0x6e1a51c871522aaf0fed887028703054439fda7f450fd1effcb2ce5c72c86f60'
+  market_id: '2610556'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Zero Tenacity
+  no_team: summer bear
+  yes_token_id: '54063075467585210739343990295410299525566370988018947965832288333013604284817'
+  no_token_id: '101065054605724579967031884388324809625512126275278631875402034522041522958480'
+  dota_match_id: '8859240763'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:46'
+  auto_mapped_at_utc: '2026-06-20T13:20:09+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: Summer Bear
+  steam_side_mapping: normal
+- name: 'Dota 2: Zero Tenacity vs summer bear (BO3) - European Pro League Playoffs'
+  condition_id: '0x14f9e798b6883b62836201c135776c068f4198961978c96afb39b0c10e6a10d8'
+  market_id: '2610582'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 0
+  current_game_number: 1
+  yes_team: Zero Tenacity
+  no_team: summer bear
+  yes_token_id: '31078978501425946242412050855414820388989304345814568717372291823744323205915'
+  no_token_id: '35203412356609143375322443286243066344493132802312192318736948759777432583761'
+  dota_match_id: '8859240763'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:46'
+  auto_mapped_at_utc: '2026-06-20T13:20:09+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: Summer Bear
+  steam_side_mapping: normal

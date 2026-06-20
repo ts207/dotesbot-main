@@ -330,8 +330,10 @@ def run_once(verbose: bool = True) -> int:
     if verbose:
         print(f"  Live Steam matches: {len(valid_live_games)}", flush=True)
 
+    import mapping
     with open("markets.yaml") as fp:
-        md = yaml.safe_load(fp)
+        md_base = yaml.safe_load(fp)
+    md = {"markets": mapping.apply_runtime_overlay(md_base.get("markets", []))}
 
     added = 0
     for event in events:
@@ -397,6 +399,8 @@ def run_once(verbose: bool = True) -> int:
                 by_cond[mm["conditionId"]] = ev
     updated = 0
     for x in md.get("markets", []):
+        if x.get("market_type") != "MATCH_WINNER" and x.get("market_type") != "MAP_WINNER":
+            continue
         ev = by_cond.get(x.get("condition_id"))
         if not ev or not x.get("yes_team") or not x.get("no_team"):
             continue
@@ -421,7 +425,9 @@ def run_once(verbose: bool = True) -> int:
 
     if added or updated:
         from atomic_writes import atomic_yaml_write
-        atomic_yaml_write("markets.yaml", md)
+        import os
+        os.makedirs("logs", exist_ok=True)
+        atomic_yaml_write("logs/runtime_markets.yaml", md)
     if verbose:
         print(f"  Added {added} new bindings, refreshed {updated} series states.", flush=True)
     return added

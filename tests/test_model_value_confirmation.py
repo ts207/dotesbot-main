@@ -26,7 +26,13 @@ def make_test_signal(match_id="m1", token_id="t1", side="YES", edge=0.20, ask=0.
         book_age_ms=10,
         model_version="v1",
         model_reason="ok",
-        sized_usd=5.0
+        sized_usd=5.0,
+        token_net_worth_lead=0.0,
+        token_score_margin=0.0,
+        radiant_net_worth=0.0,
+        dire_net_worth=0.0,
+        radiant_score=0.0,
+        dire_score=0.0,
     )
 
 def test_first_signal_arms_but_does_not_confirm():

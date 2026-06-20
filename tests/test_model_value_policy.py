@@ -109,3 +109,19 @@ def test_policy_real_live_fails_closed_by_default(monkeypatch):
     res = evaluate_policy(inp)
     assert res.allowed is False
     assert "strategy_contract_disabled" in res.reason
+
+def test_policy_model_value_duplicate_match():
+    from live_position_store import LivePosition
+    pos = LivePosition(
+        position_id="1", state="OPEN", token_id="TOK3", opposing_token_id="TOK4", match_id="M1",
+        market_name=None, side="YES", entry_price=0.5, shares=10, cost_usd=5, entry_time_ns=0,
+        entry_game_time_sec=None, event_type="MODEL_VALUE_EDGE", expected_move=0, fair_price=0.7,
+        strategy_family="MODEL_VALUE", strategy_kind="MODEL_VALUE_EDGE"
+    )
+    inp = make_policy_input(
+        signal={"strategy_family": "MODEL_VALUE"},
+        risk_state={"open_positions": {"1": pos}}
+    )
+    res = evaluate_policy(inp)
+    assert res.allowed is False
+    assert "match_already_has_model_value" in res.reason

@@ -47,6 +47,13 @@ class ModelValueSignal:
     model_reason: str
     sized_usd: float
 
+    token_net_worth_lead: float
+    token_score_margin: float
+    radiant_net_worth: float
+    dire_net_worth: float
+    radiant_score: float
+    dire_score: float
+
     would_pass_live_gates: bool = True
     would_pass_live: bool = True
     live_skip_reason: str = ""
@@ -81,7 +88,7 @@ class ModelValueSignal:
             "target_size_usd": self.sized_usd,
             "event_type": "MODEL_VALUE_EDGE",
             "strategy_kind": "MODEL_VALUE_EDGE",
-            "strategy_family": "VALUE",
+            "strategy_family": "MODEL_VALUE",
             "target_horizon": self.target_horizon,
             "expected_hold_sec": self.expected_hold_sec,
             "event_direction": self.direction,
@@ -170,13 +177,7 @@ class ModelValueEngine:
         # Eagerly load the model
         model_value_predictor.load_model(MODEL_VALUE_MODEL_PATH)
 
-    def evaluate(
-        self,
-        game: Mapping,
-        mapping: Mapping,
-        book_store: Any,
-        entered_tokens: Any = None,
-    ) -> list[ModelValueSignal | ModelValueReject]:
+    def evaluate(self, game: dict, mapping: dict, book_store: Any, entered_tokens: set[str], mode: str = "paper_research") -> list[ModelValueSignal | ModelValueReject]:
         if not MODEL_VALUE_ENABLED:
             return []
 
@@ -318,7 +319,7 @@ class ModelValueEngine:
 
             # Run policy evaluation through evaluate_policy
             policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
-                mode="paper_research",
+                mode=mode,
                 strategy_kind="MODEL_VALUE_EDGE",
                 market_type=market_type,
                 token_id=str(token_id),
@@ -356,6 +357,12 @@ class ModelValueEngine:
                 model_version=pred["model_version"],
                 model_reason=pred["reason"],
                 sized_usd=MODEL_VALUE_TRADE_USD,
+                token_net_worth_lead=features.get("token_net_worth_lead", 0.0),
+                token_score_margin=features.get("token_score_margin", 0.0),
+                radiant_net_worth=features.get("radiant_net_worth", 0.0),
+                dire_net_worth=features.get("dire_net_worth", 0.0),
+                radiant_score=features.get("radiant_score", 0.0),
+                dire_score=features.get("dire_score", 0.0),
                 **policy_fields,
             )
             candidates.append(signal)

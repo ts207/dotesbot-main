@@ -54,7 +54,10 @@ class Position:
     entry_fair: float | None = None
     entry_edge: float | None = None
     entry_backed_side: str | None = None
-    entry_radiant_lead: int | None = None
+    entry_radiant_lead: float | None = None
+    entry_token_net_worth_lead: float | None = None
+    entry_token_score_margin: float | None = None
+    entry_model_version: str | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
     paper_mode: str = PAPER_MODE
@@ -112,7 +115,10 @@ class ClosedPosition:
     entry_fair: float | None = None
     entry_edge: float | None = None
     entry_backed_side: str | None = None
-    entry_radiant_lead: int | None = None
+    entry_radiant_lead: float | None = None
+    entry_token_net_worth_lead: float | None = None
+    entry_token_score_margin: float | None = None
+    entry_model_version: str | None = None
     entry_actual_event_type: str | None = None
     entry_derived_state_flags: list[str] = field(default_factory=list)
     paper_mode: str = PAPER_MODE
@@ -229,8 +235,11 @@ class PaperTrader:
                 disable_rule=row.get("disable_rule") or None,
                 entry_fair=self._optional_float(row.get("entry_fair")),
                 entry_edge=self._optional_float(row.get("entry_edge")),
-                entry_backed_side=row.get("entry_backed_side") or None,
-                entry_radiant_lead=self._optional_int(row.get("entry_radiant_lead")),
+                entry_backed_side=row.get("entry_backed_side"),
+                entry_radiant_lead=self._optional_float(row.get("entry_radiant_lead")),
+                entry_token_net_worth_lead=self._optional_float(row.get("entry_token_net_worth_lead")),
+                entry_token_score_margin=self._optional_float(row.get("entry_token_score_margin")),
+                entry_model_version=row.get("entry_model_version"),
                 entry_actual_event_type=row.get("entry_actual_event_type") or None,
                 entry_derived_state_flags=self._parse_flags(row.get("entry_derived_state_flags")),
                 paper_mode=row.get("paper_mode") or PAPER_MODE,
@@ -420,7 +429,10 @@ class PaperTrader:
             entry_fair=fair_price,
             entry_edge=self._optional_float(entry_edge),
             entry_backed_side=signal.get("event_direction") or signal.get("direction"),
-            entry_radiant_lead=self._optional_int(entry_lead),
+            entry_radiant_lead=self._optional_float(entry_lead),
+            entry_token_net_worth_lead=self._optional_float(signal.get("token_net_worth_lead")),
+            entry_token_score_margin=self._optional_float(signal.get("token_score_margin")),
+            entry_model_version=signal.get("model_version"),
             entry_actual_event_type=signal.get("actual_event_type"),
             entry_derived_state_flags=self._parse_flags(signal.get("derived_state_flags")),
             **paper_metadata,
@@ -725,6 +737,9 @@ class PaperTrader:
             entry_edge=pos.entry_edge,
             entry_backed_side=pos.entry_backed_side,
             entry_radiant_lead=pos.entry_radiant_lead,
+            entry_token_net_worth_lead=pos.entry_token_net_worth_lead,
+            entry_token_score_margin=pos.entry_token_score_margin,
+            entry_model_version=pos.entry_model_version,
             entry_actual_event_type=pos.entry_actual_event_type,
             entry_derived_state_flags=pos.entry_derived_state_flags,
             paper_mode=pos.paper_mode,

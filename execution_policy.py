@@ -186,6 +186,8 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
         VALUE_MAX_PER_MATCH,
         DSWING_MAX_PER_MATCH,
         EVENT_MAX_PER_MATCH,
+        MODEL_VALUE_MAX_PER_MATCH,
+        MODEL_VALUE_MAX_OPEN_POSITIONS,
     )
     from event_taxonomy import event_tier
     
@@ -370,7 +372,8 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
                 risk_tags=("lag_too_small",),
             )
 
-    open_positions = _int(inp.risk_state.get("open_positions"))
+    op_raw = inp.risk_state.get("open_positions")
+    open_positions = len(op_raw) if isinstance(op_raw, dict) else _int(op_raw)
     if open_positions is not None and open_positions >= MAX_OPEN_POSITIONS:
         return reject("max_open_positions", risk_tags=("max_open_positions",))
     submitted_usd = _float(inp.risk_state.get("total_submitted_usd")) or 0.0
@@ -385,7 +388,7 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
 
     # Match duplication logic (not applied to VALUE/DSWING which have separate cooldowns/logic)
     strategy_family = str(inp.signal.get("strategy_family") or "")
-    if strategy_family not in {"VALUE", "DSWING"}:
+    if strategy_family not in {"VALUE", "DSWING", "MODEL_VALUE"}:
         event_direction = str(inp.signal.get("event_direction") or "")
         existing = inp.risk_state.get("submitted_match_sides")
         existing_dirs = (set(existing) if isinstance(existing, (list, set))
@@ -395,8 +398,37 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
                       else "match_direction_conflict")
             return reject(reason, risk_tags=("match_direction_conflict",))
 
+    if strategy_family == "MODEL_VALUE":
+        open_positions = inp.risk_state.get("open_positions", {})
+        match_id = str(inp.game.get("match_id") or "")
+        token_id = str(inp.token_id)
+        yes_token_id = str(inp.mapping.get("yes_token_id"))
+        no_token_id = str(inp.mapping.get("no_token_id"))
+        opposing_token_id = no_token_id if token_id == yes_token_id else yes_token_id
+
+        for pos in open_positions.values():
+            if str(getattr(pos, "match_id", "")) == match_id:
+                pos_token_id = str(getattr(pos, "token_id", ""))
+                if pos_token_id == token_id:
+                    return reject("token_already_active", risk_tags=("token_already_active",))
+                if pos_token_id == opposing_token_id:
+                    return reject("opposing_token_already_active", risk_tags=("opposing_token_already_active",))
+                pos_family = str(getattr(pos, "strategy_family", ""))
+                pos_kind = str(getattr(pos, "strategy_kind", ""))
+                if pos_family == "MODEL_VALUE" or pos_kind == "MODEL_VALUE_EDGE":
+                    return reject("match_already_has_model_value", risk_tags=("match_already_has_model_value",))
+                if pos_family == "VALUE":
+                    return reject("match_already_has_value", risk_tags=("match_already_has_value",))
+
+        model_value_positions = sum(
+            1 for pos in open_positions.values()
+            if str(getattr(pos, "strategy_family", "")) == "MODEL_VALUE"
+               or str(getattr(pos, "strategy_kind", "")) == "MODEL_VALUE_EDGE"
+        )
+        if model_value_positions >= MODEL_VALUE_MAX_OPEN_POSITIONS:
+            return reject("model_value_max_open_positions", risk_tags=("model_value_max_open_positions",))
+
     # Strategy family cap logic
-    strategy_family = str(inp.signal.get("strategy_family") or "")
     if strategy_family:
         family_cap = _float(inp.risk_state.get(f"{strategy_family}_max_live_usd")) or MAX_TOTAL_LIVE_USD
         family_used = _float(inp.risk_state.get("submitted_family_usd", {}).get(strategy_family)) or 0.0
@@ -408,10 +440,11 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
             )
             
     # Strategy-specific match cap
-    if strategy_family in {"VALUE", "DSWING", "EVENT"}:
+    if strategy_family in {"VALUE", "DSWING", "EVENT", "MODEL_VALUE"}:
         cap = (
             VALUE_MAX_PER_MATCH if strategy_family == "VALUE"
             else DSWING_MAX_PER_MATCH if strategy_family == "DSWING"
+            else MODEL_VALUE_MAX_PER_MATCH if strategy_family == "MODEL_VALUE"
             else EVENT_MAX_PER_MATCH
         )
         if match_used is not None and match_used + size_usd_req > cap:

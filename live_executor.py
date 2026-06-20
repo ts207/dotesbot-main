@@ -313,6 +313,13 @@ class LiveOrderAttempt:
     manual_operator: str | None = None
     manual_source: str | None = None
     manual_pre_trade_book: str | None = None
+    model_version: str | None = None
+    token_net_worth_lead: float | None = None
+    token_score_margin: float | None = None
+    radiant_net_worth: float | None = None
+    dire_net_worth: float | None = None
+    radiant_score: float | None = None
+    dire_score: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -895,7 +902,7 @@ class LiveExecutor:
             "submitted_match_sides": self._submitted_match_sides.get(str(match_id)) if match_id else None,
             "submitted_family_usd": self._submitted_family_usd,
         }
-        for family in ["VALUE", "EVENT", "DSWING"]:
+        for family in ["VALUE", "EVENT", "DSWING", "MODEL_VALUE"]:
             state[f"{family}_max_live_usd"] = _strategy_family_cap_usd(family)
         return state
 
@@ -1297,6 +1304,13 @@ class LiveExecutor:
             strategy_subtype=strategy_subtype,
             is_reversal=is_reversal,
             is_continuation=is_continuation,
+            model_version=getattr(signal, "model_version", None),
+            token_net_worth_lead=getattr(signal, "token_net_worth_lead", None),
+            token_score_margin=getattr(signal, "token_score_margin", None),
+            radiant_net_worth=getattr(signal, "radiant_net_worth", None),
+            dire_net_worth=getattr(signal, "dire_net_worth", None),
+            radiant_score=getattr(signal, "radiant_score", None),
+            dire_score=getattr(signal, "dire_score", None),
         )
         return self._apply_policy_result(attempt, policy_result)
 
@@ -1590,6 +1604,13 @@ class LiveExecutor:
             strategy_subtype=strategy_subtype,
             is_reversal=is_reversal,
             is_continuation=is_continuation,
+            model_version=getattr(signal, "model_version", None),
+            token_net_worth_lead=getattr(signal, "token_net_worth_lead", None),
+            token_score_margin=getattr(signal, "token_score_margin", None),
+            radiant_net_worth=getattr(signal, "radiant_net_worth", None),
+            dire_net_worth=getattr(signal, "dire_net_worth", None),
+            radiant_score=getattr(signal, "radiant_score", None),
+            dire_score=getattr(signal, "dire_score", None),
         )
         self._apply_policy_result(
             attempt,
