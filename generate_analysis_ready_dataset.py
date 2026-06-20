@@ -92,6 +92,20 @@ class OutcomeAggregator:
                 except Exception as e:
                     print(f"Error reading {pfile}: {e}")
 
+        # 5. opendota_outcomes.json
+        opendota_path = self.root_dir / "logs" / "opendota_outcomes.json"
+        if opendota_path.exists():
+            try:
+                with open(opendota_path, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        for k in data.keys():
+                            m_id = str(k)
+                            if m_id not in outcomes:
+                                outcomes[m_id] = set()
+            except Exception as e:
+                print(f"Error reading {opendota_path}: {e}")
+
         return dict(outcomes)
 
 class DataCounter:

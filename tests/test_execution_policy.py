@@ -196,3 +196,15 @@ def test_execution_policy_family_cap():
     result = evaluate_policy(inp)
     assert result.allowed is False
     assert "strategy_family_cap" in result.live_skip_reason
+
+
+def test_execution_policy_dswing_lag_bypass():
+    inp = _policy_input(strategy_kind="DSWING")
+    inp.signal["strategy_kind"] = "DSWING"
+    inp.signal["strategy_family"] = "DSWING"
+    inp.signal["target_horizon"] = "map_end"
+    inp.signal["expected_hold_sec"] = 0
+    inp.signal["lag"] = None  # DSWING has no lag
+    result = evaluate_policy(inp)
+    assert result.allowed is True
+    assert "hold_to_settle_edge_lag_bypass" in result.risk_tags

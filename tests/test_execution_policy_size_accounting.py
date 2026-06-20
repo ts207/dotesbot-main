@@ -52,7 +52,7 @@ def _policy_input(
         risk_state=risk,
         game=game,
         now_ns=now_ns,
-        mode="real_live",
+        mode="dry_live",
         strategy_kind="VALUE_EDGE",
         market_type="MAP_WINNER",
         token_id="tok_yes",

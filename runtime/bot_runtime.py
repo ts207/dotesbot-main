@@ -756,7 +756,7 @@ async def steam_loop(
 
                 if now - last_mapping_refresh >= MAPPING_REFRESH_SECONDS:
                     last_mapping_refresh = now
-                    games_for_sync = await fetch_all_live_games(session, include_league=True)
+                    games_for_sync = await fetch_all_live_games(session, include_league=False)
                     # Learn team_id → team_name from games that have BOTH, then
                     # backfill names on games that have team_id but no team_name.
                     team_id_cache.observe_many(games_for_sync)
@@ -889,7 +889,7 @@ async def steam_loop(
                               f"{len(fresh_mappings) - len(live_mappings)} stale skipped")
 
                 if _iter_debug == 1 or (now - _last_iter_print) < 0.1: print(f"DEBUG iter={_iter_debug} pre-fetch_all")
-                games = await fetch_all_live_games(session, include_league=True)
+                games = await fetch_all_live_games(session, include_league=False)
                 # Backfill empty team names from team_id cache (Valve API regression workaround)
                 team_id_cache.observe_many(games)
                 for _g in games: team_id_cache.backfill_team_names(_g)
@@ -2019,7 +2019,7 @@ async def main():
     print("Running initial Steam market sync...")
     try:
         async with aiohttp.ClientSession() as session:
-            games = await fetch_all_live_games(session)
+            games = await fetch_all_live_games(session, include_league=False)
         mdata = load_markets()
         raw_markets = mdata.setdefault("markets", [])
         updates = sync_markets_to_games(raw_markets, games)

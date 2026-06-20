@@ -174,3 +174,31 @@ def test_identity_rejects_yes_no_direction_ambiguity():
     result = validate_mapping_identity(mapping, game)
     assert not result.ok
     assert any("team_name_mismatch" in err for err in result.mapping_errors)
+
+
+def test_fallback_reversed_side_mapping_success():
+    mapping = {
+        "market_type": "MATCH_WINNER",
+        "yes_team": "Yakult Brothers",
+        "no_team": "Vici Gaming",
+        "yes_token_id": "123",
+        "no_token_id": "456",
+        "dota_match_id": "8856401359",
+        "confidence": 1.0,
+        "steam_radiant_team": "Vici Gaming",
+        "steam_dire_team": "Yakutou Brothers",
+        "steam_side_mapping": "reversed",
+        "series_type": 1,
+        "current_game_number": 2,
+        "series_score_yes": 1,
+        "series_score_no": 0,
+        "p_next_yes": 0.5,
+    }
+    game = {
+        "match_id": "8856401359",
+        "radiant_team": "Vici Gaming",
+        "dire_team": "Yakutou Brothers",
+    }
+    result = validate_mapping_identity(mapping, game)
+    assert result.ok
+    assert not result.mapping_errors

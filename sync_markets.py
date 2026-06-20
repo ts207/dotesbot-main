@@ -20,6 +20,8 @@ from mapping_audit import audit_mappings, quarantine_critical_issues
 from runtime_markets import compact_runtime_markets
 from steam_client import fetch_all_live_games
 
+print('sync_markets module loaded')
+
 
 PLACEHOLDER_MATCH_ID = "STEAM_MATCH_OR_LOBBY_ID_HERE"
 
@@ -68,8 +70,16 @@ def _scheduled_start_dt(mapping: dict) -> Any:
     s = str(raw).replace("Z", "+00:00")
     try:
         from datetime import datetime as _dt
+        # If the string has no explicit timezone offset, assume UTC
+        if not ("+" in s or "-" in s.split()[-1] or s.endswith("Z") or "+00" in s):
+            s = s + "+00:00"
         # Handle both 'YYYY-MM-DD HH:MM:SS+00:00' and ISO formats
-        return _dt.fromisoformat(s)
+        dt = _dt.fromisoformat(s)
+        # Ensure the datetime is timezone-aware (UTC) so comparisons work
+        if dt.tzinfo is None:
+            from datetime import timezone as _tz
+            dt = dt.replace(tzinfo=_tz.utc)
+        return dt
     except (TypeError, ValueError):
         return None
 
@@ -82,7 +92,32 @@ def _is_market_in_window(mapping: dict, window_days: int = 2) -> bool:
         return True
     from datetime import datetime as _dt, timedelta, timezone as _tz
     now = _dt.now(_tz.utc)
-    delta = abs((dt - now).total_seconds())
+    # Defensive: ensure parsed datetime is timezone-aware (UTC) before math
+    try:
+        # Compute epoch timestamps defensively to avoid type-mismatch subtraction
+        try:
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=_tz.utc)
+            dt_ts = dt.timestamp()
+        except Exception:
+            # Try to re-parse if dt isn't a proper datetime
+            try:
+                from datetime import datetime as _dt2
+                s = str(dt).replace("Z", "+00:00")
+                parsed = _dt2.fromisoformat(s)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=_tz.utc)
+                dt_ts = parsed.timestamp()
+            except Exception:
+                return True
+        now_ts = now.timestamp()
+        delta = abs(dt_ts - now_ts)
+    except Exception as e:
+        try:
+            print(f"_is_market_in_window unexpected error for market={mapping.get('name')!r}: dt={dt!r} error={e}")
+        except Exception:
+            print("_is_market_in_window unexpected error and failed to format mapping")
+        return True
     return delta <= window_days * 86400
 
 
@@ -106,7 +141,10 @@ def choose_mapping_for_live_game(markets: list[dict], game: dict) -> tuple[dict 
             return True
         try:
             from datetime import datetime as _dt, timezone as _tz
-            dt = _dt.fromisoformat(str(q_until).replace("Z", "+00:00"))
+            s = str(q_until).replace("Z", "+00:00")
+            dt = _dt.fromisoformat(s)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=_tz.utc)
             return dt > _dt.now(_tz.utc)
         except Exception:
             return True

@@ -118,7 +118,7 @@ def _is_hold_to_settle(signal: Mapping[str, Any]) -> bool:
         return True
     if event_type in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE"}:
         return True
-    if strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_CONTINUATION_EDGE"}:
+    if strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_CONTINUATION_EDGE", "DSWING"}:
         return True
     return False
 

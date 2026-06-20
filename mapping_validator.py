@@ -259,13 +259,17 @@ def validate_mapping_identity(mapping: dict, game: dict, liveleague_context: dic
         # Fallback to binder-mapped steam team names
         steam_rad_mapped = norm_team(mapping.get("steam_radiant_team") or "")
         steam_dire_mapped = norm_team(mapping.get("steam_dire_team") or "")
-        if steam_rad_mapped and steam_dire_mapped:
-            normal_steam = (radiant_team == steam_rad_mapped and dire_team == steam_dire_mapped)
-            reversed_steam = (dire_team == steam_rad_mapped and radiant_team == steam_dire_mapped)
-            normal = normal or normal_steam
-            reversed_side = reversed_side or reversed_steam
-
         configured_side_map = str(mapping.get("steam_side_mapping") or "normal").strip().lower()
+        if steam_rad_mapped and steam_dire_mapped:
+            same_sides = (radiant_team == steam_rad_mapped and dire_team == steam_dire_mapped)
+            swapped_sides = (dire_team == steam_rad_mapped and radiant_team == steam_dire_mapped)
+            if same_sides or swapped_sides:
+                if configured_side_map == "reversed":
+                    reversed_side = reversed_side or same_sides
+                    normal = normal or swapped_sides
+                else:
+                    normal = normal or same_sides
+                    reversed_side = reversed_side or swapped_sides
         
         if not (normal or reversed_side):
             result.mapping_errors.append(

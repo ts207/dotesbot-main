@@ -11242,9 +11242,9 @@ markets:
   confidence: 0.0
   scheduled_start_utc: '2026-06-11 00:00:00+00'
   source_url: https://polymarket.com/event/dota2-nawedw-the-2026-06-11
-  current_game_number: 2
+  current_game_number: 3
   series_score_yes: 0
-  series_score_no: 1
+  series_score_no: 2
 - name: 'Dota 2: NA, we''d win vs the bug - Game 2 Winner'
   market_id: '2491162'
   condition_id: '0xf9aa9dafc3b304c7e08f38b4689821c5e0f682c902fd67a1f03604e621f67b50'
@@ -11258,9 +11258,9 @@ markets:
   confidence: 0.0
   scheduled_start_utc: '2026-06-11 00:00:00+00'
   source_url: https://polymarket.com/event/dota2-nawedw-the-2026-06-11
-  current_game_number: 2
+  current_game_number: 3
   series_score_yes: 0
-  series_score_no: 1
+  series_score_no: 2
 - name: 'Dota 2: D family vs InterActive Philippines - Game 2 Winner'
   condition_id: '0x9e3233f3322150dd1d652cc4a8223bee94e53dc71f4d508c8d4e8a8413c3c85a'
   market_id: '2547001'
@@ -12136,4 +12136,747 @@ markets:
   auto_mapped_source: auto_series_binder
   steam_radiant_team: Team Nemesis
   steam_dire_team: PlayTime
+  steam_side_mapping: normal
+- name: 'Dota 2: LGD Gaming vs PlayTime (BO3) - The International South America Closed
+    Qualifier Playoffs'
+  condition_id: '0x981b227bcff91bbf12e5485ce34924a311f05f66d3856020ad109bb5a1225b1d'
+  market_id: '2591466'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: LGD Gaming
+  no_team: PlayTime
+  yes_token_id: '21374734942150919678172920263434749142243008428444670173241516364409856775909'
+  no_token_id: '34073423434879569839339257959780095592801834052301222186232445590410509717697'
+  dota_match_id: '8857362150'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 02:47:58'
+  auto_mapped_at_utc: '2026-06-19T02:01:19+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: LGD Gaming
+  steam_side_mapping: reversed
+- name: 'Dota 2: Grind Back vs Mentality Monster - Game 1 Winner'
+  condition_id: '0xcb3b1b991c1dbe81e7306b3ff139ae537edaf8dc03d183493ffe4cad0832f25c'
+  market_id: '2547357'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Grind Back
+  no_team: Mentality Monster
+  yes_token_id: '61606058683139378349295179191308037177702600946375383019003637826553520420423'
+  no_token_id: '64324454091669666510149042876736619068343485152380564107840488606629330254457'
+  dota_match_id: '8857411776'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:09'
+  auto_mapped_at_utc: '2026-06-19T02:25:43+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Mentality Monsters
+  steam_dire_team: TEAM GRIND
+  steam_side_mapping: reversed
+- name: 'Dota 2: Grind Back vs Mentality Monster (BO3) - The International Southeast
+    Asia Closed Qualifier Playoffs'
+  condition_id: '0x41afa53ef07e153278c263e6709f0b7749797c07fa56ba50e62b0a9a32ede86b'
+  market_id: '2547478'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Grind Back
+  no_team: Mentality Monster
+  yes_token_id: '49726465133448834835587509301351923855198014525692510437198079743672955892662'
+  no_token_id: '86178778663789548212477821408997488474857348448351629675501384366265442175777'
+  dota_match_id: '8857442251'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:09'
+  auto_mapped_at_utc: '2026-06-19T02:25:43+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Mentality Monsters
+  steam_dire_team: TEAM GRIND
+  steam_side_mapping: reversed
+- name: 'Dota 2: Team Nemesis vs Amaru Gaming - Game 1 Winner'
+  condition_id: '0xa1a5eb5962675bb5dd9a3733e1d68e3dd5c49128b0664725f355f042e85930fc'
+  market_id: '2599991'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Team Nemesis
+  no_team: Amaru Gaming
+  yes_token_id: '20496894689255006497990486155653472737438143436823715906901795466888524620623'
+  no_token_id: '85947738494820806851011949516789923031741990282992855815683310079155471786018'
+  dota_match_id: '8857423188'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 22:35:50'
+  auto_mapped_at_utc: '2026-06-19T02:42:32+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Amaru Gaming
+  steam_dire_team: Team Nemesis
+  steam_side_mapping: reversed
+- name: 'Dota 2: Team Nemesis vs Amaru Gaming (BO3) - The International South America
+    Closed Qualifier Playoffs'
+  condition_id: '0x0b38ca4ebd2a720ec41590e3866e77d75de7f3504520ebb7cf06b04b2f4c79aa'
+  market_id: '2599993'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Team Nemesis
+  no_team: Amaru Gaming
+  yes_token_id: '30793294110426617764971393381741118076780415320487807205227196724063238122490'
+  no_token_id: '57626817720960430447024744748379707077906489550755827400900659897577880116870'
+  dota_match_id: '8857522406'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 22:35:50'
+  auto_mapped_at_utc: '2026-06-19T02:42:32+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Amaru Gaming
+  steam_dire_team: Team Nemesis
+  steam_side_mapping: reversed
+- name: 'Dota 2: Grind Back vs Mentality Monster - Game 2 Winner'
+  condition_id: '0xcfd922627ecab55e4a7f4749d2920cd02d7246e3aa8983b8589344e8dc433afc'
+  market_id: '2547358'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Grind Back
+  no_team: Mentality Monster
+  yes_token_id: '7097655916978165209336053795448898752041848797179438359797954568702441008286'
+  no_token_id: '79701757278359674992951682646117893324372008405237158607223386230912101850997'
+  dota_match_id: '8857442251'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:09'
+  auto_mapped_at_utc: '2026-06-19T03:21:13+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Mentality Monsters
+  steam_dire_team: TEAM GRIND
+  steam_side_mapping: reversed
+- name: 'Dota 2: Team Nemesis vs Amaru Gaming - Game 2 Winner'
+  condition_id: '0xcee615c18c9a0ee970888891318800d5aab84903fd578ce1b127ce3b26174874'
+  market_id: '2599992'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Team Nemesis
+  no_team: Amaru Gaming
+  yes_token_id: '81689012144441422332763069701360056350188367365619041189410485789103550186492'
+  no_token_id: '55366862702275939076103159769248570404071429703168162328397505786772235712027'
+  dota_match_id: '8857465914'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 22:35:50'
+  auto_mapped_at_utc: '2026-06-19T04:08:01+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Amaru Gaming
+  steam_dire_team: Team Nemesis
+  steam_side_mapping: reversed
+- name: 'Dota 2: Yangon Galacticos vs InterActive Philippines - Game 1 Winner'
+  condition_id: '0x3579186f194e714f8523c9aed41d51815135f5764bb43907442875dbbbcee4bc'
+  market_id: '2547548'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Yangon Galacticos
+  no_team: InterActive Philippines
+  yes_token_id: '75234488050700066519166040440190810858593513216741530544654837715833000655552'
+  no_token_id: '62596518677400378174900162114103816803141827046194593498648549251231764520577'
+  dota_match_id: '8857503648'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:02'
+  auto_mapped_at_utc: '2026-06-19T05:11:40+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Yangon Galacticos
+  steam_side_mapping: reversed
+- name: 'Dota 2: Yangon Galacticos vs InterActive Philippines (BO3) - The International
+    Southeast Asia Closed Qualifier Playoffs'
+  condition_id: '0xbad0895846c40b314bf184811736b10d13f77afe00eb4c42228d9b58e7ac8c10'
+  market_id: '2547585'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Yangon Galacticos
+  no_team: InterActive Philippines
+  yes_token_id: '89902741524516330743640979052187289115796124216055358304792435933960588489392'
+  no_token_id: '13040193751539177722696030148923386658291699038129720274692171190382238582746'
+  dota_match_id: '8857588451'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:02'
+  auto_mapped_at_utc: '2026-06-19T05:11:40+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Yangon Galacticos
+  steam_side_mapping: reversed
+- name: 'Dota 2: Yangon Galacticos vs InterActive Philippines - Game 2 Winner'
+  condition_id: '0x36c35f9e0dbde755d229c99a03f15f8ba4dc4ecb607f6e51a3fa99843d69290a'
+  market_id: '2547549'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Yangon Galacticos
+  no_team: InterActive Philippines
+  yes_token_id: '49284440044960707047515546688148984912980595428902872712294009470483846183063'
+  no_token_id: '4398340989207346868637884554819469416978607041700374477839415695652728513475'
+  dota_match_id: '8857534603'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:02'
+  auto_mapped_at_utc: '2026-06-19T06:01:25+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: InterActive Philippines
+  steam_dire_team: Yangon Galacticos
+  steam_side_mapping: reversed
+- name: 'Dota 2: Execration vs Carstensz - Game 1 Winner'
+  condition_id: '0xed4540f942ff9abef34797a4b39c87c6d4051e7a097a5c15801a00c8b1b19271'
+  market_id: '2547622'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Execration
+  no_team: Carstensz
+  yes_token_id: '108850752530902418783350123277112759236045043177339642487529831440676501722292'
+  no_token_id: '2958557681666696538856920546146381668521467732040670231359753617467904017886'
+  dota_match_id: '8857663074'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:07'
+  auto_mapped_at_utc: '2026-06-19T08:51:54+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Execration
+  steam_dire_team: Carstensz Esports
+  steam_side_mapping: normal
+- name: 'Dota 2: Execration vs Carstensz (BO3) - The International Southeast Asia
+    Closed Qualifier Playoffs'
+  condition_id: '0xccf522e02571ab645b380762597bf103e025fd1a2a592f0093acc7b077998847'
+  market_id: '2547624'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Execration
+  no_team: Carstensz
+  yes_token_id: '38531099622867727941621843343222694302923956963217038167932250840262639572691'
+  no_token_id: '109021394978753524859133564805503428421593556269470468623283717171564237131951'
+  dota_match_id: '8857713100'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:07'
+  auto_mapped_at_utc: '2026-06-19T08:51:54+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Carstensz Esports
+  steam_dire_team: Execration
+  steam_side_mapping: reversed
+- name: 'Dota 2: Spirit Academy vs Hive - Game 1 Winner'
+  condition_id: '0x86cd7868a07a7362fe084dcebfd0ecdb535e5876c6458da2bcb1eb6e2a51d0ab'
+  market_id: '2599247'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Spirit Academy
+  no_team: Hive
+  yes_token_id: '56572930636484484338880413288593805860442823889644013432838512055504780869067'
+  no_token_id: '51982950229707924918594897038520624757721997389915942590208909442967598365422'
+  dota_match_id: '8857691279'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T09:38:01+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Hive
+  steam_dire_team: Team Spirit Academy
+  steam_side_mapping: reversed
+- name: 'Dota 2: Spirit Academy vs Hive (BO3) - European Pro League Playoffs'
+  condition_id: '0xf106f7d9b9e54b2b7f8127aae97b1006359fe1a1aee76fba5677db2ef27799fd'
+  market_id: '2599305'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Spirit Academy
+  no_team: Hive
+  yes_token_id: '5939843911038380418038159014292365824074008151055466879960698162332874308051'
+  no_token_id: '65302462104179493272127264841619200378917802170676416530846214635251117128110'
+  dota_match_id: '8857830052'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T09:38:01+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Hive
+  steam_dire_team: Team Spirit Academy
+  steam_side_mapping: reversed
+- name: 'Dota 2: Execration vs Carstensz - Game 2 Winner'
+  condition_id: '0x0603835c865fd48ec1a5be0c0e22e4f858bd01899455d93ab6446c3d6214fd51'
+  market_id: '2547623'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: Execration
+  no_team: Carstensz
+  yes_token_id: '14882159290968985261595203002122270925254315082599274934850681263672750056603'
+  no_token_id: '102795860228585608522861722922743061594696905087761711237348777020906396928903'
+  dota_match_id: '8857713100'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-14 23:46:07'
+  auto_mapped_at_utc: '2026-06-19T09:49:24+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Carstensz Esports
+  steam_dire_team: Execration
+  steam_side_mapping: reversed
+- name: 'Dota 2: Spirit Academy vs Hive - Game 2 Winner'
+  condition_id: '0x857f9962f244969271230d72a1b9e8b2d54c735a697dc5fe572c9d148e839b0b'
+  market_id: '2599248'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Spirit Academy
+  no_team: Hive
+  yes_token_id: '24665814924333661997950545359531436310450644661621982556146811988594088408463'
+  no_token_id: '107313730750476535284725077234862994968617307761412492483010065479767242197819'
+  dota_match_id: '8857761890'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T11:05:48+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Team Spirit Academy
+  steam_dire_team: Hive
+  steam_side_mapping: normal
+- name: 'Dota 2: VP.Prodigy vs Zero Tenacity - Game 1 Winner'
+  condition_id: '0xf8c8707b540afc4987119de4cd1afff33b6c3a2ba8a271e4d17f568d677886cb'
+  market_id: '2599332'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: VP.Prodigy
+  no_team: Zero Tenacity
+  yes_token_id: '93633689468754765427741942073763504150505770320302161353816224338863989239895'
+  no_token_id: '55797705924355266709198872928626115410867256426256206884921759270050537512620'
+  dota_match_id: '8857903057'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T13:14:25+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: VP.Prodigy
+  steam_side_mapping: reversed
+- name: 'Dota 2: VP.Prodigy vs Zero Tenacity (BO3) - European Pro League Playoffs'
+  condition_id: '0x7dfb80132d90ee285afe56dad5c316ab3a453f19a5c0511f3400d8be2e7b4795'
+  market_id: '2599334'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: VP.Prodigy
+  no_team: Zero Tenacity
+  yes_token_id: '31241591235194753234439068657424998039437863971507460730411368975005130118697'
+  no_token_id: '10494168749389600752639417998313718956726349346960669187041784979337255062091'
+  dota_match_id: '8857999201'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T13:14:25+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: VP.Prodigy
+  steam_side_mapping: reversed
+- name: 'Dota 2: VP.Prodigy vs Zero Tenacity - Game 2 Winner'
+  condition_id: '0xc6f189afebdd3324bd32ea4b351814402519308868d437f7ef0ced894cb1338a'
+  market_id: '2599333'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 0
+  series_score_no: 2
+  current_game_number: 3
+  yes_team: VP.Prodigy
+  no_team: Zero Tenacity
+  yes_token_id: '107302398070419672456798047438961486808744724773083279367741026935777572876629'
+  no_token_id: '84565977341223110191832572572591588277550910846137180764863488947273782860520'
+  dota_match_id: '8857999201'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T14:27:25+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: VP.Prodigy
+  steam_side_mapping: reversed
+- name: 'Dota 2: 4ikibamboni vs Flame Team - Game 1 Winner'
+  condition_id: '0xebad85f8bd0d82a1ed04761ff399dfcb0a0ad5411c4c856764939a85b281305e'
+  market_id: '2599352'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: 4ikibamboni
+  no_team: Flame Team
+  yes_token_id: '47926574218093282214893206699589006902133435214286767336896814323191005768372'
+  no_token_id: '17356808129946043159908105660579610838465790415817959186573373576395740998663'
+  dota_match_id: '8858110624'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T15:48:19+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Flame Esports
+  steam_dire_team: 4ikibamboni
+  steam_side_mapping: reversed
+- name: 'Dota 2: 4ikibamboni vs Flame Team (BO3) - European Pro League Playoffs'
+  condition_id: '0xddee28f4ec4057cfd1c0371051c2dceb9df3cbf1a68a58248750c6a0c09424df'
+  market_id: '2599354'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: 4ikibamboni
+  no_team: Flame Team
+  yes_token_id: '6783585120099028075629919766220429961244680981413764944710516600079546229342'
+  no_token_id: '25206103482200334349282950182432008074477932478685799923764105978453081909149'
+  dota_match_id: '8858214865'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:51:47'
+  auto_mapped_at_utc: '2026-06-19T15:48:19+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Flame Esports
+  steam_dire_team: 4ikibamboni
+  steam_side_mapping: reversed
+- name: 'Dota 2: PlayTime vs Amaru Gaming - Game 1 Winner'
+  condition_id: '0x796a7fd08c04f6293c90c0d29f68469e2cc97de0b0bdafcee0c64cfbbefd1bbc'
+  market_id: '2604960'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: PlayTime
+  no_team: Amaru Gaming
+  yes_token_id: '23372025876579104552238454757416958249710201505203177013775558295938532069801'
+  no_token_id: '82738458330203597661172638097841990466879593663708188585873179985749948518419'
+  dota_match_id: '8858165744'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 07:25:31'
+  auto_mapped_at_utc: '2026-06-19T16:17:12+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Amaru Gaming
+  steam_dire_team: PlayTime
+  steam_side_mapping: reversed
+- name: 'Dota 2: PlayTime vs Amaru Gaming (BO3) - The International South America
+    Closed Qualifier Playoffs'
+  condition_id: '0xe28446806bd6a9187c4b57f03485b074babaac67f482e9018d4f236761d1dc3b'
+  market_id: '2604962'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: PlayTime
+  no_team: Amaru Gaming
+  yes_token_id: '27864738086538544209760014233099260728469990960384623089573926602081021053178'
+  no_token_id: '60143194118347567168250658851990392179757804543411309511661518706851857653426'
+  dota_match_id: '8858252265'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 07:25:31'
+  auto_mapped_at_utc: '2026-06-19T16:17:12+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: Amaru Gaming
+  steam_side_mapping: normal
+- name: 'Dota 2: 4ikibamboni vs Flame Team - Game 2 Winner'
+  condition_id: '0x7bfd82bcb4804e23fa1238f18842915de10e26b70d907bd8fe8d56336ba7eee1'
+  market_id: '2599353'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: 4ikibamboni
+  no_team: Flame Team
+  yes_token_id: '42612446015058296129023934138621432230660624223269349727730187519052962947381'
+  no_token_id: '20506461040512797875255674659813929252341596189965051809566564987740690099441'
+  dota_match_id: '8858214865'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:43:20'
+  auto_mapped_at_utc: '2026-06-19T17:02:19+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Flame Esports
+  steam_dire_team: 4ikibamboni
+  steam_side_mapping: reversed
+- name: 'Dota 2: PlayTime vs Amaru Gaming - Game 2 Winner'
+  condition_id: '0xd46b068e6658c371f1543546de31840bef08e2e63a7e7b68348b7f0f3631efce'
+  market_id: '2604961'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 2
+  series_score_no: 0
+  current_game_number: 3
+  yes_team: PlayTime
+  no_team: Amaru Gaming
+  yes_token_id: '19773554705218821181397940141428455943240698366528727498319527467810395527852'
+  no_token_id: '18493514256576478673343345176536403566474125257359041617599787903974842831020'
+  dota_match_id: '8858252265'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 07:22:45'
+  auto_mapped_at_utc: '2026-06-19T17:22:26+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: Amaru Gaming
+  steam_side_mapping: normal
+- name: 'Dota 2: summer bear vs Power Rangers - Game 1 Winner'
+  condition_id: '0x30eb6d7f6b29b9f5176a12b23df6068e7ef78e46987dc1c496a1b23c371a9100'
+  market_id: '2599372'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: summer bear
+  no_team: Power Rangers
+  yes_token_id: '4499783646784803862307209616882299694213612520949373646036792337753954018339'
+  no_token_id: '80690128867266634953370191216258952831554009761629641501992668325802461501722'
+  dota_match_id: '8858316246'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:43:21'
+  auto_mapped_at_utc: '2026-06-19T18:33:30+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: _PowerRangers
+  steam_dire_team: Summer Bear
+  steam_side_mapping: reversed
+- name: 'Dota 2: summer bear vs Power Rangers (BO3) - European Pro League Playoffs'
+  condition_id: '0x0ea8d09b3dddc51a44fdd98b2af793807197b7406cbd005dcaeb63a96f261537'
+  market_id: '2599374'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: summer bear
+  no_team: Power Rangers
+  yes_token_id: '28716572075232118837907587520858642506337553429694171960733011530171726079819'
+  no_token_id: '84307736825868675083290882054282899768682932923092366593619531446253338481628'
+  dota_match_id: '8858452170'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:43:21'
+  auto_mapped_at_utc: '2026-06-19T18:33:30+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: _PowerRangers
+  steam_dire_team: Summer Bear
+  steam_side_mapping: reversed
+- name: 'Dota 2: LGD Gaming vs PlayTime - Game 1 Winner'
+  condition_id: '0x944e8cf1fc520480222eac07695cf6d230580b4db3ec91b6af9e5e6e3fa1e55e'
+  market_id: '2609087'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 3
+  series_score_no: 0
+  current_game_number: 4
+  yes_team: LGD Gaming
+  no_team: PlayTime
+  yes_token_id: '104068441170428942625311935137533474849490783810091485428533478408321475025318'
+  no_token_id: '39413735885700094387849772655515457412063096598855504532418956402783071873548'
+  dota_match_id: '8858368963'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 18:18:04'
+  auto_mapped_at_utc: '2026-06-19T19:02:14+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: LGD Gaming
+  steam_side_mapping: reversed
+- name: 'Dota 2: LGD Gaming vs PlayTime (BO5) - The International South America Closed
+    Qualifier Playoffs'
+  condition_id: '0x20f73a8197d2464ca35e7e74b2f45fa6799be1d14ea7f090d66b14b31377f29f'
+  market_id: '2609093'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 3
+  series_score_no: 0
+  current_game_number: 4
+  yes_team: LGD Gaming
+  no_team: PlayTime
+  yes_token_id: '91286495542537539079605647840953748246507665176171514001608077883110106966215'
+  no_token_id: '9325371716003634338320900470270480147593692591786543451467277000320204474634'
+  dota_match_id: '8858503756'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 18:18:04'
+  auto_mapped_at_utc: '2026-06-19T19:02:14+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: LGD Gaming
+  steam_side_mapping: reversed
+- name: 'Dota 2: summer bear vs Power Rangers - Game 2 Winner'
+  condition_id: '0xb5da12584ed39878411af501b85135bca63179c7d771f81c04b41a11b90b05ed'
+  market_id: '2599373'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: summer bear
+  no_team: Power Rangers
+  yes_token_id: '108789316699048615965124564092729958831817553019742451969051073197950371680956'
+  no_token_id: '71495080835704352153951125147462960358452646434912802727271241926636417632800'
+  dota_match_id: '8858389710'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-18 20:43:21'
+  auto_mapped_at_utc: '2026-06-19T19:31:27+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Summer Bear
+  steam_dire_team: _PowerRangers
+  steam_side_mapping: normal
+- name: 'Dota 2: LGD Gaming vs PlayTime - Game 2 Winner'
+  condition_id: '0xf086c5dbfd23b7c9f2c5b7b691092b2f333f5628ab205c33e64926292d28f272'
+  market_id: '2609088'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 3
+  series_score_no: 0
+  current_game_number: 4
+  yes_team: LGD Gaming
+  no_team: PlayTime
+  yes_token_id: '64710684532004382183458442669227293567211194616183352103251822596268891711349'
+  no_token_id: '33588700230243418262125073927906769400270205829056957591324209889785190704220'
+  dota_match_id: '8858445091'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 18:18:04'
+  auto_mapped_at_utc: '2026-06-19T20:11:54+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: LGD Gaming
+  steam_dire_team: PlayTime
+  steam_side_mapping: normal
+- name: 'Dota 2: LGD Gaming vs PlayTime - Game 3 Winner'
+  condition_id: '0x43a6641ac00d21975bacaf9d63ab5348ae465b4b4ae02fd3ba5eef10cc029173'
+  market_id: '2609089'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 3
+  series_score_no: 0
+  current_game_number: 4
+  yes_team: LGD Gaming
+  no_team: PlayTime
+  yes_token_id: '52791961688049705840394412255159687608720261392646753713440198845001863292265'
+  no_token_id: '23762804677715214689195620083788727424066112118895575631520221144970968607439'
+  dota_match_id: '8858503756'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 18:18:04'
+  auto_mapped_at_utc: '2026-06-19T21:07:45+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: PlayTime
+  steam_dire_team: LGD Gaming
+  steam_side_mapping: reversed
+- name: 'Dota 2: Carstensz vs Yangon Galacticos - Game 1 Winner'
+  condition_id: '0x8807cd7719266f928cb3114e3de21e58bd51e1591124b1f42589ed8709511da1'
+  market_id: '2607004'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Carstensz
+  no_team: Yangon Galacticos
+  yes_token_id: '13487235253558484411020794914019464497912078672630282480551907643141396621338'
+  no_token_id: '78184766868891170509265720155103031029927445024320438827137938977423899761945'
+  dota_match_id: '8858693286'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 13:43:59'
+  auto_mapped_at_utc: '2026-06-20T02:15:56+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Yangon Galacticos
+  steam_dire_team: Carstensz Esports
+  steam_side_mapping: reversed
+- name: 'Dota 2: Carstensz vs Yangon Galacticos (BO3) - The International Southeast
+    Asia Closed Qualifier Playoffs'
+  condition_id: '0x3efe96801689dc355eabfa8cc011d8ced6dfffbf760110870aa8f27568a707ac'
+  market_id: '2607008'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Carstensz
+  no_team: Yangon Galacticos
+  yes_token_id: '47724180140406580411656848423344288685792495133804736437475311845463687782647'
+  no_token_id: '36651185832063570931200405435776917782160523491344653464446329414785021373756'
+  dota_match_id: '8858763196'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 13:43:59'
+  auto_mapped_at_utc: '2026-06-20T02:15:56+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Carstensz Esports
+  steam_dire_team: Yangon Galacticos
+  steam_side_mapping: normal
+- name: 'Dota 2: Carstensz vs Yangon Galacticos - Game 2 Winner'
+  condition_id: '0x75f6ea2bfebacf1feb47b6a561f7cea295fdb6676f1824842b5e6816a686c964'
+  market_id: '2607005'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Carstensz
+  no_team: Yangon Galacticos
+  yes_token_id: '9981041023029800507991371321536221971745908146540044556338308144844647668325'
+  no_token_id: '30007569967788031503526321909666330248271488134985540630478366306135070281678'
+  dota_match_id: '8858726463'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 13:43:59'
+  auto_mapped_at_utc: '2026-06-20T03:13:49+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Carstensz Esports
+  steam_dire_team: Yangon Galacticos
   steam_side_mapping: normal

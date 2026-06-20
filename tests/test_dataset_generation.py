@@ -27,6 +27,14 @@ def test_outcome_aggregator(tmp_path):
     shadow_ledger = log_dir / "settlement_shadow.csv"
     shadow_ledger.write_text("match_id,token_id,status\nm6,t6,WIN\nm7,t7,LOSS\nm8,t8,PENDING\n")
         
+    # 3.5. Mock opendota_outcomes.json
+    opendota_file = log_dir / "opendota_outcomes.json"
+    with open(opendota_file, "w") as f:
+        json.dump({
+            "m9": True,
+            "m10": False
+        }, f)
+
     # 4. Mock GAME_ENDED parquet
     parquet_file = event_dir / "events.parquet"
     df = pd.DataFrame([
@@ -63,6 +71,10 @@ def test_outcome_aggregator(tmp_path):
     
     # m8 should NOT be present (PENDING)
     assert "m8" not in outcomes
+
+    # m9, m10 should be present (opendota_outcomes.json)
+    assert "m9" in outcomes
+    assert "m10" in outcomes
 
 def test_data_counter(tmp_path):
     # Mock snapshots

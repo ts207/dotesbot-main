@@ -26,12 +26,15 @@ def main() -> None:
     parser.add_argument("--markets", default="markets.yaml")
     parser.add_argument("--outcomes", default="logs/opendota_outcomes.json")
     parser.add_argument("--sleep-sec", type=float, default=1.05)
-    parser.add_argument("--only-map-winner", action="store_true", default=True)
+    parser.add_argument("--only-map-winner", action="store_true", default=False)
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
-    data = yaml.safe_load(Path(args.markets).read_text(encoding="utf-8")) or {}
-    markets = data.get("markets", [])
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from mapping import load_valid_mappings
+
+    markets, _ = load_valid_mappings(args.markets if args.markets != "markets.yaml" else None)
     ids = []
     for market in markets:
         if args.only_map_winner and market.get("market_type") != "MAP_WINNER":

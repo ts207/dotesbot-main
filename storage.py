@@ -51,9 +51,27 @@ def ns_to_iso(ns: int | None) -> str | None:
 def _mirror_state(method: str, *args) -> None:
     try:
         from state_store import StateStore
-        getattr(StateStore(), method)(*args)
+        store = StateStore()
+        try:
+            getattr(store, method)(*args)
+        except Exception as exc:
+            msg = str(exc).lower()
+            # If the mirror failed due to missing tables, attempt to initialize
+            # the schema and retry the operation once. This handles transient
+            # cases where the DB file existed but schema wasn't applied.
+            if "no such table" in msg:
+                try:
+                    store.init_schema()
+                    getattr(store, method)(*args)
+                    return
+                except Exception as exc2:
+                    _storage_logger.warning(
+                        "state sqlite mirror failed after init_schema retry: %s", exc2
+                    )
+                    return
+            _storage_logger.warning("state sqlite mirror failed: %s", exc)
     except Exception as exc:
-        _storage_logger.warning("state sqlite mirror failed: %s", exc)
+        _storage_logger.warning("state sqlite mirror failed (store init): %s", exc)
 
 
 import queue

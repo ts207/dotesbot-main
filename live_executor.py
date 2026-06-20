@@ -1492,6 +1492,8 @@ class LiveExecutor:
             "game_time_sec": signal.game_time_sec,
             "is_reversal": is_reversal,
             "is_continuation": is_continuation,
+            "target_horizon": getattr(signal, "target_horizon", None),
+            "expected_hold_sec": getattr(signal, "expected_hold_sec", None),
         }
         book_for_policy = book_store.get(token_id) if book_store else None
         policy_result = evaluate_policy(

@@ -6,7 +6,7 @@ from value_engine import ValueSignal
 
 
 def test_strategy_registry_loads_event_contracts():
-    continuation = strategy_registry.get("EVENT_CONTINUATION_EDGE")
+    continuation = strategy_registry.get("EVENT_REPRICE_120")
     reversal = strategy_registry.get("EVENT_REVERSAL_EDGE")
 
     assert continuation.edge_type == "event_repricing"
