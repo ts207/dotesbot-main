@@ -12880,3 +12880,46 @@ markets:
   steam_radiant_team: Carstensz Esports
   steam_dire_team: Yangon Galacticos
   steam_side_mapping: normal
+- name: 'Dota 2: REKONIX vs Grind Back - Game 1 Winner'
+  condition_id: '0x83c083210e93265825b7543500ed09858006533f0d08b34e27473ea080a8e022'
+  market_id: '2605368'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 0
+  current_game_number: 2
+  yes_team: REKONIX
+  no_team: Grind Back
+  yes_token_id: '80119689949063626503507937284478467611233487928605828276156518022312758208851'
+  no_token_id: '73321612237090205853610667061261114579936835926835799760159261314909860475079'
+  dota_match_id: '8858939215'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 09:22:54'
+  auto_mapped_at_utc: '2026-06-20T08:13:24+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: REKONIX
+  steam_dire_team: TEAM GRIND
+  steam_side_mapping: normal
+- name: 'Dota 2: REKONIX vs Grind Back (BO3) - The International Southeast Asia Closed
+    Qualifier Playoffs'
+  condition_id: '0x1bbeb5c541fee7f4641c4989eb46e33a7169c1230ed9c91d839fdf4d8ec47e72'
+  market_id: '2605370'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 0
+  current_game_number: 2
+  yes_team: REKONIX
+  no_team: Grind Back
+  yes_token_id: '110006950502164075061853678002274601132373531923564524375874091093854854563468'
+  no_token_id: '85340363732011779458481513623021638177309049753012937729857858659056777833077'
+  dota_match_id: '8858939215'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 09:22:54'
+  auto_mapped_at_utc: '2026-06-20T08:13:24+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: REKONIX
+  steam_dire_team: TEAM GRIND
+  steam_side_mapping: normal

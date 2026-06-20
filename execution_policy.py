@@ -118,7 +118,7 @@ def _is_hold_to_settle(signal: Mapping[str, Any]) -> bool:
         return True
     if event_type in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE"}:
         return True
-    if strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_CONTINUATION_EDGE", "DSWING"}:
+    if strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_CONTINUATION_EDGE", "DSWING", "MODEL_VALUE_EDGE"}:
         return True
     return False
 
@@ -151,6 +151,8 @@ def _strategy_disabled(inp: PolicyInput) -> str | None:
         return "strategy_disabled:DSWING"
     if kind in {"EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE"} and not RUNTIME_CONFIG.strategy.event_triggered_value_enabled:
         return "strategy_disabled:EVENT_TRIGGERED_VALUE"
+    if kind == "MODEL_VALUE_EDGE" and not getattr(RUNTIME_CONFIG.strategy, "model_value_enabled", False):
+        return "strategy_disabled:MODEL_VALUE_EDGE"
     return None
 
 

@@ -1,0 +1,52 @@
+{
+  "name": "tree_booster",
+  "tree_info": [
+    {
+      "tree_index": 0,
+      "tree_structure": {
+        "split_feature": "token_net_worth_lead",
+        "threshold": 0.0,
+        "left_child": {
+          "split_feature": "token_net_worth_lead",
+          "threshold": -5000.0,
+          "left_child": {
+            "leaf_value": -1.5
+          },
+          "right_child": {
+            "leaf_value": -0.5
+          }
+        },
+        "right_child": {
+          "split_feature": "token_net_worth_lead",
+          "threshold": 5000.0,
+          "left_child": {
+            "leaf_value": 0.5
+          },
+          "right_child": {
+            "leaf_value": 1.5
+          }
+        }
+      }
+    },
+    {
+      "tree_index": 1,
+      "tree_structure": {
+        "split_feature": "token_score_margin",
+        "threshold": -5.0,
+        "left_child": {
+          "leaf_value": -0.5
+        },
+        "right_child": {
+          "split_feature": "token_score_margin",
+          "threshold": 5.0,
+          "left_child": {
+            "leaf_value": 0.0
+          },
+          "right_child": {
+            "leaf_value": 0.5
+          }
+        }
+      }
+    }
+  ]
+}

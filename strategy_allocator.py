@@ -27,9 +27,10 @@ from typing import Any
 # Priority — lower index = higher priority.
 _STRATEGY_PRIORITY: dict[str, int] = {
     "EVENT_CONTINUATION_EDGE": 0,
-    "VALUE_EDGE": 1,
-    "EVENT_REVERSAL_EDGE": 2,
-    "DSWING": 3,
+    "MODEL_VALUE_EDGE": 1,
+    "VALUE_EDGE": 2,
+    "EVENT_REVERSAL_EDGE": 3,
+    "DSWING": 4,
 }
 
 

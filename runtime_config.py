@@ -67,6 +67,7 @@ class StrategyConfig:
     value_enabled: bool
     dswing_enabled: bool
     event_triggered_value_enabled: bool
+    model_value_enabled: bool
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,7 @@ DEFAULTS: dict[str, str] = {
     "VALUE_ENGINE_ENABLED": "true",
     "DSWING_ENABLED": "true",
     "EVENT_TRIGGERED_VALUE_ENABLED": "true",
+    "MODEL_VALUE_ENABLED": "false",
 }
 
 
@@ -293,6 +295,7 @@ def load_config(
     value_enabled = _tracked(env, "VALUE_ENGINE_ENABLED", _bool, rows)
     dswing_enabled = _tracked(env, "DSWING_ENABLED", _bool, rows)
     event_triggered_value_enabled = _tracked(env, "EVENT_TRIGGERED_VALUE_ENABLED", _bool, rows)
+    model_value_enabled = _tracked(env, "MODEL_VALUE_ENABLED", _bool, rows)
 
     config = RuntimeConfig(
         feed=FeedConfig(
@@ -328,6 +331,7 @@ def load_config(
             value_enabled=value_enabled,
             dswing_enabled=dswing_enabled,
             event_triggered_value_enabled=event_triggered_value_enabled,
+            model_value_enabled=model_value_enabled,
         ),
         values=tuple(rows),
     )

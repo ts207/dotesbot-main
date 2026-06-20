@@ -10,10 +10,7 @@ Do NOT run `main.py` directly. The system relies on a supervisor to manage child
 
 To start the bot:
 ```bash
-python3 supervisor.py
-```
-The supervisor manages the runtime processes that need to stay alive together:
-1.  **bot** (`main.py`): The core trading loop.
+pyt*bot** (`main.py`): The core trading loop.
 2.  **binder** (`auto_series_binder.py --loop`): The market discovery and matching service.
 3.  **shadow** (`settlement_shadow.py --loop`): The settlement accounting shadow loop.
 4.  **monitor** (`monitor.py --loop`): Health and risk monitoring.

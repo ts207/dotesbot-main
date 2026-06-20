@@ -15,6 +15,7 @@ from strategy_allocator import StrategyCandidate
 from value_engine import ValueSignal
 from decisive_swing_engine import DSwingSignal
 from event_triggered_value_engine import EventTriggeredValueSignal
+from model_value_engine import ModelValueSignal, ModelValueEngine
 
 if TYPE_CHECKING:
     from value_engine import ValueEngine
@@ -44,14 +45,17 @@ class StrategyCollectionContext:
     event_value_engine: EventTriggeredValueEngine | None = None
     value_engine: ValueEngine | None = None
     dswing_engine: DecisiveSwingEngine | None = None
+    model_value_engine: ModelValueEngine | None = None
 
     enable_event_triggered_value_trading: bool = False
     enable_value_trading: bool = False
     dswing_enabled: bool = False
     enable_match_winner_trading: bool = False
+    enable_model_value_trading: bool = False
 
     # fn(ValueSignal) -> (bool, reason)
     value_confirmation_fn: Callable[[ValueSignal], tuple[bool, str]] | None = None
+    model_value_confirmation_fn: Callable[[ModelValueSignal], tuple[bool, str]] | None = None
     loggers: StrategyCollectionLoggers = field(default_factory=StrategyCollectionLoggers)
 
     # Required for EventTriggeredValueEngine

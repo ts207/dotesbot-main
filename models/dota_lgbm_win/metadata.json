@@ -1,0 +1,20 @@
+{
+  "strategy": "MODEL_VALUE_EDGE",
+  "model_type": "lgbm_win_export",
+  "trained_on": "expanded_sideaware_highmed_112",
+  "target": "official_win",
+  "entry_rule": "p_model - ask >= 0.15; persistence=2",
+  "filters": {
+    "max_spread": 0.05,
+    "max_book_age_ms": 10000,
+    "min_ask": 0.05,
+    "max_ask": 0.95
+  },
+  "backtest": {
+    "bets": 40,
+    "win_rate": 0.60,
+    "roi": 0.319,
+    "clv_900s": 0.0617,
+    "clv_1200s": 0.0870
+  }
+}
