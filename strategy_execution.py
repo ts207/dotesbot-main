@@ -272,6 +272,22 @@ async def _execute_model_value_winner(
 
     opposing_tok = mapping["no_token_id"] if sig.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
 
+    if ctx.live_position_store is not None:
+        for pos in ctx.live_position_store.positions.values():
+            if (
+                pos.match_id == str(game.get("match_id") or "")
+                and pos.strategy_kind == "MODEL_VALUE_EDGE"
+                and pos.state in ctx.live_position_store.ACTIVE_STATES
+            ):
+                return StrategyExecutionResult(
+                    strategy="MODEL_VALUE_EDGE",
+                    token_id=str(sig.token_id),
+                    match_id=str(game.get("match_id") or ""),
+                    status="rejected",
+                    mode="LIVE",
+                    reason="model_value_match_already_entered",
+                )
+
     if ctx.live_executor is not None and ctx.live_position_store is not None:
         v_attempt = await ctx.live_executor.try_buy_value(
             signal=sig, mapping=mapping, game=game, book_store=book_store)
@@ -320,7 +336,7 @@ async def _execute_model_value_winner(
                 backed_direction=sig.direction,
                 pending_entry_order_id=v_attempt.order_id if not is_filled else None,
                 strategy_kind="MODEL_VALUE_EDGE",
-                strategy_family="VALUE",
+                strategy_family="MODEL_VALUE",
                 entry_engine="model_value",
                 exit_engine="value_fair_invalidation",
                 hold_policy="thesis_invalidation",
