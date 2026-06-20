@@ -5,9 +5,10 @@ with a transparent collect → allocate → execute pattern.
 
 Priority order:
   1. EVENT_CONTINUATION_EDGE
-  2. VALUE_EDGE
-  3. EVENT_REVERSAL_EDGE
-  4. DSWING
+  2. MODEL_VALUE_EDGE
+  3. VALUE_EDGE
+  4. EVENT_REVERSAL_EDGE
+  5. DSWING
 
 Per token_id:
   - Token already in entered_tokens → all candidates blocked (already_entered).
@@ -98,6 +99,8 @@ def _block_reason_for_winner(winner: StrategyCandidate) -> str:
 def allocate_candidates(
     candidates: list[StrategyCandidate],
     entered_tokens: set[str],
+    active_model_value_matches: set[str] | None = None,
+    active_match_tokens: dict[str, set[str]] | None = None,
 ) -> list[AllocationDecision]:
     """Allocate a list of candidates to AllocationDecision objects.
 
@@ -111,10 +114,16 @@ def allocate_candidates(
     Args:
         candidates: All StrategyCandidate objects collected this tick.
         entered_tokens: Set of token_ids currently held / pending.
+        active_model_value_matches: Matches with active MODEL_VALUE_EDGE positions.
+        active_match_tokens: Map of match_id to set of active token_ids.
 
     Returns:
         List of AllocationDecision — one per token_id in candidates.
     """
+    active_model_value_matches = active_model_value_matches or set()
+    active_match_tokens = active_match_tokens or {}
+    newly_allocated_model_value_matches = set()
+
     # Group candidates by token_id.
     by_token: dict[str, list[StrategyCandidate]] = {}
     for c in candidates:
@@ -141,25 +150,46 @@ def allocate_candidates(
             ))
             continue
 
-        winner = token_candidates[0]
-        blocked = token_candidates[1:]
-        if blocked:
-            block_reason = _block_reason_for_winner(winner)
-            note_parts = [f"Winner={winner.strategy}(edge={winner.edge:.4f})"]
-            note_parts += [f"{c.strategy}(edge={c.edge:.4f})" for c in blocked]
-            counterfactual_note = "Preempted: " + " vs ".join(note_parts)
-        else:
-            block_reason = ""
-            counterfactual_note = ""
+        winner = None
+        blocked = []
 
-        decisions.append(AllocationDecision(
-            token_id=token_id,
-            match_id=winner.match_id,
-            winner=winner,
-            blocked=blocked,
-            block_reason=block_reason,
-            counterfactual_note=counterfactual_note,
-        ))
+        for c in token_candidates:
+            if winner is None:
+                if c.strategy == "MODEL_VALUE_EDGE":
+                    m_id = c.match_id
+                    # Block if match already has model value
+                    if m_id in active_model_value_matches or m_id in newly_allocated_model_value_matches:
+                        blocked.append(c)
+                        continue
+                    # Block if match has ANY active token (meaning opposing token since this token is not in entered_tokens)
+                    if active_match_tokens.get(m_id):
+                        blocked.append(c)
+                        continue
+
+                winner = c
+                if winner.strategy == "MODEL_VALUE_EDGE":
+                    newly_allocated_model_value_matches.add(winner.match_id)
+            else:
+                blocked.append(c)
+
+        if winner:
+            decisions.append(AllocationDecision(
+                token_id=token_id,
+                match_id=winner.match_id,
+                winner=winner,
+                blocked=blocked,
+                block_reason=_block_reason_for_winner(winner) if blocked else "",
+                counterfactual_note=f"Winner: {winner.strategy}. Blocked {len(blocked)} lower-priority." if blocked else ""
+            ))
+        else:
+            decisions.append(AllocationDecision(
+                token_id=token_id,
+                match_id=token_candidates[0].match_id,
+                winner=None,
+                blocked=blocked,
+                block_reason="match_exposure_blocked",
+                counterfactual_note=f"Blocked {len(blocked)} candidates due to match exposure."
+            ))
 
     return decisions
 

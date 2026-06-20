@@ -245,3 +245,38 @@ def test_decision_to_log_row_fields():
     for key in ("token_id", "match_id", "winner_strategy", "winner_edge", "candidate_count", "blocked_count", "allocator_winner",
                 "blocked_strategies", "blocked_edges", "block_reason", "counterfactual_note"):
         assert key in row, f"Missing key: {key}"
+
+def test_model_value_blocked_by_active_match():
+    # If match already has a MODEL_VALUE_EDGE, block
+    c = _cand("MODEL_VALUE_EDGE", token_id="tok_A", match_id="m1")
+    decisions = allocate_candidates([c], entered_tokens=set(), active_model_value_matches={"m1"})
+    assert len(decisions) == 1
+    dec = decisions[0]
+    assert dec.winner is None
+    assert dec.block_reason == "match_exposure_blocked"
+    assert c in dec.blocked
+
+def test_model_value_blocked_by_opposing_token():
+    # If match has ANY active token, block
+    c = _cand("MODEL_VALUE_EDGE", token_id="tok_A", match_id="m1")
+    decisions = allocate_candidates([c], entered_tokens=set(), active_match_tokens={"m1": {"tok_B"}})
+    assert len(decisions) == 1
+    dec = decisions[0]
+    assert dec.winner is None
+    assert dec.block_reason == "match_exposure_blocked"
+    assert c in dec.blocked
+
+def test_model_value_two_candidates_same_match():
+    # If two MODEL_VALUE_EDGE candidates appear for the same match, only one wins
+    c1 = _cand("MODEL_VALUE_EDGE", token_id="tok_A", match_id="m1")
+    c2 = _cand("MODEL_VALUE_EDGE", token_id="tok_B", match_id="m1")
+    decisions = allocate_candidates([c1, c2], entered_tokens=set())
+    # Two tokens, so two decisions
+    assert len(decisions) == 2
+    winners = [d.winner for d in decisions if d.winner is not None]
+    assert len(winners) == 1
+    assert winners[0] in [c1, c2]
+    # The other one should be blocked by match_exposure_blocked
+    blocked_decs = [d for d in decisions if d.winner is None]
+    assert len(blocked_decs) == 1
+    assert blocked_decs[0].block_reason == "match_exposure_blocked"

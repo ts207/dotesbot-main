@@ -120,8 +120,7 @@ EVENT_MAX_PER_MATCH = float(os.getenv("EVENT_MAX_PER_MATCH", str(VALUE_MAX_PER_M
 VALUE_FAK_BUFFER_TICKS = float(os.getenv("VALUE_FAK_BUFFER_TICKS", "4"))
 
 MODEL_VALUE_ENABLED = RUNTIME_CONFIG.strategy.model_value_enabled
-_paper_only = not RUNTIME_CONFIG.live.enable_real_live_trading and RUNTIME_CONFIG.paper.paper_mode in {"research", "live_parity"}
-ENABLE_MODEL_VALUE_TRADING = os.getenv("ENABLE_MODEL_VALUE_TRADING", str(_paper_only)).lower() in {"1", "true", "yes"}
+ENABLE_MODEL_VALUE_TRADING = os.getenv("ENABLE_MODEL_VALUE_TRADING", "false").lower() in {"1", "true", "yes"}
 MODEL_VALUE_MIN_EDGE = float(os.getenv("MODEL_VALUE_MIN_EDGE", "0.15"))
 MODEL_VALUE_CONFIRM_ENABLED = os.getenv("MODEL_VALUE_CONFIRM_ENABLED", "true").lower() in {"1", "true", "yes"}
 MODEL_VALUE_CONFIRM_MIN_EDGE = float(os.getenv("MODEL_VALUE_CONFIRM_MIN_EDGE", "0.15"))

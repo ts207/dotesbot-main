@@ -428,3 +428,64 @@ def test_dswing_candidate_created_only_when_match_winner_trading_enabled(base_ct
     candidates = collect_strategy_candidates(base_ctx)
     assert len(candidates) == 1
     assert candidates[0].strategy == "DSWING"
+
+def test_model_value_edge_unconfirmed_not_collected(base_ctx):
+    base_ctx.enable_model_value_trading = True
+    base_ctx.model_value_engine = MagicMock()
+    
+    from model_value_engine import ModelValueSignal
+    sig = MagicMock(spec=ModelValueSignal)
+    sig.token_id = "tok_yes"
+    sig.direction = "radiant"
+    sig.edge = 0.20
+    sig.fair_price = 0.70
+    sig.game_time_sec = 600
+    sig.ask = 0.50
+    sig.side = "YES"
+    sig.edge_type = "model_value"
+    sig.target_horizon = "end"
+    sig.expected_hold_sec = 600
+    sig.entry_trigger = "m"
+    sig.exit_trigger = "m"
+    sig.would_pass_live_gates = True
+    sig.primary_metric = "m"
+    sig.secondary_metric = "m2"
+    sig.promotion_rule = "p"
+    sig.disable_rule = "d"
+    
+    base_ctx.model_value_engine.evaluate.return_value = [sig]
+    base_ctx.model_value_confirmation_fn = MagicMock(return_value=(False, "not_confirmed"))
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 0
+
+def test_model_value_edge_confirmed_collected(base_ctx):
+    base_ctx.enable_model_value_trading = True
+    base_ctx.model_value_engine = MagicMock()
+    
+    from model_value_engine import ModelValueSignal
+    sig = MagicMock(spec=ModelValueSignal)
+    sig.token_id = "tok_yes"
+    sig.direction = "radiant"
+    sig.edge = 0.20
+    sig.fair_price = 0.70
+    sig.game_time_sec = 600
+    sig.ask = 0.50
+    sig.side = "YES"
+    sig.edge_type = "model_value"
+    sig.target_horizon = "end"
+    sig.expected_hold_sec = 600
+    sig.entry_trigger = "m"
+    sig.exit_trigger = "m"
+    sig.would_pass_live_gates = True
+    sig.primary_metric = "m"
+    sig.secondary_metric = "m2"
+    sig.promotion_rule = "p"
+    sig.disable_rule = "d"
+    
+    base_ctx.model_value_engine.evaluate.return_value = [sig]
+    base_ctx.model_value_confirmation_fn = MagicMock(return_value=(True, "confirmed"))
+    
+    candidates = collect_strategy_candidates(base_ctx)
+    assert len(candidates) == 1
+    assert candidates[0].strategy == "MODEL_VALUE_EDGE"

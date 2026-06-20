@@ -12,7 +12,15 @@ def test_load_model_valid():
     loaded = load_model("models/dota_lgbm_win/model.json")
     assert loaded is True
     assert model_value_predictor._MODEL_DATA is not None
-    assert model_value_predictor._FEATURE_NAMES == ["token_net_worth_lead", "token_score_margin"]
+    assert model_value_predictor._FEATURE_NAMES == [
+      "market_mid",
+      "ask",
+      "spread",
+      "game_time_sec",
+      "token_net_worth_lead",
+      "token_score_margin",
+      "token_net_worth_lead_per_min"
+    ]
     assert model_value_predictor._METADATA is not None
     assert model_value_predictor._METADATA.get("strategy") == "MODEL_VALUE_EDGE"
 
@@ -61,25 +69,35 @@ def test_predict_probability():
     
     # Standard prediction: Radiant leads significantly
     features = {
+        "market_mid": 0.5,
+        "ask": 0.5,
+        "spread": 0.0,
+        "game_time_sec": 600,
         "token_net_worth_lead": 6000.0,
-        "token_score_margin": 6.0
+        "token_score_margin": 6.0,
+        "token_net_worth_lead_per_min": 600.0
     }
     res = predict_probability(features)
     assert res["features_available"] is True
     assert res["reason"] == "ok"
     assert 0.0 <= res["model_probability"] <= 1.0
-    # Score for NW lead > 5000: 1.5, score for score margin > 5: 0.5. Total score = 2.0. Sigmoid(2.0) > 0.8
-    assert res["model_probability"] > 0.8
+    # Score for NW lead > 0 is 0.05. Residual mode adds this to market_mid (0.5)
+    assert abs(res["model_probability"] - 0.55) < 1e-6
 
     # Significant disadvantage
     features_disadv = {
+        "market_mid": 0.5,
+        "ask": 0.5,
+        "spread": 0.0,
+        "game_time_sec": 600,
         "token_net_worth_lead": -6000.0,
-        "token_score_margin": -6.0
+        "token_score_margin": -6.0,
+        "token_net_worth_lead_per_min": -600.0
     }
     res_disadv = predict_probability(features_disadv)
     assert res_disadv["features_available"] is True
-    # Score for NW lead < -5000: -1.5, score for score margin < -5: -0.5. Total score = -2.0. Sigmoid(-2.0) < 0.2
-    assert res_disadv["model_probability"] < 0.2
+    # Score for NW lead <= 0 is -0.05.
+    assert abs(res_disadv["model_probability"] - 0.45) < 1e-6
 
     # Test missing features
     res_missing = predict_probability({})

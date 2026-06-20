@@ -109,13 +109,34 @@ def build_side_features(
         else:
             return None
 
+        # Extract market features
+        market_mid = 0.5
+        ask = 0.5
+        spread = 0.0
+        if book:
+            b_bid = book.get("best_bid")
+            b_ask = book.get("best_ask")
+            if b_bid is not None and b_ask is not None:
+                market_mid = (b_bid + b_ask) / 2.0
+                ask = float(b_ask)
+                spread = float(b_ask) - float(b_bid)
+
+        game_time_sec = float(game.get("game_time_sec", 1.0))
+        if game_time_sec <= 0:
+            game_time_sec = 1.0
+
         return {
             "token_net_worth_lead": token_net_worth_lead,
             "token_score_margin": token_score_margin,
             "radiant_net_worth": r_nw,
             "dire_net_worth": d_nw,
             "radiant_score": r_score,
-            "dire_score": d_score
+            "dire_score": d_score,
+            "market_mid": market_mid,
+            "ask": ask,
+            "spread": spread,
+            "game_time_sec": game_time_sec,
+            "token_net_worth_lead_per_min": token_net_worth_lead / (game_time_sec / 60.0)
         }
     except (TypeError, ValueError):
         return None
@@ -196,8 +217,14 @@ def predict_probability(features: dict[str, float] | None) -> dict[str, Any]:
             if tree_structure:
                 raw_score += _evaluate_node(tree_structure, features, _FEATURE_NAMES or [])
 
-        # Sigmoid activation to get probability
-        p = 1.0 / (1.0 + math.exp(-raw_score))
+        # If residual mode, add to market_mid and clamp
+        if _METADATA and _METADATA.get("residual_mode"):
+            market_mid = features.get("market_mid", 0.5)
+            p = max(0.0, min(1.0, market_mid + raw_score))
+        else:
+            # Sigmoid activation to get probability
+            p = 1.0 / (1.0 + math.exp(-raw_score))
+            
         return {
             "model_probability": p,
             "model_version": version,

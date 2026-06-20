@@ -1218,6 +1218,16 @@ async def steam_loop(
                 # mapper still observes these games via the steam_loop poll
                 # and binds them when Polymarket lists a market.
 
+                _active_model_value_matches = set()
+                _active_match_tokens = {}
+                if live_position_store:
+                    for p in live_position_store.positions.values():
+                        if p.state in {"OPEN", "EXITING", "PENDING_ENTRY", "PENDING_EXIT_GTC"}:
+                            m_id = str(p.match_id)
+                            _active_match_tokens.setdefault(m_id, set()).add(str(p.token_id))
+                            if str(getattr(p, "strategy_family", "")) == "MODEL_VALUE" or str(getattr(p, "strategy_kind", "")) == "MODEL_VALUE_EDGE":
+                                _active_model_value_matches.add(m_id)
+
                 for game in active_games:
                     for mapping in mappings:
                         if str(mapping["dota_match_id"]) not in {
@@ -1288,7 +1298,12 @@ async def steam_loop(
                         )
 
                         # ── ALLOCATE: explicit priority + counterfactual attribution ──────
-                        _decisions = allocate_candidates(_all_candidates, _entered_toks)
+                        _decisions = allocate_candidates(
+                            _all_candidates, 
+                            _entered_toks,
+                            active_model_value_matches=_active_model_value_matches,
+                            active_match_tokens=_active_match_tokens,
+                        )
 
                         # Log contested decisions (preemptions + already_entered).
                         if allocator_logger is not None:

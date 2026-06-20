@@ -1,35 +1,11 @@
 {
+  "model_name": "model_value_edge_v1_residual",
+  "model_class": "residual_tree",
   "strategy": "MODEL_VALUE_EDGE",
-  "model_type": "lgbm_win_export",
-  "model_name": "model_value_edge_v0_state_tree",
-  "model_class": "state_only_threshold_tree",
-  "uses_market_price": false,
-  "uses_game_time": false,
+  "residual_mode": true,
+  "uses_market_price": true,
+  "uses_game_time": true,
   "uses_objectives": false,
-  "uses_orderbook_dynamics": false,
-  "deployment_status": "paper_only",
-  "known_limitations": [
-    "state-only model",
-    "ignores market mid",
-    "ignores game time",
-    "ignores towers, barracks, roshan, lineups",
-    "coarse probability buckets",
-    "small backtest sample"
-  ],
-  "trained_on": "expanded_sideaware_highmed_112",
-  "target": "official_win",
-  "entry_rule": "p_model - ask >= 0.15; persistence=2",
-  "filters": {
-    "max_spread": 0.05,
-    "max_book_age_ms": 10000,
-    "min_ask": 0.05,
-    "max_ask": 0.95
-  },
-  "backtest": {
-    "bets": 40,
-    "win_rate": 0.60,
-    "roi": 0.319,
-    "clv_900s": 0.0617,
-    "clv_1200s": 0.0870
-  }
+  "uses_orderbook_dynamics": true,
+  "deployment_status": "paper_only"
 }

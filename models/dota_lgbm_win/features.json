@@ -1,4 +1,9 @@
 [
+  "market_mid",
+  "ask",
+  "spread",
+  "game_time_sec",
   "token_net_worth_lead",
-  "token_score_margin"
+  "token_score_margin",
+  "token_net_worth_lead_per_min"
 ]
