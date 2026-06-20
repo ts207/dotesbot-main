@@ -38,7 +38,7 @@ _STRATEGY_PRIORITY: dict[str, int] = {
 @dataclass
 class StrategyCandidate:
     """A signal from one engine that is eligible to trade a specific token."""
-    strategy: str           # EVENT_CONTINUATION_EDGE | EVENT_REVERSAL_EDGE | VALUE_EDGE | DSWING
+    strategy: str           # EVENT_CONTINUATION_EDGE | EVENT_REVERSAL_EDGE | MODEL_VALUE_EDGE | VALUE_EDGE | DSWING
     token_id: str
     match_id: str
     direction: str          # "radiant" | "dire"

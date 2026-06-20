@@ -341,6 +341,11 @@ class PaperTrader:
         if opposing_token_id and opposing_token_id in self.positions:
             return None, "opposing_position_open"
 
+        if signal.get("strategy_kind") == "MODEL_VALUE_EDGE":
+            for pos in self.positions.values():
+                if pos.match_id == match_id and pos.strategy_kind == "MODEL_VALUE_EDGE":
+                    return None, "model_value_match_already_entered"
+
         paper_allowed, paper_reason, paper_metadata = self._paper_gate(signal)
         if not paper_allowed:
             return None, paper_reason

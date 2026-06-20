@@ -144,6 +144,8 @@ def _value_signal_strategy_meta(signal: Any) -> tuple[str, str, str | None, bool
         )
     if signal_kind == "DSwingSignal":
         return ("DSWING", "DSWING", None, False, False)
+    if signal_kind == "ModelValueSignal":
+        return ("MODEL_VALUE_EDGE", "MODEL_VALUE", None, False, False)
     return ("VALUE_EDGE", "VALUE", None, False, False)
 
 
@@ -1483,6 +1485,11 @@ class LiveExecutor:
                 signal, mapping, game, token_id, size_usd,
                 f"mapping_invalid:{';'.join(mapping_result.mapping_errors) or 'confidence_not_1'}"
             )
+
+        if attempt_event_type == "MODEL_VALUE_EDGE":
+            for pos in self._position_store.open_positions() + self._position_store.pending_entry_positions():
+                if pos.match_id == signal_match_id and pos.strategy_kind == "MODEL_VALUE_EDGE":
+                    return self._reject_value(signal, mapping, game, token_id, size_usd, "model_value_match_already_entered")
 
         if attempt_event_type == "VALUE_EDGE":
             policy_event_type = "VALUE"
