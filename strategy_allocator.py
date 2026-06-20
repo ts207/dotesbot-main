@@ -86,6 +86,8 @@ def _block_reason_for_winner(winner: StrategyCandidate) -> str:
     # Simplified: just name the winner strategy
     if winner.strategy in ("EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE"):
         return "preempted_by_event"
+    if winner.strategy == "MODEL_VALUE_EDGE":
+        return "preempted_by_model"
     if winner.strategy == "VALUE_EDGE":
         return "preempted_by_value"
     if winner.strategy == "DSWING":

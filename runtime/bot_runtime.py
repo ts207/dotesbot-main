@@ -19,6 +19,8 @@ from paper_trader import PaperTrader
 from storage import SignalLogger, DotaEventLogger, BookEventLogger, PositionLogger, RawSnapshotLogger, LiveAttemptLogger, LatencyLogger, RichContextLogger, SourceDelayLogger, BookRefreshRescueLogger, MatchWinnerSignalLogger, SignalMarkoutLogger, LiveExitLogger, BookMoveLogger, ValueAttemptLogger, DSwingAttemptLogger, ActualDotaEventLogger, StrategySignalLogger, DSwingExitQualityLogger, AllocatorLogger
 from value_engine import ValueEngine, ValueSignal, VALUE_ENGINE_ENABLED, ENABLE_VALUE_TRADING
 from decisive_swing_engine import DecisiveSwingEngine, DSwingSignal, DSWING_ENABLED
+from model_value_engine import ModelValueEngine, _model_value_confirmation_passes
+from config import MODEL_VALUE_ENABLED, ENABLE_MODEL_VALUE_TRADING
 from actual_dota_event_detector import ActualDotaEventDetector
 from event_triggered_value_engine import EventTriggeredValueEngine, EventTriggeredValueSignal
 from strategy_allocator import StrategyCandidate, allocate_candidates, decision_to_log_row
@@ -700,6 +702,7 @@ async def steam_loop(
     event_value_engine: EventTriggeredValueEngine | None = None,
     strategy_signal_logger: StrategySignalLogger | None = None,
     allocator_logger: AllocatorLogger | None = None,
+    model_value_engine: ModelValueEngine | None = None,
     dswing_map_end_detected_ns: dict[str, int] | None = None,
 ):
     if not STEAM_API_KEY or STEAM_API_KEY == "replace_me":
@@ -1257,10 +1260,13 @@ async def steam_loop(
                                 event_value_engine=event_value_engine,
                                 value_engine=value_engine,
                                 dswing_engine=dswing_engine,
+                                model_value_engine=model_value_engine,
                                 enable_event_triggered_value_trading=ENABLE_EVENT_TRIGGERED_VALUE_TRADING,
                                 enable_value_trading=ENABLE_VALUE_TRADING,
                                 dswing_enabled=DSWING_ENABLED,
+                                enable_model_value_trading=ENABLE_MODEL_VALUE_TRADING,
                                 value_confirmation_fn=_value_confirmation_passes,
+                                model_value_confirmation_fn=_model_value_confirmation_passes,
                                 loggers=StrategyCollectionLoggers(
                                     value_logger=value_logger,
                                     dswing_logger=dswing_logger,
@@ -2099,6 +2105,14 @@ async def main():
         strategy_signal_logger = StrategySignalLogger()
         allocator_logger = AllocatorLogger()
         print("EVENT_TRIGGERED_VALUE mode ON")
+    model_value_engine: ModelValueEngine | None = None
+    if MODEL_VALUE_ENABLED:
+        model_value_engine = ModelValueEngine()
+        if strategy_signal_logger is None:
+            strategy_signal_logger = StrategySignalLogger()
+        if allocator_logger is None:
+            allocator_logger = AllocatorLogger()
+        print("MODEL_VALUE_EDGE mode ON")
     latency_logger = LatencyLogger()
     rich_context_logger = RichContextLogger()
     source_delay_logger = SourceDelayLogger()
@@ -2858,6 +2872,7 @@ async def main():
                     event_value_engine=event_value_engine,
                     strategy_signal_logger=strategy_signal_logger,
                     allocator_logger=allocator_logger,
+                    model_value_engine=model_value_engine,
                     dswing_map_end_detected_ns=dswing_map_end_detected_ns,
                 ),
                 proactive_refresh_loop(session),

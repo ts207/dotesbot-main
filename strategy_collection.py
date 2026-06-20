@@ -70,10 +70,13 @@ def collect_strategy_candidates(ctx: StrategyCollectionContext) -> list[Strategy
     # 1. Event-Triggered Value
     candidates.extend(_collect_event_value_candidates(ctx))
 
-    # 2. Value Engine
+    # 2. Model Value
+    candidates.extend(_collect_model_value_candidates(ctx))
+
+    # 3. Value Engine
     candidates.extend(_collect_value_candidates(ctx))
 
-    # 3. Decisive-Swing Engine
+    # 4. Decisive-Swing Engine
     candidates.extend(_collect_dswing_candidates(ctx))
 
     return candidates
@@ -298,5 +301,52 @@ def _collect_dswing_candidates(ctx: StrategyCollectionContext) -> list[StrategyC
             secondary_metric=ds_res.secondary_metric,
             promotion_rule=ds_res.promotion_rule,
             disable_rule=ds_res.disable_rule,
+        ))
+    return results
+
+
+def _collect_model_value_candidates(ctx: StrategyCollectionContext) -> list[StrategyCandidate]:
+    if ctx.model_value_engine is None:
+        return []
+
+    results: list[StrategyCandidate] = []
+    model_results = ctx.model_value_engine.evaluate(
+        ctx.game, ctx.mapping, ctx.book_store, entered_tokens=ctx.entered_tokens
+    )
+    for result in model_results:
+        if not isinstance(result, ModelValueSignal):
+            if ctx.loggers.strategy_signal_logger is not None:
+                ctx.loggers.strategy_signal_logger.log_reject(result, strategy="MODEL_VALUE_EDGE")
+            continue
+
+        if ctx.loggers.strategy_signal_logger is not None:
+            ctx.loggers.strategy_signal_logger.log_signal(result, strategy="MODEL_VALUE_EDGE")
+
+        if not ctx.enable_model_value_trading:
+            continue
+
+        confirmed = True
+        if ctx.model_value_confirmation_fn is not None:
+            confirmed, _ = ctx.model_value_confirmation_fn(result)
+
+        results.append(StrategyCandidate(
+            strategy="MODEL_VALUE_EDGE",
+            token_id=str(result.token_id),
+            match_id=str(ctx.game.get("match_id") or ""),
+            direction=result.direction,
+            edge=result.edge,
+            fair=result.fair_price,
+            game_time_sec=result.game_time_sec,
+            signal=result,
+            edge_type=result.edge_type,
+            target_horizon=result.target_horizon,
+            expected_hold_sec=result.expected_hold_sec,
+            entry_trigger=result.entry_trigger,
+            exit_trigger=result.exit_trigger,
+            primary_metric=result.primary_metric,
+            secondary_metric=result.secondary_metric,
+            promotion_rule=result.promotion_rule,
+            disable_rule=result.disable_rule,
+            would_pass_confirmation=confirmed,
         ))
     return results

@@ -32,8 +32,8 @@ class ExitPolicy:
         event_type = str(getattr(position, "event_type", "") or "").upper()
         return (
             trader_kind in {"value", "dswing"}
-            or strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE", "DSWING"}
-            or event_type in {"VALUE", "VALUE_EDGE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE", "DSWING"}
+            or strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE", "DSWING", "MODEL_VALUE_EDGE"}
+            or event_type in {"VALUE", "VALUE_EDGE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "EVENT_REVERSAL_EDGE", "DSWING", "MODEL_VALUE_EDGE"}
             or hold_policy in {"thesis_invalidation", "map_end_convergence", "reversal_bounce_or_thesis"}
         )
 
@@ -93,8 +93,8 @@ class ExitPolicy:
         is_value = (
             trader_kind == "value"
             or hold_policy == "thesis_invalidation"
-            or strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE"}
-            or event_type in {"VALUE", "VALUE_EDGE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE"}
+            or strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "MODEL_VALUE_EDGE"}
+            or event_type in {"VALUE", "VALUE_EDGE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "EVENT_CONTINUATION_EDGE", "MODEL_VALUE_EDGE"}
         )
         if is_value:
             if position.match_id in game_over_match_ids:

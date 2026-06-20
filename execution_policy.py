@@ -116,7 +116,7 @@ def _is_hold_to_settle(signal: Mapping[str, Any]) -> bool:
     strategy_kind = str(signal.get("strategy_kind") or signal.get("event_family") or "")
     if horizon == "settlement" or expected_hold == 0:
         return True
-    if event_type in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE"}:
+    if event_type in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "MODEL_VALUE_EDGE"}:
         return True
     if strategy_kind in {"VALUE", "VALUE_EDGE", "EVENT_CONTINUATION_EDGE", "DSWING", "MODEL_VALUE_EDGE"}:
         return True
@@ -301,23 +301,23 @@ def evaluate_policy(inp: PolicyInput) -> PolicyResult:
     cluster_types = {e for e in str(inp.signal.get("cluster_event_types") or event_type).split("+") if e}
     is_book_move = event_type == "BOOK_MOVE"
     
-    if event_type and TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"} and event_type not in TRADE_EVENTS:
+    if event_type and TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING", "MODEL_VALUE_EDGE"} and event_type not in TRADE_EVENTS:
         return reject("event_not_allowed", risk_tags=("event_not_allowed",))
         
     if not is_book_move:
         if DISABLE_STRUCTURE_TRADES and (event_type in STRUCTURE_EVENTS or cluster_types <= STRUCTURE_EVENTS):
             return reject("structure_trade_disabled", risk_tags=("structure_trade_disabled",))
         if TRADE_EVENTS and not (event_type in TRADE_EVENTS or cluster_types & TRADE_EVENTS):
-            if event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
+            if event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING", "MODEL_VALUE_EDGE"}:
                 return reject("event_not_allowed", risk_tags=("event_not_allowed",))
         tier = event_tier(event_type)
-        if event_type not in TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
+        if event_type not in TRADE_EVENTS and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING", "MODEL_VALUE_EDGE"}:
             if tier == "C" and not ALLOW_CONFIRMATION_ONLY_LIVE_TRADES:
                 return reject("confirmation_only_event", risk_tags=("confirmation_only_event",))
             if tier in {"research", "block", "unknown"}:
                 return reject(f"{tier}_event_not_live_tradable", risk_tags=("event_tier_not_live",))
 
-    if event_type and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING"}:
+    if event_type and event_type not in {"VALUE", "VALUE_HOLD", "EVENT_TRIGGERED_VALUE", "DSWING", "MODEL_VALUE_EDGE"}:
         if LIVE_REQUIRE_CADENCE_SCHEMA and inp.signal.get("event_schema_version") != "cadence_v1":
             return reject("cadence_schema_missing", risk_tags=("cadence_schema_missing",))
         cadence_quality = str(inp.signal.get("source_cadence_quality") or "")

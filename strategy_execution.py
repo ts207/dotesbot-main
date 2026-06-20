@@ -75,6 +75,10 @@ async def execute_allocation_decisions(
             res = await _execute_event_value_winner(dec, ctx)
             if res:
                 results.append(res)
+        elif strategy == "MODEL_VALUE_EDGE":
+            res = await _execute_model_value_winner(dec, ctx)
+            if res:
+                results.append(res)
         elif strategy == "VALUE_EDGE":
             res = await _execute_value_winner(dec, ctx)
             if res:
@@ -234,6 +238,157 @@ async def _execute_event_value_winner(
             print(f"EVENT_VALUE ENTER {mapping.get('name')} {sig.side} event={sig.actual_event_type} price={pos.entry_price:.4f} edge={sig.edge:.4f}")
             return StrategyExecutionResult(
                 strategy=cand.strategy,
+                token_id=str(sig.token_id),
+                match_id=str(game.get("match_id") or ""),
+                status="entered",
+                mode="PAPER",
+                position_id=pos.position_id,
+            )
+    return None
+
+
+async def _execute_model_value_winner(
+    dec: AllocationDecision,
+    ctx: StrategyExecutionContext,
+) -> StrategyExecutionResult | None:
+    cand = dec.winner
+    sig = cand.signal
+    mapping = ctx.mapping
+    game = ctx.game
+    book_store = ctx.book_store
+
+    # Confirmation gate
+    if not cand.would_pass_confirmation:
+        print(
+            f"MODEL_VALUE LIVE WAIT {mapping.get('name')} {sig.side} "
+            f"edge={sig.edge:.4f} ask={sig.ask:.4f}"
+        )
+        return StrategyExecutionResult(
+            strategy="MODEL_VALUE_EDGE",
+            token_id=str(sig.token_id),
+            match_id=str(game.get("match_id") or ""),
+            status="waiting_confirmation",
+        )
+
+    opposing_tok = mapping["no_token_id"] if sig.token_id == mapping["yes_token_id"] else mapping["yes_token_id"]
+
+    if ctx.live_executor is not None and ctx.live_position_store is not None:
+        v_attempt = await ctx.live_executor.try_buy_value(
+            signal=sig, mapping=mapping, game=game, book_store=book_store)
+        if ctx.loggers.live_logger is not None:
+            ctx.loggers.live_logger.log_attempt(v_attempt, phase="entry")
+        
+        landed = (v_attempt.filled_size_usd > 0
+                  or v_attempt.order_status in ("delayed", "live", "matched", "filled"))
+        if landed:
+            entry_px = v_attempt.avg_fill_price or v_attempt.price_cap or sig.ask
+            fill = None
+            if ctx.normalized_entry_fill_fn:
+                fill = ctx.normalized_entry_fill_fn(
+                    filled_usd=v_attempt.filled_size_usd,
+                    filled_shares=None,
+                    avg_fill_price=v_attempt.avg_fill_price,
+                    fallback_price=entry_px,
+                )
+            
+            is_filled = fill is not None and v_attempt.filled_size_usd > 0
+            if fill:
+                cost, v_shares, entry_px = fill
+            else:
+                cost = v_attempt.submitted_size_usd or 0.0
+                v_shares = 0.0
+            
+            v_pos = LivePosition(
+                position_id=f"{v_attempt.match_id}:{v_attempt.token_id}:{v_attempt.created_at_ns}",
+                state="OPEN" if is_filled else "PENDING_ENTRY",
+                token_id=v_attempt.token_id,
+                opposing_token_id=opposing_tok or "",
+                match_id=v_attempt.match_id,
+                market_name=mapping.get("name"),
+                side=sig.side,
+                entry_price=entry_px,
+                shares=v_shares,
+                cost_usd=cost,
+                entry_time_ns=v_attempt.created_at_ns,
+                entry_game_time_sec=sig.game_time_sec,
+                event_type="MODEL_VALUE_EDGE",
+                expected_move=0.0,
+                fair_price=sig.fair_price,
+                trader_kind="value",
+                exit_horizon_sec=None,
+                signal_id=sig.signal_id,
+                backed_direction=sig.direction,
+                pending_entry_order_id=v_attempt.order_id if not is_filled else None,
+                strategy_kind="MODEL_VALUE_EDGE",
+                strategy_family="VALUE",
+                entry_engine="model_value",
+                exit_engine="value_fair_invalidation",
+                hold_policy="thesis_invalidation",
+                edge_type=sig.edge_type,
+                target_horizon=sig.target_horizon,
+                expected_hold_sec=sig.expected_hold_sec,
+                entry_trigger=sig.entry_trigger,
+                exit_trigger=sig.exit_trigger,
+                primary_metric=sig.primary_metric,
+                secondary_metric=sig.secondary_metric,
+                promotion_rule=sig.promotion_rule,
+                disable_rule=sig.disable_rule,
+                entry_fair=sig.fair_price,
+                entry_edge=sig.edge,
+                entry_ask=sig.ask,
+                entry_backed_side=sig.direction,
+                entry_radiant_lead=0.0,
+            )
+            ctx.live_position_store.add(v_pos)
+            ctx.entered_tokens.add(str(sig.token_id))
+            print(f"MODEL_VALUE LIVE ENTER {mapping.get('name')} {sig.side} entry≈{entry_px:.4f} edge={sig.edge:.4f} status={v_attempt.order_status}")
+            return StrategyExecutionResult(
+                strategy="MODEL_VALUE_EDGE",
+                token_id=str(sig.token_id),
+                match_id=str(game.get("match_id") or ""),
+                status="entered",
+                mode="LIVE",
+                order_id=v_attempt.order_id,
+                position_id=v_pos.position_id,
+            )
+        else:
+            print(f"MODEL_VALUE LIVE REJECT {mapping.get('name')} {sig.side} reason={v_attempt.reason_if_rejected}")
+            return StrategyExecutionResult(
+                strategy="MODEL_VALUE_EDGE",
+                token_id=str(sig.token_id),
+                match_id=str(game.get("match_id") or ""),
+                status="rejected",
+                mode="LIVE",
+                reason=v_attempt.reason_if_rejected or "",
+            )
+    else:
+        # Paper path
+        annotated_signal = sig.to_signal_dict()
+        if ctx.annotate_signal_policy_for_paper_fn:
+            annotated_signal = ctx.annotate_signal_policy_for_paper_fn(
+                signal=annotated_signal,
+                token_id=sig.token_id,
+                side=sig.side,
+                mapping=mapping,
+                game={"match_id": str(game.get("match_id") or "")},
+                book_store=book_store,
+                trader=ctx.trader,
+            )
+        pos, reason = ctx.trader.enter(
+            signal=annotated_signal,
+            token_id=sig.token_id,
+            side=sig.side,
+            book_store=book_store,
+            match_id=str(game.get("match_id") or ""),
+            market_name=mapping.get("name"),
+            opposing_token_id=opposing_tok,
+        )
+        if pos:
+            if ctx.loggers.position_logger:
+                ctx.loggers.position_logger.log_entry(pos)
+            print(f"MODEL_VALUE ENTER {mapping.get('name')} {sig.side} price={pos.entry_price:.4f} edge={sig.edge:.4f}")
+            return StrategyExecutionResult(
+                strategy="MODEL_VALUE_EDGE",
                 token_id=str(sig.token_id),
                 match_id=str(game.get("match_id") or ""),
                 status="entered",
