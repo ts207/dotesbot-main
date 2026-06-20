@@ -2088,6 +2088,7 @@ async def main():
         value_logger = ValueAttemptLogger()
         value_engine = ValueEngine()
         print(f"VALUE_ENGINE mode ON")
+    dswing_engine: DecisiveSwingEngine | None = None
     dswing_logger: DSwingAttemptLogger | None = None
     dswing_exit_quality_logger: DSwingExitQualityLogger | None = None
     dswing_map_end_detected_ns: dict[str, int] = {}

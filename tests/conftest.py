@@ -26,3 +26,11 @@ os.environ["REALTIME_STATS_ENABLED"] = "false"
 # Pin tests to FAK so existing FakeLiveClient (no buy_gtc_limit method)
 # keeps working. The production .env can use GTC; tests stay deterministic.
 os.environ["ORDER_TYPE"] = "FAK"
+
+# Ensure all engines are enabled and PAPER_MODE is research during tests
+os.environ["VALUE_ENGINE_ENABLED"] = "true"
+os.environ["EVENT_TRIGGERED_VALUE_ENABLED"] = "true"
+os.environ["DSWING_ENABLED"] = "true"
+os.environ["MODEL_VALUE_ENABLED"] = "true"
+os.environ["PAPER_MODE"] = "research"
+
