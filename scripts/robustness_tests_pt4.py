@@ -48,6 +48,8 @@ def main():
         c900 = df['clv_900s'].mean()
         c1200 = df['clv_1200s'].mean()
         
+
+        
         last_mids_clv = []
         for _, r in df.iterrows():
             lm = r.get('last_available_mid', np.nan)

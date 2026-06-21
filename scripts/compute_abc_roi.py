@@ -12,6 +12,8 @@ match_id_mapping = replay_df[replay_df['dota_match_id'].isin(resolved_dota_ids)]
 resolved_matches = set(match_id_mapping)
 
 trades_df['match_id'] = trades_df['match_id'].astype(str)
+trades_df['is_resolved'] = trades_df['match_id'].isin(resolved_matches)
+resolved_trades = trades_df[trades_df['is_resolved']]
 # Calculate true settlement PnL for resolved trades
 true_pnl = []
 for _, trade in resolved_trades.iterrows():

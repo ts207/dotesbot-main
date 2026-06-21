@@ -13,7 +13,8 @@ def run_backtest(out_dir, env_updates):
     cmd = [
         "python3", "scripts/backtest_model_value_edge_v1.py",
         "--replay-file", "data_v2/model_value_replay.parquet",
-        "--out-dir", out_dir
+        "--out-dir", out_dir,
+        "--no-filter"
     ]
     subprocess.run(cmd, env=env, check=True)
     
@@ -73,7 +74,7 @@ def main():
     lines.append("| threshold | signals | armed | confirmed | trades | resolved_trades | resolved_roi | mark_to_mid_roi | avg_edge | min_edge | p25_edge | p50_edge | p75_edge | avg_ask |")
     lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     
-    thresholds = [0.02, 0.05, 0.075, 0.10, 0.125, 0.15, 0.16, 0.175, 0.20, 0.25]
+    thresholds = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10]
     for th in thresholds:
         print(f"Sweeping threshold: {th}")
         tr, sig = run_backtest(f"reports/robustness_th_{th}", {

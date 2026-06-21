@@ -13,7 +13,8 @@ def run_backtest(out_dir, env_updates):
     cmd = [
         "python3", "scripts/backtest_model_value_edge_v1.py",
         "--replay-file", "data_v2/model_value_replay.parquet",
-        "--out-dir", out_dir
+        "--out-dir", out_dir,
+        "--no-filter"
     ]
     subprocess.run(cmd, env=env, check=True)
     
