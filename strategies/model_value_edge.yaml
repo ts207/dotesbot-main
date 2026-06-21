@@ -3,13 +3,14 @@ version: 2026-06-20
 enabled_paper: true
 enabled_dry_live: true
 enabled_real_live: false
-edge_type: absolute_state_value
+edge_type: "residual_market_value"
+trigger_schema: "v1"
 target_horizon: settlement
 expected_hold_sec: 0
-entry_trigger: p_model - ask
+entry_trigger: "market_mid + predicted_residual - ask"
 exit_trigger: game_over / fair_invalidation / max_hold
 primary_metric: settlement_roi
-secondary_metric: model_calibration
+secondary_metric: "clv_900s"
 promotion_rule: positive_roi
 disable_rule: negative_settlement_roi
 hold_policy: thesis_invalidation

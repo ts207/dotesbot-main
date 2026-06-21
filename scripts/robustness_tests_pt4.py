@@ -85,8 +85,8 @@ def main():
     
     # 11. Model-output sanity
     lines.append("## 11. Model-output sanity (across all signals)")
-    sig_prob = sig_df['model_probability'].dropna()
-    sig_edge = sig_df['edge'].dropna()
+    sig_prob = sig_02['model_probability'].dropna()
+    sig_edge = sig_02['edge'].dropna()
     
     def quantiles(s):
         if len(s) == 0: return "N/A"

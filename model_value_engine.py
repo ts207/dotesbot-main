@@ -65,6 +65,9 @@ class ModelValueSignal:
     policy_version: str = ""
     risk_tags: str = ""
 
+    confirmed: bool = False
+    confirmation_reason: str = ""
+
     edge_type: str = field(default_factory=lambda: strategy_registry.get("MODEL_VALUE_EDGE").edge_type)
     target_horizon: str = field(default_factory=lambda: strategy_registry.get("MODEL_VALUE_EDGE").target_horizon)
     expected_hold_sec: int = field(default_factory=lambda: strategy_registry.get("MODEL_VALUE_EDGE").expected_hold_sec)
@@ -102,6 +105,8 @@ class ModelValueSignal:
             "dire_net_worth": getattr(self, "dire_net_worth", None),
             "radiant_score": getattr(self, "radiant_score", None),
             "dire_score": getattr(self, "dire_score", None),
+            "confirmed": getattr(self, "confirmed", False),
+            "confirmation_reason": getattr(self, "confirmation_reason", ""),
             "radiant_lead": (getattr(self, "radiant_net_worth", 0) or 0) - (getattr(self, "dire_net_worth", 0) or 0),
             "would_pass_live_gates": self.would_pass_live_gates,
             "would_pass_live": self.would_pass_live,
@@ -297,7 +302,7 @@ class ModelValueEngine:
                 ))
                 continue
 
-            book_age_ms = int((time.time_ns() - received_at_ns) / 1_000_000)
+            book_age_ms = int((cur_ns - received_at_ns) / 1_000_000)
             spread = ask - bid
             edge = p - ask
 
@@ -344,6 +349,7 @@ class ModelValueEngine:
                 signal={
                     "event_type": "MODEL_VALUE_EDGE",
                     "strategy_kind": "MODEL_VALUE_EDGE",
+                    "strategy_family": "MODEL_VALUE",
                     "token_id": str(token_id),
                     "side": market_side,
                     "fair_price": p,
@@ -356,7 +362,7 @@ class ModelValueEngine:
                 game=dict(game),
                 mapping=dict(mapping),
                 book=dict(book),
-                now_ns=time.time_ns(),
+                now_ns=cur_ns,
             )))
 
             signal = ModelValueSignal(

@@ -330,7 +330,7 @@ def export_artifact(
 
     used_features = sorted(
         {
-            node["split_feature"]
+            FEATURES[node["split_feature"]]
             for tree in dumped["tree_info"]
             for node in walk_tree(tree["tree_structure"])
             if "split_feature" in node
@@ -377,6 +377,35 @@ def walk_tree(node: dict):
         yield from walk_tree(node["right_child"])
 
 
+def chronological_kfold_cv(df: pd.DataFrame, n_splits: int = 5):
+    match_times = df.groupby("match_id")["timestamp_ns"].min().sort_values()
+    matches = list(match_times.index)
+    fold_size = len(matches) // n_splits
+    
+    cv_metrics = []
+    
+    for i in range(n_splits):
+        if i == n_splits - 1:
+            valid_matches = set(matches[i * fold_size:])
+            train_matches = set(matches[:i * fold_size])
+        else:
+            valid_matches = set(matches[i * fold_size:(i + 1) * fold_size])
+            train_matches = set(matches[:i * fold_size] + matches[(i + 1) * fold_size:])
+            
+        train = df[df["match_id"].isin(train_matches)].copy()
+        valid = df[df["match_id"].isin(valid_matches)].copy()
+        
+        if train.empty or valid.empty:
+            continue
+            
+        booster = train_model(train, valid)
+        v_met = evaluate_model(booster, valid, "valid")
+        v_met["fold"] = i + 1
+        cv_metrics.append(v_met)
+        
+    return cv_metrics
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, help="Unified token-side replay parquet/csv")
@@ -395,6 +424,12 @@ def main():
     if df.empty:
         raise RuntimeError("No usable rows after normalization.")
 
+    # 5-fold CV for robust metrics
+    print("Running 5-fold cross-validation...")
+    cv_metrics = chronological_kfold_cv(df, n_splits=5)
+    for m in cv_metrics:
+        print(f"Fold {m['fold']}: AUC={m.get('auc_model', 0):.4f}, Brier={m.get('brier_model', 0):.4f}")
+
     train, valid = chronological_match_split(df, train_frac=0.8)
 
     if train.empty or valid.empty:
@@ -409,6 +444,7 @@ def main():
     metrics = {
         "train": train_metrics,
         "valid": valid_metrics,
+        "cv_folds": cv_metrics,
     }
 
     out_dir = Path(args.out_dir)

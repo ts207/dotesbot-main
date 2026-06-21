@@ -1,0 +1,11 @@
+{
+  "test_name": "model_value_v1_residual_baseline",
+  "threshold": 0.02,
+  "max_spread": 0.05,
+  "total_trades": 67,
+  "resolved_trades": 9,
+  "resolved_win_rate": 0.6667,
+  "resolved_roi": 0.66,
+  "diluted_roi": 0.058,
+  "avg_ask": 0.399
+}

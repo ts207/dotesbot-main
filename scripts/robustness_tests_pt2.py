@@ -71,6 +71,10 @@ def main():
             "MAX_BOOK_AGE_MS": bage,
         })
         if not tr.empty:
+            if 'book_age_ms' not in tr.columns:
+                sig_merge = sig[['timestamp_ns', 'token_id', 'book_age_ms']].copy()
+                sig_merge.rename(columns={'timestamp_ns': 'entry_timestamp_ns'}, inplace=True)
+                tr = tr.merge(sig_merge, on=['entry_timestamp_ns', 'token_id'], how='left')
             avg_b = tr['book_age_ms'].mean()
             p90_b = tr['book_age_ms'].quantile(0.9)
             res_tr = tr[tr['settlement_outcome'].isin(['WIN', 'LOSS'])]

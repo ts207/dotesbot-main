@@ -320,16 +320,19 @@ def _collect_model_value_candidates(ctx: StrategyCollectionContext) -> list[Stra
                 ctx.loggers.strategy_signal_logger.log_reject(result, strategy="MODEL_VALUE_EDGE")
             continue
 
+        confirmed = True
+        confirm_reason = ""
+        if ctx.model_value_confirmation_fn is not None:
+            confirmed, confirm_reason = ctx.model_value_confirmation_fn(result)
+            
+        import dataclasses
+        result = dataclasses.replace(result, confirmed=confirmed, confirmation_reason=confirm_reason)
+
         if ctx.loggers.strategy_signal_logger is not None:
             ctx.loggers.strategy_signal_logger.log_signal(result, strategy="MODEL_VALUE_EDGE")
 
         if not ctx.enable_model_value_trading:
             continue
-
-        confirmed = True
-        confirm_reason = ""
-        if ctx.model_value_confirmation_fn is not None:
-            confirmed, confirm_reason = ctx.model_value_confirmation_fn(result)
 
         if not confirmed:
             continue
