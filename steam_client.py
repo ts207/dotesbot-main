@@ -116,6 +116,8 @@ def normalize_top_live(g: dict, received_at_ns: int) -> dict:
             "team_slot": p.get("team_slot"),
         })
 
+    raw_radiant_lead = g.get("radiant_lead")
+
     return {
         "match_id": str(g.get("match_id") or g.get("lobby_id") or ""),
         "lobby_id": str(g.get("lobby_id") or ""),
@@ -125,7 +127,7 @@ def normalize_top_live(g: dict, received_at_ns: int) -> dict:
         "radiant_team_id": str(g.get("team_id_radiant") or ""),
         "dire_team_id": str(g.get("team_id_dire") or ""),
         "game_time_sec": int(g.get("game_time") or 0) or None,
-        "radiant_lead": int(g.get("radiant_lead") or 0),
+        "radiant_lead": int(raw_radiant_lead) if raw_radiant_lead not in (None, "") else None,
         "radiant_score": g.get("radiant_score"),
         "dire_score": g.get("dire_score"),
         "radiant_net_worth": None,
