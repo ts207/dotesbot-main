@@ -19,6 +19,8 @@ from config import (
     MODEL_VALUE_MAX_ASK,
     MODEL_VALUE_MAX_SPREAD,
     MODEL_VALUE_MAX_BOOK_AGE_MS,
+    MODEL_VALUE_MIN_GAME_TIME_SEC,
+    MODEL_VALUE_MAX_GAME_TIME_SEC,
     MODEL_VALUE_TRADE_USD,
     MODEL_VALUE_MODEL_PATH,
 )
@@ -231,6 +233,12 @@ class ModelValueEngine:
                 return [ModelValueReject(match_id, cur_ns, "series_market_unpriced", game_time_sec=game_time)]
         elif market_type != "MAP_WINNER":
             return [ModelValueReject(match_id, cur_ns, "unsupported_market_type", game_time_sec=game_time)]
+
+        if game_time is not None:
+            if game_time < MODEL_VALUE_MIN_GAME_TIME_SEC:
+                return [ModelValueReject(match_id, cur_ns, "game_time_too_early", game_time_sec=game_time)]
+            if game_time > MODEL_VALUE_MAX_GAME_TIME_SEC:
+                return [ModelValueReject(match_id, cur_ns, "game_time_too_late", game_time_sec=game_time)]
 
         candidates: list[ModelValueSignal] = []
         rejects: list[ModelValueReject] = []

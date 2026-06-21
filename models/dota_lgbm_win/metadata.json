@@ -1,11 +1,168 @@
 {
-  "model_name": "model_value_edge_v1_residual",
-  "model_class": "residual_tree",
+  "version": "model_value_edge_v1_residual_lgbm",
+  "model_name": "model_value_edge_v1_residual_lgbm",
+  "model_class": "lightgbm_residual_regressor",
   "strategy": "MODEL_VALUE_EDGE",
   "residual_mode": true,
   "uses_market_price": true,
   "uses_game_time": true,
   "uses_objectives": false,
   "uses_orderbook_dynamics": true,
-  "deployment_status": "paper_only"
+  "deployment_status": "paper_only",
+  "target": "settlement_outcome - market_mid",
+  "features": [
+    "market_mid",
+    "ask",
+    "spread",
+    "game_time_sec",
+    "token_net_worth_lead",
+    "token_score_margin",
+    "token_net_worth_lead_per_min"
+  ],
+  "features_used_by_trees": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "num_trees": 36,
+  "best_iteration": 36,
+  "train_rows": 1774,
+  "train_matches": 7,
+  "valid_rows": 326,
+  "valid_matches": 2,
+  "metrics": {
+    "train": {
+      "split": "train",
+      "rows": 1774,
+      "matches": 7,
+      "residual_rmse": 0.20764263322578044,
+      "residual_mae": 0.1784380371770048,
+      "brier_model": 0.13187828017935002,
+      "brier_market_mid": 0.21584960541149942,
+      "pred_residual_min": -0.22271776897872578,
+      "pred_residual_p01": -0.2197595920433803,
+      "pred_residual_p50": -0.012649260581737355,
+      "pred_residual_p99": 0.22428446701346472,
+      "pred_residual_max": 0.22796882951359507,
+      "auc_model": 0.8992112043052026,
+      "auc_market_mid": 0.7110873712614504
+    },
+    "valid": {
+      "split": "valid",
+      "rows": 326,
+      "matches": 2,
+      "residual_rmse": 0.26335888844417854,
+      "residual_mae": 0.21426525261296886,
+      "brier_model": 0.11970443905418113,
+      "brier_market_mid": 0.14488228527607364,
+      "pred_residual_min": -0.2213651653546942,
+      "pred_residual_p01": -0.21804595295841872,
+      "pred_residual_p50": -0.003853425278235848,
+      "pred_residual_p99": 0.21405643440749222,
+      "pred_residual_max": 0.2200326215855045,
+      "auc_model": 0.926342730249539,
+      "auc_market_mid": 0.8957055214723927
+    }
+  },
+  "threshold_sweep_valid": [
+    {
+      "threshold": 0.005,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.01,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.015,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.02,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.025,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.03,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.04,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.05,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.075,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    },
+    {
+      "threshold": 0.1,
+      "trades": 2,
+      "win_rate": 0.5,
+      "avg_ask": 0.435,
+      "avg_edge": 0.11450876880422606,
+      "one_share_profit": 0.13000000000000006,
+      "one_share_roi": 0.1494252873563219
+    }
+  ],
+  "notes": [
+    "Runtime prediction is p_model = clamp(market_mid + tree_sum, 0, 1).",
+    "Backtest must use residual-scale thresholds, not old 0.15 direct-probability threshold.",
+    "No real-live deployment until live-parity paper validation passes."
+  ]
 }

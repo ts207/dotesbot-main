@@ -11215,9 +11215,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Zero Tenacity
   no_team: summer bear
   yes_token_id: '54063075467585210739343990295410299525566370988018947965832288333013604284817'
@@ -11231,14 +11231,14 @@ markets:
   market_type: MATCH_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Zero Tenacity
   no_team: summer bear
   yes_token_id: '31078978501425946242412050855414820388989304345814568717372291823744323205915'
   no_token_id: '35203412356609143375322443286243066344493132802312192318736948759777432583761'
-  dota_match_id: '8859240763'
+  dota_match_id: '8859479770'
   confidence: 1.0
   scheduled_start_utc: '2026-06-19 21:44:46'
   steam_radiant_team: Zero Tenacity
@@ -11250,9 +11250,9 @@ markets:
   market_type: MAP_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Zero Tenacity
   no_team: summer bear
   yes_token_id: '54063075467585210739343990295410299525566370988018947965832288333013604284817'
@@ -11271,18 +11271,102 @@ markets:
   market_type: MATCH_WINNER
   series_type: '1'
   p_next_yes: 0.5
-  series_score_yes: 0
-  series_score_no: 0
-  current_game_number: 1
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
   yes_team: Zero Tenacity
   no_team: summer bear
   yes_token_id: '31078978501425946242412050855414820388989304345814568717372291823744323205915'
   no_token_id: '35203412356609143375322443286243066344493132802312192318736948759777432583761'
-  dota_match_id: '8859240763'
+  dota_match_id: '8859479770'
   confidence: 1.0
   scheduled_start_utc: '2026-06-19 21:44:46'
   auto_mapped_at_utc: '2026-06-20T13:43:17+00:00'
   auto_mapped_source: auto_series_binder
   steam_radiant_team: Zero Tenacity
   steam_dire_team: Summer Bear
+  steam_side_mapping: normal
+- name: 'Dota 2: Zero Tenacity vs summer bear - Game 2 Winner'
+  condition_id: '0x2518c10a8f46a33d3cef142b5c95bda2206537a7eaea0bec75b8c94d90b6a4d5'
+  market_id: '2610557'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Zero Tenacity
+  no_team: summer bear
+  yes_token_id: '77562371499057289973110932666180856281234528662946738959766597394028445699146'
+  no_token_id: '4753872972122610991919545021008848452271745217918234841762777623127026131176'
+  dota_match_id: '8859387515'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:46'
+  auto_mapped_at_utc: '2026-06-20T15:00:08+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Zero Tenacity
+  steam_dire_team: Summer Bear
+  steam_side_mapping: normal
+- name: 'Dota 2: Hive vs Flame Team - Game 1 Winner'
+  condition_id: '0x55d2c41cbe452c7abb71df86b19153317cb3a0ac6b69bf91c18be9515a584dc8'
+  market_id: '2610618'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Hive
+  no_team: Flame Team
+  yes_token_id: '79368263858439523600527009530564317407131150197850197994029449204512613685261'
+  no_token_id: '97496250152859819575928980546127817213782412863278139747136715162602502762032'
+  dota_match_id: '8859557121'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:30'
+  auto_mapped_at_utc: '2026-06-20T17:03:38+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Flame Esports
+  steam_dire_team: Hive
+  steam_side_mapping: reversed
+- name: 'Dota 2: Hive vs Flame Team (BO3) - European Pro League Playoffs'
+  condition_id: '0x55f4283681fb9badb30bf4610b47d245505dd23b892943eee557f4a0aec21561'
+  market_id: '2610639'
+  market_type: MATCH_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Hive
+  no_team: Flame Team
+  yes_token_id: '76019597706116309139615822515808344574855681114464891478752447163825503795907'
+  no_token_id: '85299323520593823809985514480260542295036691943701148762434331397159413055150'
+  dota_match_id: '8859711051'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:30'
+  auto_mapped_at_utc: '2026-06-20T17:03:38+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Hive
+  steam_dire_team: Flame Esports
+  steam_side_mapping: normal
+- name: 'Dota 2: Hive vs Flame Team - Game 2 Winner'
+  condition_id: '0x07582f61e58c5cf53920bf2e9c65bb7cca097d25d1ce410055f7f25944b7051a'
+  market_id: '2610620'
+  market_type: MAP_WINNER
+  series_type: '1'
+  p_next_yes: 0.5
+  series_score_yes: 1
+  series_score_no: 1
+  current_game_number: 3
+  yes_team: Hive
+  no_team: Flame Team
+  yes_token_id: '63665345160245990587436824239891184988889002042932014456548178758246602509208'
+  no_token_id: '34940514447481488441943138407138907736907858797978518852863024578458130660819'
+  dota_match_id: '8859647419'
+  confidence: 1.0
+  scheduled_start_utc: '2026-06-19 21:44:30'
+  auto_mapped_at_utc: '2026-06-20T18:10:52+00:00'
+  auto_mapped_source: auto_series_binder
+  steam_radiant_team: Hive
+  steam_dire_team: Flame Esports
   steam_side_mapping: normal
