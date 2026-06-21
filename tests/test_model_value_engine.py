@@ -126,13 +126,13 @@ def test_engine_rejects_ask_out_of_bounds(base_game, base_mapping):
         assert any(isinstance(r, ModelValueReject) and r.reason == "ask_out_of_bounds" for r in res)
 
 def test_engine_rejects_small_edge(base_game, base_mapping):
-    # If edge < 15c
+    # If edge < 0.02
     engine = ModelValueEngine()
     book_store = MagicMock()
-    # Say model probability is 0.55, ask is 0.50. Edge is 0.05 < 0.15
+    # Say model probability is 0.51, ask is 0.50. Edge is 0.01 < 0.02
     with patch("model_value_predictor.predict_probability") as mock_pred:
         mock_pred.return_value = {
-            "model_probability": 0.55,
+            "model_probability": 0.51,
             "model_version": "test",
             "features_available": True,
             "reason": "ok"

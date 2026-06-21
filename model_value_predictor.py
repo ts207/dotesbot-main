@@ -72,9 +72,48 @@ def load_model(model_path: str = "models/dota_lgbm_win/model.json") -> bool:
         _METADATA = None
         return False
 
+
+def canonical_team_net_worth(game: dict) -> tuple[float, float, float]:
+    """Extract radiant_nw, dire_nw, and radiant_lead from all possible sources.
+    Returns (r_nw, d_nw, radiant_lead). Missing values are float('nan').
+    """
+    radiant_candidates = [
+        "radiant_net_worth", "radiantNetWorth", "radiant_networth", "radiant_gold",
+        "delayed_radiant_net_worth", "realtime_radiant_nw"
+    ]
+    dire_candidates = [
+        "dire_net_worth", "direNetWorth", "dire_networth", "dire_gold",
+        "delayed_dire_net_worth", "realtime_dire_nw"
+    ]
+    lead_candidates = [
+        "radiant_lead", "realtime_lead_nw", "delayed_net_worth_diff"
+    ]
+
+    def first_number(keys):
+        for k in keys:
+            v = game.get(k)
+            if v not in (None, "", "nan"):
+                try:
+                    val = float(v)
+                    if not math.isnan(val):
+                        return val
+                except (TypeError, ValueError):
+                    pass
+        return float('nan')
+
+    r_nw = first_number(radiant_candidates)
+    d_nw = first_number(dire_candidates)
+    r_lead = first_number(lead_candidates)
+    
+    # Impute lead if missing but we have totals
+    if math.isnan(r_lead) and not math.isnan(r_nw) and not math.isnan(d_nw):
+        r_lead = r_nw - d_nw
+        
+    return r_nw, d_nw, r_lead
+
 def build_side_features(
-    game: dict | Mapping,
-    mapping: dict | Mapping,
+    game: dict[str, Any],
+    mapping: dict[str, Any],
     side: str,
     book: dict | None = None,
     paired_book: dict | None = None,
@@ -84,22 +123,25 @@ def build_side_features(
     Returns None if any of the required features (net worths, scores) are missing or invalid.
     """
     try:
-        radiant_nw = game.get("radiant_net_worth")
-        dire_nw = game.get("dire_net_worth")
+        r_nw, d_nw, r_lead = canonical_team_net_worth(game)
+        
+        import os
+        require_nw = os.getenv("MODEL_VALUE_REQUIRE_NET_WORTH", "true").lower() in {"1", "true", "yes"}
+        if require_nw and math.isnan(r_lead):
+            return None
+            
         radiant_score = game.get("radiant_score")
         dire_score = game.get("dire_score")
         # Convert to float, replacing None with NaN
-        r_nw = float(radiant_nw) if radiant_nw is not None else float('nan')
-        d_nw = float(dire_nw) if dire_nw is not None else float('nan')
         r_score = float(radiant_score) if radiant_score is not None else float('nan')
         d_score = float(dire_score) if dire_score is not None else float('nan')
 
         side_lower = side.lower()
         if side_lower == "radiant":
-            token_net_worth_lead = r_nw - d_nw
+            token_net_worth_lead = r_lead
             token_score_margin = r_score - d_score
         elif side_lower == "dire":
-            token_net_worth_lead = d_nw - r_nw
+            token_net_worth_lead = -r_lead if not math.isnan(r_lead) else float('nan')
             token_score_margin = d_score - r_score
         else:
             return None

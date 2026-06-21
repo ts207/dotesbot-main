@@ -13,9 +13,11 @@ from model_value_engine import (
 )
 
 def build_game(row) -> Dict[str, Any]:
+    ds = getattr(row, "data_source", "top_live")
+    if pd.isna(ds): ds = "top_live"
     return {
         "match_id": str(row.match_id),
-        "data_source": getattr(row, "data_source", "top_live"),
+        "data_source": ds,
         "received_at_ns": int(row.timestamp_ns),
         "game_over": bool(row.game_over) if pd.notna(row.game_over) and row.game_over in [True, "True", 1, "1"] else False,
         "game_time_sec": int(row.game_time_sec) if pd.notnull(row.game_time_sec) else 1,
@@ -23,7 +25,7 @@ def build_game(row) -> Dict[str, Any]:
         "dire_net_worth": float(row.dire_net_worth),
         "radiant_score": float(row.radiant_score),
         "dire_score": float(row.dire_score),
-        "radiant_lead": float(row.radiant_net_worth) - float(row.dire_net_worth),
+        "radiant_lead": float(row.radiant_lead) if getattr(row, "radiant_lead", None) is not None and not pd.isna(getattr(row, "radiant_lead", None)) else (float(row.radiant_net_worth) - float(row.dire_net_worth) if not pd.isna(row.radiant_net_worth) else float('nan')),
         "building_state": 0,
         "tower_state": 0,
     }

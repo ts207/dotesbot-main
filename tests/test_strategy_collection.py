@@ -434,24 +434,12 @@ def test_model_value_edge_unconfirmed_not_collected(base_ctx):
     base_ctx.model_value_engine = MagicMock()
     
     from model_value_engine import ModelValueSignal
-    sig = MagicMock(spec=ModelValueSignal)
-    sig.token_id = "tok_yes"
-    sig.direction = "radiant"
-    sig.edge = 0.20
-    sig.fair_price = 0.70
-    sig.game_time_sec = 600
-    sig.ask = 0.50
-    sig.side = "YES"
-    sig.edge_type = "model_value"
-    sig.target_horizon = "end"
-    sig.expected_hold_sec = 600
-    sig.entry_trigger = "m"
-    sig.exit_trigger = "m"
-    sig.would_pass_live_gates = True
-    sig.primary_metric = "m"
-    sig.secondary_metric = "m2"
-    sig.promotion_rule = "p"
-    sig.disable_rule = "d"
+    sig = ModelValueSignal(
+        signal_id="s1", match_id="m1", received_at_ns=1, direction="radiant", side="YES",
+        token_id="tok_yes", fair_price=0.70, ask=0.50, edge=0.20, game_time_sec=600, book_age_ms=100,
+        model_version="v1", model_reason="ok", sized_usd=10.0,
+        token_net_worth_lead=1000, token_score_margin=1, radiant_net_worth=15000, dire_net_worth=14000, radiant_score=10, dire_score=9
+    )
     
     base_ctx.model_value_engine.evaluate.return_value = [sig]
     base_ctx.model_value_confirmation_fn = MagicMock(return_value=(False, "not_confirmed"))
@@ -464,24 +452,12 @@ def test_model_value_edge_confirmed_collected(base_ctx):
     base_ctx.model_value_engine = MagicMock()
     
     from model_value_engine import ModelValueSignal
-    sig = MagicMock(spec=ModelValueSignal)
-    sig.token_id = "tok_yes"
-    sig.direction = "radiant"
-    sig.edge = 0.20
-    sig.fair_price = 0.70
-    sig.game_time_sec = 600
-    sig.ask = 0.50
-    sig.side = "YES"
-    sig.edge_type = "model_value"
-    sig.target_horizon = "end"
-    sig.expected_hold_sec = 600
-    sig.entry_trigger = "m"
-    sig.exit_trigger = "m"
-    sig.would_pass_live_gates = True
-    sig.primary_metric = "m"
-    sig.secondary_metric = "m2"
-    sig.promotion_rule = "p"
-    sig.disable_rule = "d"
+    sig = ModelValueSignal(
+        signal_id="s1", match_id="m1", received_at_ns=1, direction="radiant", side="YES",
+        token_id="tok_yes", fair_price=0.70, ask=0.50, edge=0.20, game_time_sec=600, book_age_ms=100,
+        model_version="v1", model_reason="ok", sized_usd=10.0,
+        token_net_worth_lead=1000, token_score_margin=1, radiant_net_worth=15000, dire_net_worth=14000, radiant_score=10, dire_score=9
+    )
     
     base_ctx.model_value_engine.evaluate.return_value = [sig]
     base_ctx.model_value_confirmation_fn = MagicMock(return_value=(True, "confirmed"))

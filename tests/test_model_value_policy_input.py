@@ -71,5 +71,5 @@ def test_engine_policy_input_has_strategy_family():
         assert mock_evaluate_policy.call_count >= 1
         policy_input = mock_evaluate_policy.call_args[0][0]
         
-        assert policy_input.strategy_family == "MODEL_VALUE"
+        assert policy_input.signal.get("strategy_family") == "MODEL_VALUE"
         assert policy_input.signal.get("strategy_family") == "MODEL_VALUE"

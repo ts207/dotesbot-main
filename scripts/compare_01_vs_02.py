@@ -8,8 +8,8 @@ def load_trades(path):
     return df
 
 def main():
-    t01 = load_trades("reports/robustness_th_0.01/model_value_v1_trades.csv")
-    t02 = load_trades("reports/robustness_th_0.02/model_value_v1_trades.csv")
+    t01 = load_trades("reports/model_value_audit_20260621_195300/robustness_th_0.01/model_value_v1_trades.csv")
+    t02 = load_trades("reports/model_value_audit_20260621_195300/robustness_th_0.02/model_value_v1_trades.csv")
     
     keys_01 = set(t01['trade_key'])
     keys_02 = set(t02['trade_key'])

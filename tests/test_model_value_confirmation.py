@@ -76,8 +76,8 @@ def test_edge_falling_below_threshold_resets_confirmation():
     confirmed1, reason1 = _model_value_confirmation_passes(sig1)
     assert confirmed1 is False
     
-    # Edge falls below min edge 0.15 (e.g. 0.10)
-    sig2 = make_test_signal(ask=0.50, edge=0.10, received_at_ns=sig1.received_at_ns + 2 * 1_000_000_000)
+    # Edge falls below min edge 0.02 (e.g. 0.01)
+    sig2 = make_test_signal(ask=0.50, edge=0.01, received_at_ns=sig1.received_at_ns + 2 * 1_000_000_000)
     confirmed2, reason2 = _model_value_confirmation_passes(sig2)
     assert confirmed2 is False
     assert "model_value_confirm_edge_too_low" in reason2
