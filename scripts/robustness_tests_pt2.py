@@ -68,7 +68,7 @@ def main():
         tr, sig = run_backtest(f"reports/robustness_bage_{bage}", {
             "MODEL_VALUE_MIN_EDGE": "0.02",
             "MODEL_VALUE_CONFIRM_MIN_EDGE": "0.02",
-            "MAX_BOOK_AGE_MS": bage,
+            "MODEL_VALUE_MAX_BOOK_AGE_MS": bage,
         })
         if not tr.empty:
             if 'book_age_ms' not in tr.columns:

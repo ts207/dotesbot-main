@@ -170,6 +170,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--replay-file", required=True, help="Path to replay CSV")
     parser.add_argument("--out-dir", default="reports", help="Output directory")
+    parser.add_argument("--no-filter", action="store_true", help="Do not filter to resolved matches")
     args = parser.parse_args()
 
     print(f"Loading {args.replay_file}...")
@@ -177,6 +178,16 @@ def main():
         rows = pd.read_parquet(args.replay_file)
     else:
         rows = pd.read_csv(args.replay_file)
+        
+    if not args.no_filter:
+        print(f"Loaded {len(rows)} rows. Filtering to fully resolved matches only...")
+        # Find matches where the last row for that match has a non-null settled_yes_outcome
+        valid_matches = rows.groupby('dota_match_id')['settled_yes_outcome'].last().notna()
+        valid_match_ids = valid_matches[valid_matches].index
+        rows = rows[rows['dota_match_id'].isin(valid_match_ids)]
+        print(f"Filtered to {len(rows)} rows with known terminal outcomes.")
+    else:
+        print(f"Loaded {len(rows)} rows. No filtering applied.")
     
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -227,7 +238,13 @@ def main():
                 signals[-1]["decision"] = "reject_model_value_match_already_entered"
                 continue
             
-            settlement = row.settled_yes_outcome if res.side == "YES" else row.settled_no_outcome
+            # Find the true settlement outcome by looking at the last available row for this token
+            future_token_rows = rows[(rows['yes_token_id'] == res.token_id) | (rows['no_token_id'] == res.token_id)]
+            if not future_token_rows.empty:
+                last_row = future_token_rows.iloc[-1]
+                settlement = last_row.settled_yes_outcome if res.side == "YES" else last_row.settled_no_outcome
+            else:
+                settlement = row.settled_yes_outcome if res.side == "YES" else row.settled_no_outcome
 
             stake_usd = 5.0
             trade = {

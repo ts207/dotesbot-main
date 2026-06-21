@@ -88,16 +88,11 @@ def build_side_features(
         dire_nw = game.get("dire_net_worth")
         radiant_score = game.get("radiant_score")
         dire_score = game.get("dire_score")
-
-        if (radiant_nw is None or dire_nw is None or 
-            radiant_score is None or dire_score is None):
-            return None
-
-        # Convert to float and handle potential formatting/parsing issues
-        r_nw = float(radiant_nw)
-        d_nw = float(dire_nw)
-        r_score = float(radiant_score)
-        d_score = float(dire_score)
+        # Convert to float, replacing None with NaN
+        r_nw = float(radiant_nw) if radiant_nw is not None else float('nan')
+        d_nw = float(dire_nw) if dire_nw is not None else float('nan')
+        r_score = float(radiant_score) if radiant_score is not None else float('nan')
+        d_score = float(dire_score) if dire_score is not None else float('nan')
 
         side_lower = side.lower()
         if side_lower == "radiant":
@@ -124,6 +119,8 @@ def build_side_features(
         game_time_sec = float(game.get("game_time_sec", 1.0))
         if game_time_sec <= 0:
             game_time_sec = 1.0
+            
+        safe_minutes = max(game_time_sec / 60.0, 5.0)
 
         return {
             "token_net_worth_lead": token_net_worth_lead,
@@ -136,7 +133,7 @@ def build_side_features(
             "ask": ask,
             "spread": spread,
             "game_time_sec": game_time_sec,
-            "token_net_worth_lead_per_min": token_net_worth_lead / (game_time_sec / 60.0)
+            "token_net_worth_lead_per_min": token_net_worth_lead / safe_minutes
         }
     except (TypeError, ValueError):
         return None
@@ -157,7 +154,7 @@ def _evaluate_node(node: dict, features: dict[str, float], feature_names_list: l
     elif isinstance(split_feature, str):
         feature_val = features.get(split_feature)
 
-    if feature_val is None:
+    if feature_val is None or math.isnan(feature_val):
         # Default direction on missing feature value (typical LightGBM default_left)
         default_left = node.get("default_left", True)
         child = node.get("left_child") if default_left else node.get("right_child")

@@ -119,7 +119,6 @@ def normalize_replay(df: pd.DataFrame) -> pd.DataFrame:
         "best_bid",
         "best_ask",
         "game_time_sec",
-        "token_net_worth_lead",
         "token_score_margin",
         "settlement_outcome",
     ]
@@ -152,10 +151,10 @@ def normalize_replay(df: pd.DataFrame) -> pd.DataFrame:
     out["spread"] = out["best_ask"] - out["best_bid"]
 
     # Runtime feature builder protects against zero time similarly.
-    safe_minutes = np.maximum(out["game_time_sec"].astype(float) / 60.0, 1.0 / 60.0)
+    safe_minutes = np.maximum(out["game_time_sec"].astype(float) / 60.0, 5.0)
     out["token_net_worth_lead_per_min"] = out["token_net_worth_lead"] / safe_minutes
 
-    # Basic book sanity.
+    # Basic book sanity & early game filter (noise reduction)
     out = out[
         (out["best_bid"] >= 0.0)
         & (out["best_ask"] <= 1.0)
@@ -163,6 +162,7 @@ def normalize_replay(df: pd.DataFrame) -> pd.DataFrame:
         & (out["market_mid"] > 0.0)
         & (out["market_mid"] < 1.0)
         & (out["settlement_outcome"].isin([0, 1]))
+        & (out["game_time_sec"] >= 420.0)
     ].copy()
 
     # Target for residual model.

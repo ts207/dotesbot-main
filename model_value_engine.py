@@ -340,6 +340,7 @@ class ModelValueEngine:
                 continue
 
             # Run policy evaluation through evaluate_policy
+            from config import MIN_ASK_SIZE_USD
             policy_fields = signal_policy_fields(evaluate_policy(PolicyInput(
                 mode=mode,
                 strategy_kind="MODEL_VALUE_EDGE",
@@ -356,6 +357,7 @@ class ModelValueEngine:
                     "executable_edge": edge,
                     "ask": ask,
                     "max_fill_price": MODEL_VALUE_MAX_ASK,
+                    "min_ask_size_usd": MIN_ASK_SIZE_USD,
                     "target_horizon": "settlement",
                     "expected_hold_sec": 0,
                 },
