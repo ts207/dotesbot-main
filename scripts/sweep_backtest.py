@@ -16,6 +16,7 @@ def run_sweep():
         env = os.environ.copy()
         env["MODEL_VALUE_MIN_EDGE"] = str(edge)
         env["MODEL_VALUE_CONFIRM_MIN_EDGE"] = str(edge)
+        env["MODEL_VALUE_REQUIRE_NET_WORTH"] = "true"
         env["PYTHONPATH"] = "."
         
         # Out dir
@@ -23,7 +24,7 @@ def run_sweep():
         os.makedirs(out_dir, exist_ok=True)
         
         cmd = [
-            "python3", "scripts/backtest_model_value_edge_v1.py",
+            ".venv/bin/python3", "scripts/backtest_model_value_edge_v1.py",
             "--replay-file", data_file,
             "--out-dir", out_dir
         ]
