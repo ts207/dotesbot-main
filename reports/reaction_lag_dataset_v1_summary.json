@@ -1,0 +1,30 @@
+{
+  "input_rows": 1089,
+  "input_matches": 42,
+  "output_rows": 1089,
+  "output_matches": 42,
+  "candidate_rows_reaction_lag_02": 218,
+  "candidate_matches_reaction_lag_02": 33,
+  "feature_columns": [
+    "state_price_equiv_30s",
+    "state_price_equiv_60s",
+    "state_move_score",
+    "price_response_score",
+    "reaction_lag_score",
+    "state_price_response_ratio",
+    "wrong_way_or_flat_price"
+  ],
+  "notes": [
+    "Input is expected to be the strict gettoplive/live-parity dataset.",
+    "Features use only current and lagged gettoplive state plus current and lagged Polymarket book fields.",
+    "CLV and settlement columns are labels/evaluation fields only."
+  ],
+  "diagnostics": {
+    "avg_ask": 0.39653994490358124,
+    "avg_state_move_score": -0.015817144628099175,
+    "avg_price_response_score": -0.005172291092745639,
+    "avg_reaction_lag_score": -0.010644853535353537,
+    "avg_clv_120s": -0.0210702479338843,
+    "avg_clv_300s": -0.02998852157943067
+  }
+}

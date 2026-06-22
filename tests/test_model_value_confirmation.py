@@ -56,6 +56,16 @@ def test_second_signal_confirms():
     assert confirmed2 is True
     assert "model_value_confirmed" in reason2
 
+def test_same_timestamp_duplicate_does_not_confirm():
+    sig1 = make_test_signal(ask=0.50, edge=0.20)
+    confirmed1, _ = _model_value_confirmation_passes(sig1)
+    assert confirmed1 is False
+
+    sig2 = make_test_signal(ask=0.50, edge=0.20, received_at_ns=sig1.received_at_ns)
+    confirmed2, reason2 = _model_value_confirmation_passes(sig2)
+    assert confirmed2 is False
+    assert "model_value_confirm_too_young" in reason2
+
 def test_ask_worsening_resets_confirmation():
     sig1 = make_test_signal(ask=0.50, edge=0.20)
     confirmed1, reason1 = _model_value_confirmation_passes(sig1)

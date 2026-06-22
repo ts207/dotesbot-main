@@ -13,6 +13,7 @@ from config import (
     MODEL_VALUE_MIN_EDGE,
     MODEL_VALUE_CONFIRM_ENABLED,
     MODEL_VALUE_CONFIRM_MIN_EDGE,
+    MODEL_VALUE_CONFIRM_MIN_AGE_SEC,
     MODEL_VALUE_CONFIRM_MAX_AGE_SEC,
     MODEL_VALUE_CONFIRM_MAX_ASK_WORSEN,
     MODEL_VALUE_MIN_ASK,
@@ -147,6 +148,7 @@ def _model_value_confirmation_passes(result: ModelValueSignal) -> tuple[bool, st
         return True, "disabled"
 
     min_edge = MODEL_VALUE_CONFIRM_MIN_EDGE
+    min_age_sec = MODEL_VALUE_CONFIRM_MIN_AGE_SEC
     max_age_sec = MODEL_VALUE_CONFIRM_MAX_AGE_SEC
     max_ask_worsen = MODEL_VALUE_CONFIRM_MAX_ASK_WORSEN
     key = f"{result.match_id}|{result.token_id}|{result.side}"
@@ -168,6 +170,8 @@ def _model_value_confirmation_passes(result: ModelValueSignal) -> tuple[bool, st
 
     age_sec = max(0.0, (now_ns - int(prior["received_at_ns"])) / 1e9)
     ask_worsen = float(result.ask) - float(prior["ask"])
+    if age_sec < min_age_sec:
+        return False, f"model_value_confirm_too_young:age={age_sec:.1f}_min={min_age_sec:.1f}"
     if age_sec > max_age_sec:
         _MODEL_VALUE_CONFIRM_STATE[key] = {
             "received_at_ns": now_ns,
@@ -303,10 +307,20 @@ class ModelValueEngine:
                 continue
 
             book_age_ms = int((cur_ns - received_at_ns) / 1_000_000)
+            if book_age_ms < 0 and abs(book_age_ms) <= 100:
+                book_age_ms = 0
             spread = ask - bid
             edge = p - ask
 
             # Engine filters
+            if book_age_ms < 0:
+                rejects.append(ModelValueReject(
+                    match_id, cur_ns, "book_timestamp_in_future",
+                    direction=direction, side=market_side, token_id=token_id,
+                    fair_price=p, ask=ask, edge=edge, game_time_sec=game_time, book_age_ms=book_age_ms
+                ))
+                continue
+
             if edge < MODEL_VALUE_MIN_EDGE:
                 rejects.append(ModelValueReject(
                     match_id, cur_ns, "edge_too_small",

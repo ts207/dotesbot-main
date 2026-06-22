@@ -86,6 +86,28 @@ def test_engine_rejects_stale_book(base_game, base_mapping):
         # Should reject with book_stale
         assert any(isinstance(r, ModelValueReject) and r.reason == "book_stale" for r in res)
 
+def test_engine_rejects_future_book_timestamp(base_game, base_mapping):
+    engine = ModelValueEngine()
+    now_ns = time.time_ns()
+    game = dict(base_game)
+    game["received_at_ns"] = now_ns
+    book_store = MagicMock()
+    book_store.get.return_value = {
+        "best_ask": 0.50,
+        "best_bid": 0.48,
+        "received_at_ns": now_ns + 1_000_000_000,
+    }
+    with patch("model_value_predictor.predict_probability") as mock_pred:
+        mock_pred.return_value = {
+            "model_probability": 0.80,
+            "model_version": "test",
+            "features_available": True,
+            "reason": "ok"
+        }
+        res = engine.evaluate(game, base_mapping, book_store, entered_tokens=set())
+        assert len(res) >= 1
+        assert any(isinstance(r, ModelValueReject) and r.reason == "book_timestamp_in_future" for r in res)
+
 def test_engine_rejects_wide_spread(base_game, base_mapping):
     engine = ModelValueEngine()
     book_store = MagicMock()

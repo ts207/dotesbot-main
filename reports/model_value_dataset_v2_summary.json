@@ -1,0 +1,63 @@
+{
+  "input_rows": 26748,
+  "input_matches": 69,
+  "output_rows": 1089,
+  "output_matches": 42,
+  "gate_counts_individual": {
+    "top_live": 10302,
+    "resolved": 26748,
+    "side_known": 26748,
+    "source_fresh": 20026,
+    "book_age_valid": 13932,
+    "book_prices_valid": 18385,
+    "spread_ok": 13196,
+    "ask_ok": 13039,
+    "game_time_ok": 18820,
+    "features_present": 26748
+  },
+  "gate_counts_all_before_velocity": 1651,
+  "settings": {
+    "max_source_age_sec": 15.0,
+    "max_book_age_ms": 2500.0,
+    "max_spread": 0.05,
+    "max_ask": 0.8,
+    "min_game_time_sec": 420.0,
+    "max_game_time_sec": 2400.0
+  },
+  "feature_columns": [
+    "market_mid",
+    "ask",
+    "bid",
+    "spread",
+    "game_time_sec",
+    "source_update_age_sec",
+    "book_age_ms",
+    "token_net_worth_lead",
+    "token_score_margin",
+    "token_net_worth_lead_per_min",
+    "lead_delta_15s",
+    "lead_delta_30s",
+    "lead_delta_60s",
+    "score_delta_30s",
+    "lead_velocity_30s",
+    "lead_accel_60s",
+    "lead_volatility_60s",
+    "mid_delta_15s",
+    "mid_delta_30s",
+    "mid_delta_60s",
+    "ask_delta_30s",
+    "spread_delta_30s"
+  ],
+  "label_columns": [
+    "settlement_binary",
+    "settlement_ev",
+    "clv_120s",
+    "clv_300s",
+    "clv_900s",
+    "net_ev_after_04c"
+  ],
+  "notes": [
+    "Features are restricted to gettoplive state and Polymarket book fields.",
+    "Settlement and future mid columns are labels/evaluation fields only."
+  ]
+}

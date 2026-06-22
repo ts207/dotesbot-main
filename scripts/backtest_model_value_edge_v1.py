@@ -15,7 +15,7 @@ from model_value_engine import (
 def build_game(row) -> Dict[str, Any]:
     ds = getattr(row, "data_source", "top_live")
     if pd.isna(ds): ds = "top_live"
-    return {
+    game = {
         "match_id": str(row.match_id),
         "data_source": ds,
         "received_at_ns": int(row.timestamp_ns),
@@ -29,6 +29,10 @@ def build_game(row) -> Dict[str, Any]:
         "building_state": 0,
         "tower_state": 0,
     }
+    source_age = getattr(row, "source_update_age_sec", None)
+    if source_age is not None and not pd.isna(source_age):
+        game["source_update_age_sec"] = float(source_age)
+    return game
 
 def build_mapping(row) -> Dict[str, Any]:
     return {
@@ -39,16 +43,31 @@ def build_mapping(row) -> Dict[str, Any]:
     }
 
 def build_book_store(row) -> Dict[str, Dict[str, Any]]:
+    yes_book = {
+        "best_bid": float(row.yes_best_bid) if pd.notnull(row.yes_best_bid) else 0.0,
+        "best_ask": float(row.yes_best_ask) if pd.notnull(row.yes_best_ask) else 1.0,
+        "received_at_ns": int(row.book_received_at_ns) if pd.notna(row.book_received_at_ns) else 0,
+    }
+    no_book = {
+        "best_bid": float(row.no_best_bid) if pd.notnull(row.no_best_bid) else 0.0,
+        "best_ask": float(row.no_best_ask) if pd.notnull(row.no_best_ask) else 1.0,
+        "received_at_ns": int(row.book_received_at_ns) if pd.notna(row.book_received_at_ns) else 0,
+    }
+    for attr, book in (
+        ("yes_ask_size", yes_book),
+        ("yes_best_ask_size", yes_book),
+        ("no_ask_size", no_book),
+        ("no_best_ask_size", no_book),
+    ):
+        value = getattr(row, attr, None)
+        if value is not None and not pd.isna(value):
+            book["ask_size"] = float(value)
     return {
         str(row.yes_token_id): {
-            "best_bid": float(row.yes_best_bid) if pd.notnull(row.yes_best_bid) else 0.0,
-            "best_ask": float(row.yes_best_ask) if pd.notnull(row.yes_best_ask) else 1.0,
-            "received_at_ns": int(row.book_received_at_ns) if pd.notna(row.book_received_at_ns) else 0,
+            **yes_book,
         },
         str(row.no_token_id): {
-            "best_bid": float(row.no_best_bid) if pd.notnull(row.no_best_bid) else 0.0,
-            "best_ask": float(row.no_best_ask) if pd.notnull(row.no_best_ask) else 1.0,
-            "received_at_ns": int(row.book_received_at_ns) if pd.notna(row.book_received_at_ns) else 0,
+            **no_book,
         }
     }
 
@@ -106,6 +125,10 @@ def signal_to_row(res: ModelValueSignal, row) -> Dict[str, Any]:
         "token_net_worth_lead": res.token_net_worth_lead,
         "token_score_margin": res.token_score_margin,
         "model_version": res.model_version,
+        "would_pass_live": res.would_pass_live,
+        "policy_allowed": res.policy_allowed,
+        "policy_reason": res.policy_reason,
+        "live_skip_reason": res.live_skip_reason,
     }
 
 def compute_clv(trades_df: pd.DataFrame, rows_df: pd.DataFrame) -> pd.DataFrame:
@@ -168,11 +191,28 @@ def compute_clv(trades_df: pd.DataFrame, rows_df: pd.DataFrame) -> pd.DataFrame:
     
     return trades_df
 
+
+def get_terminal_settlement(rows: pd.DataFrame, row: pd.Series, signal: ModelValueSignal) -> object:
+    token_rows = rows[
+        (rows["match_id"].astype(str) == str(signal.match_id))
+        & ((rows["yes_token_id"].astype(str) == str(signal.token_id)) | (rows["no_token_id"].astype(str) == str(signal.token_id)))
+    ].sort_values("timestamp_ns")
+
+    side_col = "settled_yes_outcome" if signal.side == "YES" else "settled_no_outcome"
+    if not token_rows.empty and side_col in token_rows:
+        settled = token_rows[side_col].dropna()
+        if not settled.empty:
+            return settled.iloc[-1]
+
+    return row.settled_yes_outcome if signal.side == "YES" else row.settled_no_outcome
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--replay-file", required=True, help="Path to replay CSV")
     parser.add_argument("--out-dir", default="reports", help="Output directory")
     parser.add_argument("--no-filter", action="store_true", help="Do not filter to resolved matches")
+    parser.add_argument("--policy-mode", default="paper_live_parity", choices=["paper_research", "paper_live_parity", "dry_live", "real_live"])
+    parser.add_argument("--ignore-policy", action="store_true", help="Trade confirmed signals even when live-parity policy would reject")
     args = parser.parse_args()
 
     print(f"Loading {args.replay_file}...")
@@ -218,7 +258,7 @@ def main():
                     mapping=mapping,
                     book_store=book_store,
                     entered_tokens=entered_tokens,
-                    mode="paper_research",
+                    mode=args.policy_mode,
                 )
 
         for res in results:
@@ -236,17 +276,16 @@ def main():
             if not confirmed:
                 continue
 
+            if not args.ignore_policy and not bool(res.would_pass_live):
+                signals[-1]["decision"] = "reject_policy"
+                signals[-1]["reject_reason"] = res.live_skip_reason or res.policy_reason or "policy_rejected"
+                continue
+
             if res.match_id in traded_matches:
                 signals[-1]["decision"] = "reject_model_value_match_already_entered"
                 continue
             
-            # Find the true settlement outcome by looking at the last available row for this token
-            future_token_rows = rows[(rows['yes_token_id'] == res.token_id) | (rows['no_token_id'] == res.token_id)]
-            if not future_token_rows.empty:
-                last_row = future_token_rows.iloc[-1]
-                settlement = last_row.settled_yes_outcome if res.side == "YES" else last_row.settled_no_outcome
-            else:
-                settlement = row.settled_yes_outcome if res.side == "YES" else row.settled_no_outcome
+            settlement = get_terminal_settlement(rows, row, res)
 
             stake_usd = 5.0
             trade = {
