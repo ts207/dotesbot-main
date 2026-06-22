@@ -1,0 +1,142 @@
+{
+  "model_value_replay.parquet": {
+    "path": "data_v2/model_value_replay.parquet",
+    "row_count": 26748,
+    "match_count": 69,
+    "key_columns": [
+      "received_at_utc",
+      "received_at_ns",
+      "match_id",
+      "lobby_id",
+      "league_id",
+      "server_steam_id",
+      "game_time_sec",
+      "radiant_lead",
+      "radiant_score",
+      "dire_score"
+    ],
+    "has_settlement": true,
+    "has_book": true,
+    "has_policy": false
+  },
+  "strategy_signals.csv": {
+    "path": "logs/strategy_signals.csv",
+    "row_count": 13926,
+    "match_count": 10,
+    "key_columns": [
+      "timestamp_utc",
+      "received_at_ns",
+      "signal_id",
+      "event_id",
+      "strategy",
+      "actual_event_type",
+      "match_id",
+      "would_trade",
+      "reject_reason",
+      "direction"
+    ],
+    "has_settlement": false,
+    "has_book": true,
+    "has_policy": true
+  },
+  "strategy_allocator.csv": {
+    "path": "logs/strategy_allocator.csv",
+    "row_count": 1574,
+    "match_count": 11,
+    "key_columns": [
+      "timestamp_utc",
+      "match_id",
+      "token_id",
+      "winner_strategy",
+      "winner_edge",
+      "winner_fair",
+      "winner_game_time_sec",
+      "winner_direction",
+      "winner_event_subtype",
+      "winner_is_reversal"
+    ],
+    "has_settlement": false,
+    "has_book": false,
+    "has_policy": false
+  },
+  "paper_attempts.csv": {
+    "path": "logs/paper_attempts.csv",
+    "row_count": 383,
+    "match_count": 4,
+    "key_columns": [
+      "timestamp_utc",
+      "phase",
+      "event_type",
+      "event_direction",
+      "token_id",
+      "side",
+      "market_name",
+      "match_id",
+      "game_time_sec",
+      "fair_price"
+    ],
+    "has_settlement": false,
+    "has_book": true,
+    "has_policy": true
+  },
+  "paper_exits.csv": {
+    "path": "logs/paper_exits.csv",
+    "row_count": 71,
+    "match_count": 5,
+    "key_columns": [
+      "timestamp_utc",
+      "position_id",
+      "token_id",
+      "match_id",
+      "reason",
+      "shares_requested",
+      "shares_filled",
+      "best_bid",
+      "price_posted",
+      "order_status"
+    ],
+    "has_settlement": false,
+    "has_book": true,
+    "has_policy": false
+  },
+  "strategy_outcomes.csv": {
+    "path": "logs/strategy_outcomes.csv",
+    "row_count": 6,
+    "match_count": 4,
+    "key_columns": [
+      "position_id",
+      "mode",
+      "match_id",
+      "token_id",
+      "market_name",
+      "side",
+      "strategy_family",
+      "strategy_kind",
+      "strategy_subtype",
+      "signal_id"
+    ],
+    "has_settlement": true,
+    "has_book": true,
+    "has_policy": true
+  },
+  "settlement_shadow.csv": {
+    "path": "logs/settlement_shadow.csv",
+    "row_count": 2,
+    "match_count": 1,
+    "key_columns": [
+      "ts",
+      "match_id",
+      "event_type",
+      "side",
+      "token_id",
+      "ask",
+      "game_time",
+      "status",
+      "pnl_per_1",
+      "sized_pnl"
+    ],
+    "has_settlement": false,
+    "has_book": true,
+    "has_policy": false
+  }
+}
